@@ -1,7 +1,7 @@
 ---
-name: 기능추가 이슈 템플릿
-about: Describe this issue template's purpose here.
-title: "[FEAT]"
+name: "✅Feature request"
+about: Feature 작업 상황을 입력해주세요.
+title: "[FEAT] "
 labels: ''
 assignees: ''
 
