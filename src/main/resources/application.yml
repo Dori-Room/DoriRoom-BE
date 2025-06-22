@@ -1,3 +1,5 @@
 spring:
-  config:
-    import: classpath:application-db.yml
+  datasource:
+    url: jdbc:mysql://doriroom-db.cpy2gc2cw64n.ap-northeast-2.rds.amazonaws.com
+    username: admin
+    password: ehflfna123
