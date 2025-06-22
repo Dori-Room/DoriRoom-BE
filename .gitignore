@@ -1,8 +1,81 @@
-# User-specific stuff
-.idea
+# === Java & Spring Boot ===
+/target/
+*.class
+*.jar
+*.war
+*.log
+spring.log
 
-### macOS ###
-# General
+# === Gradle ===
+/build/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# === IntelliJ IDEA ===
+.idea/
+*.iml
+out/
+
+# === MacOS 시스템 파일 ===
 .DS_Store
-.AppleDouble
-.LSOverride
+
+# === 테스트 결과물 ===
+test-output/
+test-results/
+
+# === 환경 분리용 ===
+application-local.yml
+application-dev.yml
+application-prod.yml
+.env
+
+# === Redis 관련 ===
+dump.rdb
+
+# === 기타 ===
+*.swp
+
+
+
+
+
+
+
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
