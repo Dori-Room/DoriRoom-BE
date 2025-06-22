@@ -24,9 +24,7 @@ test-output/
 test-results/
 
 # === 환경 분리용 ===
-application-local.yml
-application-dev.yml
-application-prod.yml
+application-*.yml
 .env
 
 # === Redis 관련 ===
