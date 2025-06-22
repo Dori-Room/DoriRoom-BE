@@ -25,6 +25,7 @@ test-results/
 
 # === 환경 분리용 ===
 application-*.yml
+application-*.yaml
 .env
 
 # === Redis 관련 ===
