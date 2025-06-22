@@ -30,8 +30,8 @@ jobs:
           ls -al build/libs || true
           echo "Dockerfile:"
           ls -al Dockerfile || true
-          echo ".env:"
-          ls -al .env || true
+#          echo ".env:"
+#          ls -al .env || true
 
       - name: Rename JAR to app.jar
         run: |
@@ -49,7 +49,7 @@ jobs:
           source: |
             build/libs/*.jar
             Dockerfile
-            .env
+#            .env
           target: /home/ubuntu/app
 
       - name: SSH Deploy
