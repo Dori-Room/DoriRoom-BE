@@ -1,6 +1,6 @@
-package doritos.doriroom.global.api.exception;
+package doritos.doriroom.global.exception;
 
-import doritos.doriroom.global.api.dto.ApiResponse;
+import doritos.doriroom.global.dto.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
