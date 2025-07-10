@@ -1,4 +1,4 @@
-package doritos.doriroom.global.api.exception;
+package doritos.doriroom.global.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
