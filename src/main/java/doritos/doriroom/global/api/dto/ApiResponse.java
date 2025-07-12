@@ -1,27 +1,19 @@
 package doritos.doriroom.global.api.dto;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-
-@Getter
-@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class ApiResponse<T> {
-
     private final int statusCode;
-    private final String error;
-    private final T content;
+    private final String message;
+    private final T data;
 
-    public static ApiResponse<Void> ok() {
-        return new ApiResponse<>(200, null, null);
+    public static ApiResponse<Void> success(){
+        return new ApiResponse<>(200, "요청 성공", null);
     }
 
-    public static <T> ApiResponse<T> ok(T content) {
-        return new ApiResponse<>(200, null, content);
+    public static <T> ApiResponse<T> success(T data) {
+        return new ApiResponse<>(200, "요청 성공", data);
     }
 
-    public static <T> ApiResponse<T> error(HttpStatus status, String error) {
-        return new ApiResponse<>(status.value(), error, null);
+    public static <T> ApiResponse<T> error(int statusCode, String message){
+        return new ApiResponse<>(statusCode, message, null);
     }
 }
