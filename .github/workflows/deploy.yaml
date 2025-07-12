@@ -24,7 +24,8 @@ jobs:
       - name: Check JAR exists
         run: ls -al build/libs
 
-      - name: Debug Show files to be copied
+      - name:
+          Debug: Show files to be copied
         run: |
           echo "build/libs:"
           ls -al build/libs || true
