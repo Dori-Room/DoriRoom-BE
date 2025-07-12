@@ -24,19 +24,21 @@ jobs:
       - name: Check JAR exists
         run: ls -al build/libs
 
-      - name: Rename JAR to app.jar
-        run: |
-          JAR_PATH=$(find build/libs -name "*SNAPSHOT.jar" | head -n 1)
-          echo "Found JAR: $JAR_PATH"
-          cp "$JAR_PATH" build/libs/app.jar
-          ls -al build/libs
-
       - name: Debug Show files to be copied
         run: |
           echo "build/libs:"
           ls -al build/libs || true
           echo "Dockerfile:"
           ls -al Dockerfile || true
+#          echo ".env:"
+#          ls -al .env || true
+
+      - name: Rename JAR to app.jar
+        run: |
+          JAR_PATH=$(find build/libs -name "*SNAPSHOT.jar" | head -n 1)
+          echo "Found JAR: $JAR_PATH"
+          cp "$JAR_PATH" build/libs/app.jar
+      
 
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.6
@@ -45,8 +47,9 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           source: |
-            build/libs/app.jar
+            build/libs/*.jar
             Dockerfile
+#            .env
           target: /home/ubuntu/app
 
       - name: SSH Deploy
@@ -60,4 +63,4 @@ jobs:
             docker stop backend || true
             docker rm backend || true
             docker build -t doribackend .
-            docker run -d -p 8080:8080 --name backend doribackend
+            docker run -d -p 8080:8080 --name backend --env-file .env doribackend
