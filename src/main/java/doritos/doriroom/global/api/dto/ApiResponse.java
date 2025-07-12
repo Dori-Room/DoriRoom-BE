@@ -1,4 +1,4 @@
-package doritos.doriroom.global.dto;
+package doritos.doriroom.global.api.dto;
 
 import lombok.AccessLevel;
 import lombok.Getter;
