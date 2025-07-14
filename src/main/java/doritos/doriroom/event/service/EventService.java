@@ -1,72 +1,38 @@
 package doritos.doriroom.event.service;
 
+import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.response.EventApiItemDto;
-import doritos.doriroom.event.dto.response.EventApiResponseDto;
-import doritos.doriroom.event.exception.ExternalApiException;
+import doritos.doriroom.event.repository.EventRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Slf4j
 public class EventService {
-    private final WebClient webClient;
+    private final tourApiService tourApiService;
+    private final EventRepository eventRepository;
 
-    @Value("${tour-api.event.url}")
-    private String eventPath;
+    @Transactional
+    public void getAllEvents() {
+        List<EventApiItemDto> items = tourApiService.fetchEvents();
 
-    @Value("${tour-api.event.key}")
-    private String serviceKey;
+        List<String> contentIds = items.stream()
+            .map(EventApiItemDto::getContentid)
+            .toList();
 
-    public Page<EventApiItemDto> getEvents(String startDate, Pageable pageable) {
-        EventApiResponseDto response = fetchEventData(startDate, pageable);
+        List<String> existingIds = eventRepository.findAllContentIdIn(contentIds);
 
-        if(response == null || response.getResponse() == null
-            || response.getResponse().getBody() == null
-            || response.getResponse().getBody().getItems() == null) {
-            return Page.empty(pageable);
-        }
+        List<Event> newEvents = items.stream()
+            .filter(dto -> !existingIds.contains(dto.getContentid()))
+            .map(Event::fromEntity)
+            .toList();
 
-        List<EventApiItemDto> items = response.getResponse().getBody().getItems().getItem();
-        long totalCount = response.getResponse().getBody().getTotalCount();
-
-        return new PageImpl<>(items, pageable, totalCount);
-    }
-
-    private EventApiResponseDto fetchEventData(String startDate, Pageable pageable) {
-        try{
-            return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                    .path(eventPath)
-                    .queryParam("MobileOS", "ETC")
-                    .queryParam("MobileApp", "DoriRoom")
-                    .queryParam("eventStartDate", startDate)
-                    .queryParam("pageNo", pageable.getPageNumber() + 1)
-                    .queryParam("numOfRows", pageable.getPageSize())
-                    .queryParam("serviceKey", serviceKey)
-                    .queryParam("_type", "json")
-                    .build())
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, res ->
-                    res.bodyToMono(String.class).map(body -> new ExternalApiException("4xx Error: " + body))
-                )
-                .onStatus(HttpStatusCode::is5xxServerError, res ->
-                    res.bodyToMono(String.class).map(body -> new ExternalApiException("5xx Error: " + body))
-                )
-                .bodyToMono(EventApiResponseDto.class)
-                .block();
-        } catch (Exception e){
-            throw new ExternalApiException("TOUR API 호출 실패" + e.getMessage());
-        }
+        eventRepository.saveAll(newEvents);
+        log.info(" 총 {}개 이벤트 저장 완료", newEvents.size());
     }
 }
