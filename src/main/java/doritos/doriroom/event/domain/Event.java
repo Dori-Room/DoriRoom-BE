@@ -1,7 +1,5 @@
 package doritos.doriroom.event.domain;
 
-import static java.lang.Double.parseDouble;
-import static java.lang.Integer.parseInt;
 import doritos.doriroom.event.dto.response.EventApiItemDto;
 import jakarta.persistence.*;
 import java.time.LocalDate;
