@@ -2,6 +2,7 @@ package doritos.doriroom.event.service;
 
 import doritos.doriroom.event.dto.response.EventApiItemDto;
 import doritos.doriroom.event.dto.response.EventApiResponseDto;
+import doritos.doriroom.event.exception.ExternalApiException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -42,19 +44,29 @@ public class EventService {
     }
 
     private EventApiResponseDto fetchEventData(String startDate, Pageable pageable) {
-        return webClient.get()
-            .uri(uriBuilder -> uriBuilder
-                .path(eventPath)
-                .queryParam("MobileOS", "ETC")
-                .queryParam("MobileApp", "DoriRoom")
-                .queryParam("eventStartDate", startDate)
-                .queryParam("pageNo", pageable.getPageNumber() + 1)
-                .queryParam("numOfRows", pageable.getPageSize())
-                .queryParam("serviceKey", serviceKey)
-                .queryParam("_type", "json")
-                .build())
-            .retrieve()
-            .bodyToMono(EventApiResponseDto.class)
-            .block();
+        try{
+            return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                    .path(eventPath)
+                    .queryParam("MobileOS", "ETC")
+                    .queryParam("MobileApp", "DoriRoom")
+                    .queryParam("eventStartDate", startDate)
+                    .queryParam("pageNo", pageable.getPageNumber() + 1)
+                    .queryParam("numOfRows", pageable.getPageSize())
+                    .queryParam("serviceKey", serviceKey)
+                    .queryParam("_type", "json")
+                    .build())
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, res ->
+                    res.bodyToMono(String.class).map(body -> new ExternalApiException("4xx Error: " + body))
+                )
+                .onStatus(HttpStatusCode::is5xxServerError, res ->
+                    res.bodyToMono(String.class).map(body -> new ExternalApiException("5xx Error: " + body))
+                )
+                .bodyToMono(EventApiResponseDto.class)
+                .block();
+        } catch (Exception e){
+            throw new ExternalApiException("TOUR API 호출 실패" + e.getMessage());
+        }
     }
 }
