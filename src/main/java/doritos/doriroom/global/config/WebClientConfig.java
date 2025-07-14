@@ -17,6 +17,9 @@ public class WebClientConfig {
 
         return WebClient.builder()
             .uriBuilderFactory(uriBuilderFactory)
+            .codecs(configurer ->
+                configurer.defaultCodecs().maxInMemorySize(5 * 1024 * 1024) // 5MB
+            )
             .baseUrl("https://apis.data.go.kr")
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
