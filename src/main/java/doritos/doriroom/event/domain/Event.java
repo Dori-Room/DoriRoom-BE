@@ -1,7 +1,11 @@
 package doritos.doriroom.event.domain;
 
+import static java.lang.Double.parseDouble;
+import static java.lang.Integer.parseInt;
+import doritos.doriroom.event.dto.response.EventApiItemDto;
 import jakarta.persistence.*;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import lombok.*;
 
@@ -13,6 +17,9 @@ public class Event {
     @Id
     private UUID eventId;
 
+    @Column(nullable = false, unique = true)
+    private String contentId;
+
     @Column
     private String firstImage;
 
@@ -23,16 +30,16 @@ public class Event {
     private String title;
 
     @Column(nullable = false)
-    private Date startDate;
+    private LocalDate startDate;
 
     @Column(nullable = false)
-    private Date endDate;
+    private LocalDate endDate;
 
     @Column
-    private Long mapX;
+    private Double mapX;
 
     @Column
-    private Long mapY;
+    private Double mapY;
 
     @Column
     private int areaCode;
@@ -40,4 +47,45 @@ public class Event {
     @Column(nullable = false)
     private int likeCount = 0;
 
+    public static Event fromEntity(EventApiItemDto dto){
+        if (dto.getContentid() == null || dto.getContentid().isBlank()) {
+            throw new IllegalArgumentException("contentId 없음: " + dto.getTitle());
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        return Event.builder()
+            .eventId(UUID.randomUUID())
+            .contentId(dto.getContentid())
+            .firstImage(dto.getFirstimage())
+            .secondImage(dto.getFirstimage2())
+            .title(dto.getTitle())
+            .startDate(LocalDate.parse(dto.getEventstartdate(), formatter))
+            .endDate(LocalDate.parse(dto.getEventenddate(), formatter))
+            .mapX(parseDouble(dto.getMapx()))
+            .mapY(parseDouble(dto.getMapy()))
+            .areaCode(parseInt(dto.getAreacode()))
+            .likeCount(0)
+            .build();
+    }
+
+    private static double parseDouble(String value) {
+        try {
+            return (value != null && !value.isBlank())
+                ? Double.parseDouble(value)
+                : 0.0;
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    private static int parseInt(String value) {
+        try {
+            return (value != null && !value.isBlank())
+                ? Integer.parseInt(value)
+                : 0;
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
 }
