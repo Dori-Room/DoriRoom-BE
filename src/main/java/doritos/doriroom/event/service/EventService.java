@@ -21,32 +21,13 @@ public class EventService {
     private final WebClient webClient;
 
     @Value("${tour-api.event.url}")
-    private String eventUrl;
+    private String eventPath;
 
     @Value("${tour-api.event.key}")
     private String serviceKey;
 
     public Page<EventApiItemDto> getEvents(String startDate, Pageable pageable) {
-        String path = eventUrl.replace("https://apis.data.go.kr", "");
-
-        int pageNo = pageable.getPageNumber() + 1;
-        int numOfRows = pageable.getPageSize();
-
-        EventApiResponseDto response = webClient.get()
-            .uri(uriBuilder -> uriBuilder
-                .path(path)
-                .queryParam("MobileOS", "ETC")
-                .queryParam("MobileApp", "DoriRoom")
-                .queryParam("eventStartDate", startDate)
-                .queryParam("pageNo", pageNo)
-                .queryParam("numOfRows", numOfRows)
-                .queryParam("serviceKey", serviceKey)
-                .queryParam("_type", "json")
-                .build()
-            )
-            .retrieve()
-            .bodyToMono(EventApiResponseDto.class)
-            .block();
+        EventApiResponseDto response = fetchEventData(startDate, pageable);
 
         if(response == null || response.getResponse() == null
             || response.getResponse().getBody() == null
@@ -58,5 +39,22 @@ public class EventService {
         long totalCount = response.getResponse().getBody().getTotalCount();
 
         return new PageImpl<>(items, pageable, totalCount);
+    }
+
+    private EventApiResponseDto fetchEventData(String startDate, Pageable pageable) {
+        return webClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path(eventPath)
+                .queryParam("MobileOS", "ETC")
+                .queryParam("MobileApp", "DoriRoom")
+                .queryParam("eventStartDate", startDate)
+                .queryParam("pageNo", pageable.getPageNumber() + 1)
+                .queryParam("numOfRows", pageable.getPageSize())
+                .queryParam("serviceKey", serviceKey)
+                .queryParam("_type", "json")
+                .build())
+            .retrieve()
+            .bodyToMono(EventApiResponseDto.class)
+            .block();
     }
 }
