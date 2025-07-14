@@ -1,7 +1,7 @@
 package doritos.doriroom.event.dto.response;
 
+import java.util.List;
 import lombok.Data;
-import org.springframework.data.domain.Page;
 
 @Data
 public class EventApiResponseDto {
@@ -29,6 +29,6 @@ public class EventApiResponseDto {
 
     @Data
     public static class Items{
-        private Page<EventApiItemDto> item;
+        private List<EventApiItemDto> item;
     }
 }
