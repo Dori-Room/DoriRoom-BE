@@ -8,6 +8,7 @@ public record EventResponseDto(
     String contentId,
     String startDate,
     String endDate,
+    String addr1,
     String firstImage
 ) {
     public static EventResponseDto from(Event e) {
@@ -16,6 +17,7 @@ public record EventResponseDto(
             e.getContentId(),
             e.getStartDate().format(DateTimeFormatter.ofPattern("yyyy.MM.dd")),
             e.getEndDate().format(DateTimeFormatter.ofPattern("yyyy.MM.dd")),
+            e.getAddr1(),
             e.getFirstImage()
         );
     }
