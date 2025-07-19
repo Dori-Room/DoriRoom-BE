@@ -34,6 +34,12 @@ public class Event {
     private LocalDate endDate;
 
     @Column
+    private String addr1;
+
+    @Column
+    private String addr2;
+
+    @Column
     private Double mapX;
 
     @Column
@@ -60,6 +66,8 @@ public class Event {
             .title(dto.getTitle())
             .startDate(LocalDate.parse(dto.getEventstartdate(), formatter))
             .endDate(LocalDate.parse(dto.getEventenddate(), formatter))
+            .addr1(dto.getAddr1())
+            .addr2(dto.getAddr2())
             .mapX(parseDouble(dto.getMapx()))
             .mapY(parseDouble(dto.getMapy()))
             .areaCode(parseInt(dto.getAreacode()))
@@ -73,6 +81,8 @@ public class Event {
         this.title = newEvent.title;
         this.startDate = newEvent.startDate;
         this.endDate = newEvent.endDate;
+        this.addr1 = newEvent.addr1;
+        this.addr2 = newEvent.addr2;
         this.mapX = newEvent.mapX;
         this.mapY = newEvent.mapY;
         this.areaCode = newEvent.areaCode;
