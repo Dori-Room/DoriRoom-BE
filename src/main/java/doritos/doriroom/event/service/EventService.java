@@ -6,6 +6,8 @@ import doritos.doriroom.event.repository.EventRepository;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,5 +79,11 @@ public class EventService {
 
         eventRepository.saveAll(toSave);
         log.info("오늘 이벤트 upsert 완료: 총 {}, 업데이트 {}, 신규 {}", toSave.size(), updateCount, insertCount);
+    }
+
+    public List<Event> getUpcomingEvents(){
+        Pageable limit = PageRequest.of(0, 4);
+
+        return eventRepository.findUpcomingEvents(limit);
     }
 }
