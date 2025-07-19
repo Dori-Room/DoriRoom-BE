@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class tourApiScheduler {
+public class TourApiScheduler {
 
     private final EventService eventService;
 
@@ -18,4 +18,11 @@ public class tourApiScheduler {
     public void schedule() {
         eventService.getAllEvents();
     }
+
+    //DB에 오늘 시작하는 축제, 수정날짜 오늘인 데이터 upsert 추후 스케줄러 시간 변경 필요
+    @Scheduled(cron = "0 * * * * ?") //1분마다 호출
+    public void updateEventSchedule(){
+        eventService.updateTodayEvents();
+    }
+
 }
