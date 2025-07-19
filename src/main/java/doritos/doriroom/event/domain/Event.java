@@ -67,6 +67,17 @@ public class Event {
             .build();
     }
 
+    public void updateFrom(Event newEvent) {
+        this.firstImage = newEvent.firstImage;
+        this.secondImage = newEvent.secondImage;
+        this.title = newEvent.title;
+        this.startDate = newEvent.startDate;
+        this.endDate = newEvent.endDate;
+        this.mapX = newEvent.mapX;
+        this.mapY = newEvent.mapY;
+        this.areaCode = newEvent.areaCode;
+    }
+
     private static double parseDouble(String value) {
         try {
             return (value != null && !value.isBlank())
