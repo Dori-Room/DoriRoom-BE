@@ -27,6 +27,7 @@ public class SecurityConfig {
             .httpBasic(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(SWAGGER_ENDPOINTS).permitAll()
+                .requestMatchers("/api/**").permitAll()
             );
         return http.build();
     }
