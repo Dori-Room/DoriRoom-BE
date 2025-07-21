@@ -27,4 +27,17 @@ public class EventController {
 
         return ApiResponse.ok(response);
     }
+
+    @Operation(summary = "마감 임박 축제 조회")
+    @GetMapping("/ending-soon")
+    public ApiResponse<List<EventResponseDto>> getEndingSoonEvents(){
+        List<Event> events = eventService.getEndingSoonEvents();
+
+        List<EventResponseDto> response = events.stream()
+            .map(EventResponseDto::from)
+            .toList();
+
+        return ApiResponse.ok(response);
+    }
+
 }
