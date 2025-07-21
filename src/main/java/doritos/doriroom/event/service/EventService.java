@@ -3,6 +3,7 @@ package doritos.doriroom.event.service;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.response.EventApiItemDto;
 import doritos.doriroom.event.repository.EventRepository;
+import java.time.LocalDate;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,5 +86,10 @@ public class EventService {
         Pageable limit = PageRequest.of(0, 4);
 
         return eventRepository.findUpcomingEvents(limit);
+    }
+
+    public List<Event> getEndingSoonEvents(){
+        Pageable limit = PageRequest.of(0, 4);
+        return  eventRepository.findEndingSoonEvents(LocalDate.now(), limit);
     }
 }
