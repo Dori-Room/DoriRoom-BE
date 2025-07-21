@@ -1,6 +1,7 @@
 package doritos.doriroom.event.repository;
 
 import doritos.doriroom.event.domain.Event;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
@@ -22,4 +23,8 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     """)
     List<Event> findUpcomingEvents(Pageable pageable);
 
+    @Query("SELECT e FROM Event e " +
+        "WHERE e.startDate <= :today AND e.endDate >= :today " +
+        "ORDER BY e.endDate ASC")
+    List<Event> findEndingSoonEvents(@Param("today") LocalDate today, Pageable pageable);
 }
