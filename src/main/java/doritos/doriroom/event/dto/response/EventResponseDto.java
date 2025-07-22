@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 
 public record EventResponseDto(
     String title,
-    String contentId,
+    int contentId,
     String startDate,
     String endDate,
     String addr1,
