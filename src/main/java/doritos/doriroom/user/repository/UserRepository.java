@@ -1,7 +1,6 @@
 package doritos.doriroom.user.repository;
 
 import doritos.doriroom.user.domain.User;
-
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +14,5 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     // 로그인 시 유저 조회
     Optional<User> findByUsername(String username);
+    User findByUsername(String username);
 }

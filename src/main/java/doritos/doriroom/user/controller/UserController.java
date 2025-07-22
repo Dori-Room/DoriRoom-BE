@@ -3,6 +3,7 @@ package doritos.doriroom.user.controller;
 
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.dto.*;
+import doritos.doriroom.user.dto.SignupRequestDto;
 import doritos.doriroom.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;

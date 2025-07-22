@@ -11,6 +11,12 @@ import doritos.doriroom.user.repository.UserRepository;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.dto.SignupRequestDto;
+import doritos.doriroom.user.exception.DuplicateException;
+import doritos.doriroom.user.repository.UserRepository;
+import lombok.Builder;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +30,7 @@ public class UserService {
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder encoder;
 
     public void signup(SignupRequestDto request) {
         // 중복 아이디, 닉네임 예외 처리
