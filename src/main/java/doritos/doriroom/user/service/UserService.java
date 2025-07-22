@@ -24,13 +24,11 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Builder
 public class UserService {
     private final UserRepository userRepository;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
-    private final PasswordEncoder encoder;
 
     public void signup(SignupRequestDto request) {
         // 중복 아이디, 닉네임 예외 처리
