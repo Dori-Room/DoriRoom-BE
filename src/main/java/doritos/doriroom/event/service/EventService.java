@@ -52,7 +52,7 @@ public class EventService {
 
         // 기존 데이터 Map으로 만들기
         List<Event> existingEvents = eventRepository.findEventsByContentIds(contentIds);
-        Map<String, Event> existingEventMap = new HashMap<>();
+        Map<Integer, Event> existingEventMap = new HashMap<>();
         for (Event event : existingEvents) {
             existingEventMap.put(event.getContentId(), event);
         }
