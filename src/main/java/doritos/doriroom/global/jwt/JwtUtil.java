@@ -38,6 +38,7 @@ public class JwtUtil {
 
         String token = Jwts.builder()
                 .setSubject(user.getUsername())
+                .claim("userId", user.getUserId())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + exp))
                 .signWith(SignatureAlgorithm.HS512, getSignKey())

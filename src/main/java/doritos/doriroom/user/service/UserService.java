@@ -59,12 +59,19 @@ public class UserService {
     }
 
     public TokenResponseDto reissue(RefreshTokenRequestDto request) {
+        if(!jwtUtil.validateToken(request.getRefreshToken())) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다.");
+        }
+
         RefreshToken storedToken = refreshTokenRedisRepository.findByRefreshToken(request.getRefreshToken())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "존재하지 않는 리프레시 토큰입니다."));
 
+        UUID userId = storedToken.getUserId();
         String username = jwtUtil.getUsernameFromToken(storedToken.getRefreshToken());
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."));
+
+        refreshTokenRedisRepository.deleteById(userId);
 
         String accessToken = jwtUtil.generateAccessToken(user);
         String refreshToken = jwtUtil.generateRefresh(user);
