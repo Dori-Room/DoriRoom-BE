@@ -43,7 +43,6 @@ public class JwtUtil {
                 .signWith(SignatureAlgorithm.HS512, getSignKey())
                 .compact();
 
-        // TODO: user : refreshtoken db에 저장
         RefreshToken refreshToken = RefreshToken.builder()
                 .userId(user.getUserId())
                 .refreshToken(token)
