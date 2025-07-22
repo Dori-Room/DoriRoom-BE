@@ -35,6 +35,7 @@ public class JwtUtil {
 
     public String generateRefresh(User user) {
         long exp = jwtProperties.getRefreshTokenExpirationDays() * 24 * 60 * 60 * 1000L;
+        long expSeconds = jwtProperties.getRefreshTokenExpirationDays() * 24 * 60 * 60L;
 
         String token = Jwts.builder()
                 .setSubject(user.getUsername())
@@ -47,7 +48,7 @@ public class JwtUtil {
         RefreshToken refreshToken = RefreshToken.builder()
                 .userId(user.getUserId())
                 .refreshToken(token)
-                .ttl(exp)
+                .ttl(expSeconds)
                 .build();
 
         refreshTokenRedisRepository.save(refreshToken);
