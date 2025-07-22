@@ -1,6 +1,8 @@
 package doritos.doriroom.user.repository;
 
 import doritos.doriroom.user.domain.User;
+
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,5 +14,5 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByNickname(String nickname);
 
     // 로그인 시 유저 조회
-    User findByUsername(String username);
+    Optional<User> findByUsername(String username);
 }
