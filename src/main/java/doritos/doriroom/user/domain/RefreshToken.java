@@ -1,6 +1,6 @@
 package doritos.doriroom.user.domain;
 
-import jakarta.persistence.Id;
+import org.springframework.data.annotation.Id;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.redis.core.RedisHash;
@@ -16,5 +16,5 @@ public class RefreshToken {
     private UUID userId;
     private String refreshToken;
     @TimeToLive
-    private Long ttl; // ms
+    private Long ttl;
 }
