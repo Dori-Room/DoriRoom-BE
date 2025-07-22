@@ -16,7 +16,10 @@ public class Event {
     private UUID eventId;
 
     @Column(nullable = false, unique = true)
-    private String contentId;
+    private int contentId;
+
+    @Column(nullable = false)
+    private int contentTypeId;
 
     @Column
     private String firstImage;
@@ -48,6 +51,18 @@ public class Event {
     @Column
     private int areaCode;
 
+    @Column
+    private String cat1;
+
+    @Column
+    private String cat2;
+
+    @Column
+    private String cat3;
+
+    @Column(length = 500)
+    private String tel;
+
     @Column(nullable = false)
     private int likeCount = 0;
 
@@ -60,7 +75,8 @@ public class Event {
 
         return Event.builder()
             .eventId(UUID.randomUUID())
-            .contentId(dto.getContentid())
+            .contentId(parseInt(dto.getContentid()))
+            .contentTypeId(parseInt(dto.getContentid()))
             .firstImage(dto.getFirstimage())
             .secondImage(dto.getFirstimage2())
             .title(dto.getTitle())
@@ -71,6 +87,10 @@ public class Event {
             .mapX(parseDouble(dto.getMapx()))
             .mapY(parseDouble(dto.getMapy()))
             .areaCode(parseInt(dto.getAreacode()))
+            .cat1(dto.getCat1())
+            .cat2(dto.getCat2())
+            .cat3(dto.getCat3())
+            .tel(dto.getTel())
             .likeCount(0)
             .build();
     }
@@ -86,6 +106,11 @@ public class Event {
         this.mapX = newEvent.mapX;
         this.mapY = newEvent.mapY;
         this.areaCode = newEvent.areaCode;
+        this.contentTypeId = newEvent.contentTypeId;
+        this.cat1 = newEvent.cat1;
+        this.cat2 = newEvent.cat2;
+        this.cat3 = newEvent.cat3;
+        this.tel = newEvent.getTel();
     }
 
     private static double parseDouble(String value) {
