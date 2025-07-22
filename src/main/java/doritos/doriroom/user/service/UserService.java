@@ -1,5 +1,16 @@
 package doritos.doriroom.user.service;
 
+import doritos.doriroom.global.exception.ApiException;
+import doritos.doriroom.global.jwt.JwtUtil;
+import doritos.doriroom.user.domain.RefreshToken;
+import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.dto.*;
+import doritos.doriroom.user.exception.DuplicateException;
+import doritos.doriroom.user.repository.RefreshTokenRedisRepository;
+import doritos.doriroom.user.repository.UserRepository;
+import lombok.Builder;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.SignupRequestDto;
 import doritos.doriroom.user.exception.DuplicateException;
@@ -16,6 +27,9 @@ import java.util.UUID;
 @Builder
 public class UserService {
     private final UserRepository userRepository;
+    private final RefreshTokenRedisRepository refreshTokenRedisRepository;
+    private final PasswordEncoder encoder;
+    private final JwtUtil jwtUtil;
     private final PasswordEncoder encoder;
 
     public void signup(SignupRequestDto request) {
@@ -37,4 +51,38 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public LoginResponseDto login(LoginRequestDto request) {
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "등록되지 않은 사용자입니다."));
+
+        if (!encoder.matches(request.getPassword(), user.getPassword())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "잘못된 비밀번호 입니다.");
+        }
+
+        String accessToken = jwtUtil.generateAccessToken(user);
+        String refreshToken = jwtUtil.generateRefresh(user);
+
+        return new LoginResponseDto(accessToken, refreshToken);
+    }
+
+    public TokenResponseDto reissue(RefreshTokenRequestDto request) {
+        if(!jwtUtil.validateToken(request.getRefreshToken())) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다.");
+        }
+
+        RefreshToken storedToken = refreshTokenRedisRepository.findByRefreshToken(request.getRefreshToken())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "존재하지 않는 리프레시 토큰입니다."));
+
+        UUID userId = storedToken.getUserId();
+        String username = jwtUtil.getUsernameFromToken(storedToken.getRefreshToken());
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."));
+
+        refreshTokenRedisRepository.deleteById(userId);
+
+        String accessToken = jwtUtil.generateAccessToken(user);
+        String refreshToken = jwtUtil.generateRefresh(user);
+
+        return new TokenResponseDto(accessToken, refreshToken);
+    }
 }
