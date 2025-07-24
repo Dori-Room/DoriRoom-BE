@@ -14,7 +14,7 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     List<String> findAllContentIdIn(@Param("contentIds") List<String> contentIds);
 
     @Query("SELECT e FROM Event e WHERE e.contentId IN :contentIds")
-    List<Event> findEventsByContentIds(@Param("contentIds") List<String> contentIds);
+    List<Event> findEventsByContentIds(@Param("contentIds") List<Integer> contentIds);
 
     @Query("""
     SELECT e FROM Event e
