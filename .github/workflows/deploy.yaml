@@ -64,4 +64,7 @@ jobs:
             docker rm backend || true
             docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/doribackend || true
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/doribackend
-            docker run -d -p 8080:8080 --name backend ${{ secrets.DOCKERHUB_USERNAME }}/doribackend
+            docker run -d -p 8080:8080 --name backend \
+              -v $(pwd)/app.yml:/app/config/application.yml \
+              -e SPRING_CONFIG_LOCATION=file:/app/config/application.yml \
+              ${{ secrets.DOCKERHUB_USERNAME }}/doribackend
