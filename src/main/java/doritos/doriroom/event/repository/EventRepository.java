@@ -18,7 +18,7 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
 
     @Query("""
     SELECT e FROM Event e
-    WHERE e.startDate = CURRENT_DATE
+    WHERE e.startDate >= CURRENT_DATE
     ORDER BY e.startDate ASC
     """)
     List<Event> findUpcomingEvents(Pageable pageable);
