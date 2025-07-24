@@ -52,6 +52,9 @@ public class Event {
     private int areaCode;
 
     @Column
+    private int sigungucode;
+
+    @Column
     private String cat1;
 
     @Column
@@ -60,8 +63,14 @@ public class Event {
     @Column
     private String cat3;
 
-    @Column(length = 500)
-    private String tel;
+    @Column
+    private String lclsSystm1;
+
+    @Column
+    private String lclsSystm2;
+
+    @Column
+    private String lclsSystm3;
 
     @Column(nullable = false)
     private int likeCount = 0;
@@ -76,7 +85,7 @@ public class Event {
         return Event.builder()
             .eventId(UUID.randomUUID())
             .contentId(parseInt(dto.getContentid()))
-            .contentTypeId(parseInt(dto.getContentid()))
+            .contentTypeId(parseInt(dto.getContenttypeid()))
             .firstImage(dto.getFirstimage())
             .secondImage(dto.getFirstimage2())
             .title(dto.getTitle())
@@ -87,10 +96,13 @@ public class Event {
             .mapX(parseDouble(dto.getMapx()))
             .mapY(parseDouble(dto.getMapy()))
             .areaCode(parseInt(dto.getAreacode()))
+            .sigungucode(parseInt(dto.getSigungucode()))
             .cat1(dto.getCat1())
             .cat2(dto.getCat2())
             .cat3(dto.getCat3())
-            .tel(dto.getTel())
+            .lclsSystm1(dto.getLclsSystm1())
+            .lclsSystm2(dto.getLclsSystm2())
+            .lclsSystm3(dto.getLclsSystm3())
             .likeCount(0)
             .build();
     }
@@ -106,11 +118,14 @@ public class Event {
         this.mapX = newEvent.mapX;
         this.mapY = newEvent.mapY;
         this.areaCode = newEvent.areaCode;
+        this.sigungucode = newEvent.sigungucode;
         this.contentTypeId = newEvent.contentTypeId;
         this.cat1 = newEvent.cat1;
         this.cat2 = newEvent.cat2;
         this.cat3 = newEvent.cat3;
-        this.tel = newEvent.getTel();
+        this.lclsSystm1 = newEvent.lclsSystm1;
+        this.lclsSystm2 = newEvent.lclsSystm2;
+        this.lclsSystm3 = newEvent.lclsSystm3;
     }
 
     private static double parseDouble(String value) {
