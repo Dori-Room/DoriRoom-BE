@@ -43,12 +43,11 @@ public class EventService {
     public void updateTodayEvents(){
         List<EventApiItemDto> items = tourApiService.fetchTodayEvents();
 
-        List<String> contentIds = new ArrayList<>();
-        for(EventApiItemDto item : items){
-            if(item.getContentid() != null && !item.getContentid().isBlank()){
-                contentIds.add(item.getContentid());
-            }
-        }
+        List<Integer> contentIds = items.stream()
+            .map(EventApiItemDto::getContentid)
+            .filter(id -> id != null && !id.isBlank())
+            .map(Integer::parseInt)
+            .toList();
 
         // 기존 데이터 Map으로 만들기
         List<Event> existingEvents = eventRepository.findEventsByContentIds(contentIds);
@@ -62,8 +61,7 @@ public class EventService {
         int insertCount = 0;
 
         for (EventApiItemDto dto : items) {
-            String contentId = dto.getContentid();
-            if (contentId == null || contentId.isBlank()) continue;
+            int contentId = Integer.parseInt(dto.getContentid());
 
             Event newEvent = Event.fromEntity(dto);
 
