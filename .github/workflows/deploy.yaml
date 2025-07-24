@@ -37,7 +37,7 @@ jobs:
 
       # 5. Docker 이미지 Build
       - name: Build Docker Image
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/doribackend .
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }} .
 
       # 6. DockerHub 로그인
       - name: DockerHub Login
@@ -48,7 +48,7 @@ jobs:
 
       # 7. DockerHub 푸시
       - name: Push Docker Image
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/doribackend
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}
 
       # 8. EC2 접속하여 Docker 컨테이너 실행
       - name: Deploy on EC2
@@ -62,9 +62,9 @@ jobs:
             echo "${{ secrets.APPLICATION_YML }}" | base64 -d > app.yml
             docker stop backend || true
             docker rm backend || true
-            docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/doribackend || true
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/doribackend
+            docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }} || true
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}
             docker run -d -p 8080:8080 --name backend \
               -v $(pwd)/app.yml:/app/config/application.yml \
               -e SPRING_CONFIG_LOCATION=file:/app/config/application.yml \
-              ${{ secrets.DOCKERHUB_USERNAME }}/doribackend
+              ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}
