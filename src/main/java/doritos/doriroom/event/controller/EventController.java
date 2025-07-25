@@ -8,6 +8,9 @@ import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name="축제 정보 관련", description = "축제 정보 관련 API")
@@ -40,4 +43,12 @@ public class EventController {
         return ApiResponse.ok(response);
     }
 
+    @Operation(summary = "도별 축제 조회", description = "서울, 경기, 경상 별로 축제 정보 조회")
+    @GetMapping("/area-group/{groupCode}")
+    public ApiResponse<Page<EventResponseDto>> getAreaGroupEvents(
+        @PathVariable Integer groupCode,
+        @ParameterObject Pageable pageable
+    ){
+        return ApiResponse.ok(eventService.getEventsByAreaGroup(groupCode, pageable));
+    }
 }
