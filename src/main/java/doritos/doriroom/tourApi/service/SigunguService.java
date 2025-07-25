@@ -5,6 +5,7 @@ import doritos.doriroom.tourApi.domain.SigunguId;
 import doritos.doriroom.tourApi.dto.response.SigunguApiItemDto;
 import doritos.doriroom.tourApi.dto.response.SigunguApiResponseDto;
 import doritos.doriroom.tourApi.exception.ExternalApiException;
+import doritos.doriroom.tourApi.exception.SigunguNotFoundException;
 import doritos.doriroom.tourApi.repository.SigunguRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -126,6 +127,6 @@ public class SigunguService {
     public Sigungu getSigunguByCode(Integer areaCode, Integer code) {
         SigunguId sigunguId = new SigunguId(areaCode, code);
         return sigunguRepository.findById(sigunguId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 시군구 코드: " + areaCode + "-" + code));
+            .orElseThrow(SigunguNotFoundException::new);
     }
 } 
