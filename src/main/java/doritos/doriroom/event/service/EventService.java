@@ -100,4 +100,9 @@ public class EventService {
         return eventRepository.findByAreaCodeIn(areaGroup.getAreaCodes(), pageable)
             .map(EventResponseDto::from);
     }
+
+    public Page<EventResponseDto> getEventsByAreaAndSigungu(Integer areaCode, List<Integer> sigunguCodes, Pageable pageable) {
+        return eventRepository.findByAreaCodeAndSigunguCodes(areaCode, sigunguCodes, pageable)
+            .map(EventResponseDto::from);
+    }
 }
