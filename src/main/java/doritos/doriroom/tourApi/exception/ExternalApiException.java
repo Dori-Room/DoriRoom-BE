@@ -1,4 +1,4 @@
-package doritos.doriroom.event.exception;
+package doritos.doriroom.tourApi.exception;
 
 import doritos.doriroom.global.exception.ApiException;
 import org.springframework.http.HttpStatus;

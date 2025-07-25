@@ -1,8 +1,8 @@
-package doritos.doriroom.event.service;
+package doritos.doriroom.tourApi.service;
 
-import doritos.doriroom.event.dto.response.EventApiItemDto;
-import doritos.doriroom.event.dto.response.EventApiResponseDto;
-import doritos.doriroom.event.exception.ExternalApiException;
+import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
+import doritos.doriroom.tourApi.dto.response.TourApiResponseDto;
+import doritos.doriroom.tourApi.exception.ExternalApiException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -31,7 +31,7 @@ public class TourApiService {
      * 전체 축제 데이터 가져오는 메서드
      */
     @Transactional
-    public List<EventApiItemDto> fetchAllEvents() {
+    public List<TourApiItemDto> fetchAllEvents() {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put("eventStartDate", "20160101");
         return fetchAllPages(queryParams);
@@ -41,30 +41,30 @@ public class TourApiService {
      * modifiedTime 또는 eventStartDate가 오늘인 데이터만 가져오는 메서드
      */
     @Transactional
-    public List<EventApiItemDto> fetchTodayEvents() {
+    public List<TourApiItemDto> fetchTodayEvents() {
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
         // eventStartDate만 넣고 호출
         Map<String, String> startDateParams = new HashMap<>();
         startDateParams.put("eventStartDate", today);
-        List<EventApiItemDto> fromStartDate = fetchAllPages(startDateParams);
+        List<TourApiItemDto> fromStartDate = fetchAllPages(startDateParams);
 
         // modifiedtime만 사용하는 호출
         Map<String, String> modifiedParams = new HashMap<>();
         modifiedParams.put("eventStartDate", "20160101");
         modifiedParams.put("modifiedtime", "20250717");
-        List<EventApiItemDto> fromModifiedTime = fetchAllPages(modifiedParams);
+        List<TourApiItemDto> fromModifiedTime = fetchAllPages(modifiedParams);
 
         // 3. contentId 기준으로 중복 제거
-        Map<String, EventApiItemDto> merged = new LinkedHashMap<>();
+        Map<String, TourApiItemDto> merged = new LinkedHashMap<>();
 
-        for (EventApiItemDto dto : fromStartDate) {
+        for (TourApiItemDto dto : fromStartDate) {
             if (dto.getContentid() != null && !dto.getContentid().isBlank()) {
                 merged.put(dto.getContentid(), dto);
             }
         }
 
-        for (EventApiItemDto dto : fromModifiedTime) {
+        for (TourApiItemDto dto : fromModifiedTime) {
             if (dto.getContentid() != null && !dto.getContentid().isBlank()) {
                 merged.put(dto.getContentid(), dto); // 동일 contentId면 덮어씀
             }
@@ -79,11 +79,11 @@ public class TourApiService {
     /**
      * 페이징 전체 반복 로직
      */
-    private List<EventApiItemDto> fetchAllPages(Map<String, String> extraParams) {
+    private List<TourApiItemDto> fetchAllPages(Map<String, String> extraParams) {
         int pageSize = 1000;
         int currentPage = 1;
 
-        EventApiResponseDto firstResponse = fetchPage(currentPage, pageSize, extraParams);
+        TourApiResponseDto firstResponse = fetchPage(currentPage, pageSize, extraParams);
         if (firstResponse == null || firstResponse.getResponse() == null || firstResponse.getResponse().getBody() == null)
             return Collections.emptyList();
 
@@ -91,10 +91,10 @@ public class TourApiService {
         int totalPages = (int) Math.ceil((double) totalCount / pageSize);
         log.info("총 축제 수: {}, 총 페이지 수: {}", totalCount, totalPages);
 
-        List<EventApiItemDto> result = new ArrayList<>(firstResponse.getResponse().getBody().getItems().getItem());
+        List<TourApiItemDto> result = new ArrayList<>(firstResponse.getResponse().getBody().getItems().getItem());
 
         for (int page = 2; page <= totalPages; page++) {
-            EventApiResponseDto response = fetchPage(page, pageSize, extraParams);
+            TourApiResponseDto response = fetchPage(page, pageSize, extraParams);
             if (response != null &&
                 response.getResponse() != null &&
                 response.getResponse().getBody() != null &&
@@ -109,7 +109,7 @@ public class TourApiService {
     /**
      * 실제 단일 페이지 호출 (API 요청)
      */
-    private EventApiResponseDto fetchPage(int pageNo, int numOfRows, Map<String, String> extraParams) {
+    private TourApiResponseDto fetchPage(int pageNo, int numOfRows, Map<String, String> extraParams) {
         try {
             WebClient.RequestHeadersSpec<?> request = webClient.get()
                 .uri(uriBuilder -> {
@@ -133,7 +133,7 @@ public class TourApiService {
                 .onStatus(HttpStatusCode::is5xxServerError, res ->
                     res.bodyToMono(String.class).map(body -> new ExternalApiException("5xx Error: " + body))
                 )
-                .bodyToMono(EventApiResponseDto.class)
+                .bodyToMono(TourApiResponseDto.class)
                 .block();
         } catch (Exception e) {
             throw new ExternalApiException("TOUR API 호출 실패: " + e.getMessage());
