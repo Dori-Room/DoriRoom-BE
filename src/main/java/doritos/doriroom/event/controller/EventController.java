@@ -4,9 +4,14 @@ import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.service.EventService;
 import doritos.doriroom.global.dto.ApiResponse;
+import doritos.doriroom.tourApi.domain.AreaGroup;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -41,6 +46,20 @@ public class EventController {
             .toList();
 
         return ApiResponse.ok(response);
+    }
+
+    @Operation(summary = "도별 정보 조회", description = "도별 코드와 이름 정보 조회")
+    @GetMapping("/area-groups")
+    public ApiResponse<List<Map<String, Object>>> getAreaGroupEnumInfo() {
+            List<Map<String, Object>> areaGroups = Stream.of(AreaGroup.values())
+                .map(group -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("code", group.getCode());
+                    map.put("name", group.getName());
+                    return map;
+                })
+                .collect(Collectors.toList());
+            return ApiResponse.ok(areaGroups);
     }
 
     @Operation(summary = "도별 축제 조회", description = "서울, 경기, 경상 별로 축제 정보 조회")
