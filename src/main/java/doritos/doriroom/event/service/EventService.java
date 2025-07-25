@@ -1,6 +1,8 @@
 package doritos.doriroom.event.service;
 
 import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.dto.response.EventResponseDto;
+import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
 import doritos.doriroom.tourApi.service.TourApiService;
 import doritos.doriroom.event.repository.EventRepository;
@@ -8,6 +10,7 @@ import java.time.LocalDate;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -90,5 +93,11 @@ public class EventService {
     public List<Event> getEndingSoonEvents(){
         Pageable limit = PageRequest.of(0, 4);
         return  eventRepository.findEndingSoonEvents(LocalDate.now(), limit);
+    }
+
+    public Page<EventResponseDto> getEventsByAreaGroup(Integer groupCode, Pageable pageable) {
+        AreaGroup areaGroup = AreaGroup.fromCode(groupCode);
+        return eventRepository.findByAreaCodeIn(areaGroup.getAreaCodes(), pageable)
+            .map(EventResponseDto::from);
     }
 }
