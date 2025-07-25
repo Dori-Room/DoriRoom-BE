@@ -1,6 +1,6 @@
 package doritos.doriroom.event.domain;
 
-import doritos.doriroom.event.dto.response.EventApiItemDto;
+import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -75,7 +75,7 @@ public class Event {
     @Column(nullable = false)
     private int likeCount = 0;
 
-    public static Event fromEntity(EventApiItemDto dto){
+    public static Event fromEntity(TourApiItemDto dto){
         if (dto.getContentid() == null || dto.getContentid().isBlank()) {
             throw new IllegalArgumentException("contentId 없음: " + dto.getTitle());
         }

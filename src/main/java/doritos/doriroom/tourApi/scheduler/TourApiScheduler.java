@@ -1,4 +1,4 @@
-package doritos.doriroom.event.scheduler;
+package doritos.doriroom.tourApi.scheduler;
 
 import doritos.doriroom.event.service.EventService;
 import lombok.RequiredArgsConstructor;
