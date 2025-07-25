@@ -7,6 +7,9 @@ import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,5 +72,17 @@ public class EventController {
         @ParameterObject Pageable pageable
     ){
         return ApiResponse.ok(eventService.getEventsByAreaGroup(groupCode, pageable));
+    }
+
+    @Operation(summary = "시군구별 축제 조회", description = "지역코드와 시군구코드 리스트로 축제 조회")
+    @GetMapping("/{areaCode}/sigungu")
+    public ApiResponse<Page<EventResponseDto>> getEventsByAreaAndSigungu(
+        @Parameter(description = "지역코드 (1: 서울, 2: 인천)", example = "1", required = true)
+        @PathVariable @NotNull Integer areaCode,
+        @Parameter(description = "시군구코드 리스트 ", example = "[1, 2]", required = true)
+        @RequestParam @NotNull List<Integer> sigunguCodes,
+        @ParameterObject Pageable pageable
+    ) {
+        return ApiResponse.ok(eventService.getEventsByAreaAndSigungu(areaCode, sigunguCodes, pageable));
     }
 }
