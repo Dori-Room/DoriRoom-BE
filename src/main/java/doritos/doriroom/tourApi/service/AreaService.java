@@ -1,6 +1,7 @@
 package doritos.doriroom.tourApi.service;
 
 import doritos.doriroom.tourApi.domain.Area;
+import doritos.doriroom.tourApi.exception.AreaNotFoundException;
 import doritos.doriroom.tourApi.repository.AreaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,6 @@ public class AreaService {
 
     public Area getAreaByCode(Integer code) {
         return areaRepository.findById(code)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지역 코드: " + code));
+            .orElseThrow(AreaNotFoundException::new);
     }
 } 

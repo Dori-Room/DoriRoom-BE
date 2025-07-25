@@ -1,5 +1,6 @@
 package doritos.doriroom.event.domain;
 
+import doritos.doriroom.event.exception.EventNotFoundException;
 import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -77,7 +78,7 @@ public class Event {
 
     public static Event fromEntity(TourApiItemDto dto){
         if (dto.getContentid() == null || dto.getContentid().isBlank()) {
-            throw new IllegalArgumentException("contentId 없음: " + dto.getTitle());
+            throw new EventNotFoundException();
         }
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");

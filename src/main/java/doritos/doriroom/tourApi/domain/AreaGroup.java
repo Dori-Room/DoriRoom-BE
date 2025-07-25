@@ -1,5 +1,6 @@
 package doritos.doriroom.tourApi.domain;
 
+import doritos.doriroom.tourApi.exception.AreaGroupNotFoundException;
 import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,6 @@ public enum AreaGroup {
                 return group;
             }
         }
-        throw new IllegalArgumentException("알 수 없는 지역 그룹 코드: " + code);
+        throw new AreaGroupNotFoundException();
     }
 }
