@@ -1,7 +1,8 @@
 package doritos.doriroom.event.service;
 
 import doritos.doriroom.event.domain.Event;
-import doritos.doriroom.event.dto.response.EventApiItemDto;
+import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
+import doritos.doriroom.tourApi.service.TourApiService;
 import doritos.doriroom.event.repository.EventRepository;
 import java.time.LocalDate;
 import java.util.*;
@@ -22,10 +23,10 @@ public class EventService {
 
     @Transactional
     public void getAllEvents() {
-        List<EventApiItemDto> items = tourApiService.fetchAllEvents();
+        List<TourApiItemDto> items = tourApiService.fetchAllEvents();
 
         List<String> contentIds = items.stream()
-            .map(EventApiItemDto::getContentid)
+            .map(TourApiItemDto::getContentid)
             .toList();
 
         List<String> existingIds = eventRepository.findAllContentIdIn(contentIds);
@@ -41,10 +42,10 @@ public class EventService {
 
     @Transactional
     public void updateTodayEvents(){
-        List<EventApiItemDto> items = tourApiService.fetchTodayEvents();
+        List<TourApiItemDto> items = tourApiService.fetchTodayEvents();
 
         List<Integer> contentIds = items.stream()
-            .map(EventApiItemDto::getContentid)
+            .map(TourApiItemDto::getContentid)
             .filter(id -> id != null && !id.isBlank())
             .map(Integer::parseInt)
             .toList();
@@ -60,7 +61,7 @@ public class EventService {
         int updateCount = 0;
         int insertCount = 0;
 
-        for (EventApiItemDto dto : items) {
+        for (TourApiItemDto dto : items) {
             int contentId = Integer.parseInt(dto.getContentid());
 
             Event newEvent = Event.fromEntity(dto);

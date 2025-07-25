@@ -1,4 +1,4 @@
-package doritos.doriroom.event.properties;
+package doritos.doriroom.tourApi.properties;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "tour-api")
 @Getter
 @Setter
-public class EventApiProperties {
+public class TourApiProperties {
     private Event event;
 
     @Getter

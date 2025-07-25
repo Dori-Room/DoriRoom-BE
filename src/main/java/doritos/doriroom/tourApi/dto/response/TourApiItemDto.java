@@ -1,9 +1,9 @@
-package doritos.doriroom.event.dto.response;
+package doritos.doriroom.tourApi.dto.response;
 
 import lombok.Data;
 
 @Data
-public class EventApiItemDto {
+public class TourApiItemDto {
     private String addr1;
     private String addr2;
     private String zipcode;
