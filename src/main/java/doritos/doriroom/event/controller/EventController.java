@@ -66,7 +66,8 @@ public class EventController {
     @Operation(summary = "도별 축제 조회", description = "서울, 경기, 경상 별로 축제 정보 조회")
     @GetMapping("/area-group/{groupCode}")
     public ApiResponse<Page<EventResponseDto>> getAreaGroupEvents(
-        @PathVariable Integer groupCode,
+        @Parameter(description = "도별코드(1: 서울, 2: 경기)", example = "2", required = true)
+        @PathVariable @NotNull Integer groupCode,
         @ParameterObject Pageable pageable
     ){
         return ApiResponse.ok(eventService.getEventsByAreaGroup(groupCode, pageable));
