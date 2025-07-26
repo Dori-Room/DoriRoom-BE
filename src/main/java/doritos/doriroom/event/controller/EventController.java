@@ -1,6 +1,7 @@
 package doritos.doriroom.event.controller;
 
 import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.service.EventService;
 import doritos.doriroom.global.dto.ApiResponse;
@@ -94,4 +95,14 @@ public class EventController {
     ) {
         return ApiResponse.ok(eventService.getEventsByCategoryCode(categoryCode, pageable));
     }
+
+    @Operation(summary = "축제 조회", description = "필터링 조건에 따라 축제 조회")
+    @GetMapping("/filtered")
+    public ApiResponse<Page<EventResponseDto>> getFilteredEvents(
+        @ParameterObject EventItemFilterRequestDto request,
+        @ParameterObject Pageable pageable
+    ){
+        return ApiResponse.ok(eventService.getFilteredEvents(request, pageable));
+    }
+
 }
