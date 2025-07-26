@@ -8,7 +8,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.domain.Page;
 
 public interface EventRepository extends JpaRepository<Event, UUID>, EventRepositoryCustom {
     @Query("SELECT e.contentId FROM Event e WHERE e.contentId IN :contentIds")
@@ -28,16 +27,4 @@ public interface EventRepository extends JpaRepository<Event, UUID>, EventReposi
         "WHERE e.startDate <= :today AND e.endDate >= :today " +
         "ORDER BY e.endDate ASC")
     List<Event> findEndingSoonEvents(@Param("today") LocalDate today, Pageable pageable);
-
-    @Query("SELECT e FROM Event e WHERE e.areaCode IN :areaCodes")
-    Page<Event> findByAreaCodeIn(@Param("areaCodes") List<Integer> areaCodes, Pageable pageable);
-
-    @Query("SELECT e FROM Event e WHERE e.areaCode = :areaCode AND e.sigungucode IN :sigunguCodes")
-    Page<Event> findByAreaCodeAndSigunguCodes(
-        @Param("areaCode") Integer areaCode, @Param("sigunguCodes") List<Integer> sigunguCodes,
-        Pageable pageable
-    );
-
-    @Query("SELECT e FROM Event e WHERE e.lclsSystm2 = :categoryCode OR  e.lclsSystm3 = :categoryCode ")
-    Page<Event> findByCategoryCode(@Param("categoryCode") String categoryCode, Pageable pageable);
 }
