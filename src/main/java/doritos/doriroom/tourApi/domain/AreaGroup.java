@@ -28,4 +28,22 @@ public enum AreaGroup {
         }
         throw new AreaGroupNotFoundException();
     }
+
+    // areaCode로 속해있는 AreaGroup을 찾는 메서드
+    public static AreaGroup fromAreaCode(int areaCode) {
+        for (AreaGroup group : values()) {
+            if (group.getAreaCodes().contains(areaCode)) {
+                return group;
+            }
+        }
+        throw new AreaGroupNotFoundException();
+    }
+
+    public static String getAreaNameByAreaCode(int areaCode){
+        try {
+            return fromAreaCode(areaCode).getName();
+        } catch (AreaGroupNotFoundException e){
+            return "기타";
+        }
+    }
 }
