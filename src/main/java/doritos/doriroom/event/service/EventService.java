@@ -1,6 +1,7 @@
 package doritos.doriroom.event.service;
 
 import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
@@ -110,4 +111,10 @@ public class EventService {
         return eventRepository.findByCategoryCode(categoryCode, pageable)
             .map(EventResponseDto::from);
     }
+
+    public Page<EventResponseDto> getFilteredEvents(EventItemFilterRequestDto request, Pageable pageable){
+        return eventRepository.findFiltered(request, pageable)
+            .map(EventResponseDto::from);
+    }
+
 }
