@@ -1,35 +1,33 @@
 package doritos.doriroom.tourApi.service;
 
-import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
-import doritos.doriroom.tourApi.dto.response.TourApiResponseDto;
-import doritos.doriroom.tourApi.exception.ExternalApiException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import doritos.doriroom.tourApi.dto.response.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Slf4j
 public class TourApiService {
-    private final WebClient webClient;
+    private final TourApiClient tourApiClient;
 
     @Value("${tour-api.event.url}")
     private String eventPath;
 
-    @Value("${tour-api.event.key}")
-    private String serviceKey;
+    @Value("${tour-api.event-detail-intro.url}")
+    private String eventDetailIntroPath;
 
-    /**
-     * 전체 축제 데이터 가져오는 메서드
-     */
+    @Value("${tour-api.event-detail-info.url}")
+    private String eventDetailInfoPath;
+
+    //전체 축제 데이터 가져오기
     @Transactional
     public List<TourApiItemDto> fetchAllEvents() {
         Map<String, String> queryParams = new HashMap<>();
@@ -37,9 +35,7 @@ public class TourApiService {
         return fetchAllPages(queryParams);
     }
 
-    /**
-     * modifiedTime 또는 eventStartDate가 오늘인 데이터만 가져오는 메서드
-     */
+     //오늘 업데이트된 축제 데이터 가져오기
     @Transactional
     public List<TourApiItemDto> fetchTodayEvents() {
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -76,14 +72,57 @@ public class TourApiService {
         return new ArrayList<>(merged.values());
     }
 
-    /**
-     * 페이징 전체 반복 로직
-     */
+    //특정 축제의 상세정보(detailIntro2) 가져오기 (주관사, 주최사, 가격)
+    public TourApiDetailIntroDto fetchEventDetailIntro(int contentId) {
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put("contentId", String.valueOf(contentId));
+        queryParams.put("contentTypeId", "15");
+
+        TourApiDetailIntroResponseDto response = tourApiClient.callApi(eventDetailIntroPath, queryParams, TourApiDetailIntroResponseDto.class);
+        
+        if (response == null || response.getResponse() == null ||
+            response.getResponse().getBody() == null ||
+            response.getResponse().getBody().getItems() == null ||
+            response.getResponse().getBody().getItems().getItem().isEmpty()) {
+            log.warn("축제 상세정보가 없습니다. contentId: {}", contentId);
+            return null;
+        }
+
+        return response.getResponse().getBody().getItems().getItem().get(0);
+    }
+
+     //특정 축제의 상세정보(detailInfo2) 가져오기 (행사소개, 행사내용)
+    public List<TourApiDetailInfoDto> fetchEventDetailInfo(int contentId) {
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put("contentId", String.valueOf(contentId));
+        queryParams.put("contentTypeId", "15");
+
+        TourApiDetailInfoResponseDto response = tourApiClient.callApi(eventDetailInfoPath, queryParams, TourApiDetailInfoResponseDto.class);
+        
+        if (response == null || response.getResponse() == null ||
+            response.getResponse().getBody() == null ||
+            response.getResponse().getBody().getItems() == null ||
+            response.getResponse().getBody().getItems().getItem().isEmpty()) {
+            log.warn("축제 상세정보(detailInfo2)가 없습니다. contentId: {}", contentId);
+            return new ArrayList<>();
+        }
+
+        List<TourApiDetailInfoDto> items = response.getResponse().getBody().getItems().getItem();
+        log.info("축제 상세정보 조회 완료. contentId: {}, 조회된 항목 수: {}", contentId, items.size());
+        
+        return items;
+    }
+
+    // 페이징 전체 반복 로직
     private List<TourApiItemDto> fetchAllPages(Map<String, String> extraParams) {
         int pageSize = 1000;
         int currentPage = 1;
 
-        TourApiResponseDto firstResponse = fetchPage(currentPage, pageSize, extraParams);
+        Map<String, String> firstPageParams = new HashMap<>(extraParams);
+        firstPageParams.put("pageNo", String.valueOf(currentPage));
+        firstPageParams.put("numOfRows", String.valueOf(pageSize));
+
+        TourApiResponseDto firstResponse = tourApiClient.callApi(eventPath, firstPageParams, TourApiResponseDto.class);
         if (firstResponse == null || firstResponse.getResponse() == null || firstResponse.getResponse().getBody() == null)
             return Collections.emptyList();
 
@@ -94,7 +133,11 @@ public class TourApiService {
         List<TourApiItemDto> result = new ArrayList<>(firstResponse.getResponse().getBody().getItems().getItem());
 
         for (int page = 2; page <= totalPages; page++) {
-            TourApiResponseDto response = fetchPage(page, pageSize, extraParams);
+            Map<String, String> pageParams = new HashMap<>(extraParams);
+            pageParams.put("pageNo", String.valueOf(page));
+            pageParams.put("numOfRows", String.valueOf(pageSize));
+
+            TourApiResponseDto response = tourApiClient.callApi(eventPath, pageParams, TourApiResponseDto.class);
             if (response != null &&
                 response.getResponse() != null &&
                 response.getResponse().getBody() != null &&
@@ -104,39 +147,5 @@ public class TourApiService {
         }
 
         return result;
-    }
-
-    /**
-     * 실제 단일 페이지 호출 (API 요청)
-     */
-    private TourApiResponseDto fetchPage(int pageNo, int numOfRows, Map<String, String> extraParams) {
-        try {
-            WebClient.RequestHeadersSpec<?> request = webClient.get()
-                .uri(uriBuilder -> {
-                    uriBuilder.path(eventPath)
-                        .queryParam("MobileOS", "ETC")
-                        .queryParam("MobileApp", "DoriRoom")
-                        .queryParam("pageNo", pageNo)
-                        .queryParam("numOfRows", numOfRows)
-                        .queryParam("serviceKey", serviceKey)
-                        .queryParam("_type", "json");
-
-                    extraParams.forEach(uriBuilder::queryParam);
-                    return uriBuilder.build();
-                });
-
-            return request
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, res ->
-                    res.bodyToMono(String.class).map(body -> new ExternalApiException("4xx Error: " + body))
-                )
-                .onStatus(HttpStatusCode::is5xxServerError, res ->
-                    res.bodyToMono(String.class).map(body -> new ExternalApiException("5xx Error: " + body))
-                )
-                .bodyToMono(TourApiResponseDto.class)
-                .block();
-        } catch (Exception e) {
-            throw new ExternalApiException("TOUR API 호출 실패: " + e.getMessage());
-        }
     }
 }
