@@ -1,9 +1,13 @@
 package doritos.doriroom.event.domain;
 
-import doritos.doriroom.event.dto.response.EventApiItemDto;
+import doritos.doriroom.event.exception.EventNotFoundException;
+import doritos.doriroom.tourApi.dto.response.TourApiDetailInfoDto;
+import doritos.doriroom.tourApi.dto.response.TourApiDetailIntroDto;
+import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.UUID;
 import lombok.*;
 
@@ -72,12 +76,27 @@ public class Event {
     @Column
     private String lclsSystm3;
 
+    @Column
+    private String sponsor1; //주최사
+
+    @Column
+    private String sponsor2; //주관사
+
+    @Column
+    private String useTimeFestival; //가격
+
+    @Column(columnDefinition = "TEXT")
+    private String eventIntro;
+
+    @Column(columnDefinition = "TEXT")
+    private String eventContent;
+
     @Column(nullable = false)
     private int likeCount = 0;
 
-    public static Event fromEntity(EventApiItemDto dto){
+    public static Event fromEntity(TourApiItemDto dto){
         if (dto.getContentid() == null || dto.getContentid().isBlank()) {
-            throw new IllegalArgumentException("contentId 없음: " + dto.getTitle());
+            throw new EventNotFoundException();
         }
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -127,6 +146,27 @@ public class Event {
         this.lclsSystm2 = newEvent.lclsSystm2;
         this.lclsSystm3 = newEvent.lclsSystm3;
     }
+
+    public void updateDetailFrom(TourApiDetailIntroDto dto){
+        if(dto != null){
+            this.sponsor1 = dto.getSponsor1();
+            this.sponsor2 = dto.getSponsor2();
+            this.useTimeFestival = dto.getUsetimefestival();
+        }
+    }
+
+    public void updateDetailInfoFrom(List<TourApiDetailInfoDto> dtoList){
+        if(dtoList != null){
+            for(TourApiDetailInfoDto detailInfo : dtoList){
+                if("행사소개".equals(detailInfo.getInfoname())){
+                    this.eventIntro = detailInfo.getInfotext();
+                } else if("행사내용".equals(detailInfo.getInfoname())){
+                    this.eventContent = detailInfo.getInfotext();
+                }
+            }
+        }
+    }
+
 
     private static double parseDouble(String value) {
         try {

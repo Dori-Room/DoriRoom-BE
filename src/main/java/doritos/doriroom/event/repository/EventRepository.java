@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface EventRepository extends JpaRepository<Event, UUID> {
+public interface EventRepository extends JpaRepository<Event, UUID>, EventRepositoryCustom {
     @Query("SELECT e.contentId FROM Event e WHERE e.contentId IN :contentIds")
     List<String> findAllContentIdIn(@Param("contentIds") List<String> contentIds);
 
