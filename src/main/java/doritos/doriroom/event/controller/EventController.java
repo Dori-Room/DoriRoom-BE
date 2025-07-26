@@ -5,15 +5,9 @@ import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.service.EventService;
 import doritos.doriroom.global.dto.ApiResponse;
-import doritos.doriroom.tourApi.domain.AreaGroup;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.constraints.NotNull;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -50,52 +44,6 @@ public class EventController {
         return ApiResponse.ok(response);
     }
 
-    @Operation(summary = "도별 정보 조회", description = "도별 코드와 이름 정보 조회")
-    @GetMapping("/area-groups")
-    public ApiResponse<List<Map<String, Object>>> getAreaGroupEnumInfo() {
-            List<Map<String, Object>> areaGroups = Stream.of(AreaGroup.values())
-                .map(group -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("code", group.getCode());
-                    map.put("name", group.getName());
-                    return map;
-                })
-                .collect(Collectors.toList());
-            return ApiResponse.ok(areaGroups);
-    }
-
-    @Operation(summary = "도별 축제 조회", description = "서울, 경기, 경상 별로 축제 정보 조회")
-    @GetMapping("/area-group/{groupCode}")
-    public ApiResponse<Page<EventResponseDto>> getAreaGroupEvents(
-        @Parameter(description = "도별코드(1: 서울, 2: 경기)", example = "2", required = true)
-        @PathVariable @NotNull Integer groupCode,
-        @ParameterObject Pageable pageable
-    ){
-        return ApiResponse.ok(eventService.getEventsByAreaGroup(groupCode, pageable));
-    }
-
-        @Operation(summary = "시군구별 축제 조회", description = "지역코드와 시군구코드 리스트로 축제 조회")
-    @GetMapping("/{areaCode}/sigungu")
-    public ApiResponse<Page<EventResponseDto>> getEventsByAreaAndSigungu(
-        @Parameter(description = "지역코드 (1: 서울, 2: 인천)", example = "1", required = true)
-        @PathVariable @NotNull Integer areaCode,
-        @Parameter(description = "시군구코드 리스트 ", example = "[1, 2]", required = true)
-        @RequestParam @NotNull List<Integer> sigunguCodes,
-        @ParameterObject Pageable pageable
-    ) {
-        return ApiResponse.ok(eventService.getEventsByAreaAndSigungu(areaCode, sigunguCodes, pageable));
-    }
-
-    @Operation(summary = "분류(카테고리)별 축제 조회", description = "분류코드로 해당 분류의 축제 정보를 조회")
-    @GetMapping("/category/{categoryCode}")
-    public ApiResponse<Page<EventResponseDto>> getEventsByCategory(
-        @Parameter(description = "분류코드 (EV010100: 문화관광축제, EV010200: 문화예술축제, EV02: 공연, EV03: 행사)", example = "EV010100", required = true)
-        @PathVariable @NotNull String categoryCode,
-        @ParameterObject Pageable pageable
-    ) {
-        return ApiResponse.ok(eventService.getEventsByCategoryCode(categoryCode, pageable));
-    }
-
     @Operation(summary = "축제 조회", description = "필터링 조건에 따라 축제 조회")
     @GetMapping("/filtered")
     public ApiResponse<Page<EventResponseDto>> getFilteredEvents(
@@ -104,5 +52,4 @@ public class EventController {
     ){
         return ApiResponse.ok(eventService.getFilteredEvents(request, pageable));
     }
-
 }
