@@ -2,7 +2,11 @@ package doritos.doriroom.event.service;
 
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
+import doritos.doriroom.event.dto.response.EventDetailResponseDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
+import doritos.doriroom.event.exception.EventNotFoundException;
+import doritos.doriroom.tourApi.dto.response.TourApiDetailInfoDto;
+import doritos.doriroom.tourApi.dto.response.TourApiDetailIntroDto;
 import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
 import doritos.doriroom.tourApi.service.TourApiService;
 import doritos.doriroom.event.repository.EventRepository;
@@ -84,19 +88,72 @@ public class EventService {
         log.info("오늘 이벤트 upsert 완료: 총 {}, 업데이트 {}, 신규 {}", toSave.size(), updateCount, insertCount);
     }
 
+    @Transactional
+    public void updateAllEventDetails() {
+        List<Event> events = eventRepository.findAll();
+        int batchSize = 100;
+        int successCount = 0;
+        int failCount = 0;
+
+        log.info("축제 상세정보 업데이트 시작");
+
+        for (int i = 0; i < events.size(); i += batchSize) {
+            int endIndex = Math.min(i + batchSize, events.size());
+            List<Event> batch = events.subList(i, endIndex);
+
+            for (Event event : batch) {
+                try {
+                    // detailIntro2 업데이트
+                    TourApiDetailIntroDto detailIntroDto = tourApiService.fetchEventDetailIntro(event.getContentId());
+                    event.updateDetailFrom(detailIntroDto);
+
+                    // detailInfo2 업데이트
+                    List<TourApiDetailInfoDto> detailInfoList = tourApiService.fetchEventDetailInfo(event.getContentId());
+                    event.updateDetailInfoFrom(detailInfoList);
+
+                    successCount++;
+
+                } catch (Exception e) {
+                    log.error("축제 상세정보 업데이트 실패. contentId: {}, error: {}",
+                        event.getContentId(), e.getMessage());
+                    failCount++;
+                }
+            }
+
+            eventRepository.saveAll(batch);
+
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+
+            log.info("배치 처리 진행상황: {}/{} 완료", endIndex, events.size());
+        }
+
+        log.info("전체 축제 상세정보 업데이트 완료. 성공: {}, 실패: {}", successCount, failCount);
+    }
+
+
     public List<Event> getUpcomingEvents(){
         Pageable limit = PageRequest.of(0, 4);
-
         return eventRepository.findUpcomingEvents(limit);
     }
 
-    public List<Event> getEndingSoonEvents(){
+    public List<Event> getEndingSoonEvents() {
         Pageable limit = PageRequest.of(0, 4);
-        return  eventRepository.findEndingSoonEvents(LocalDate.now(), limit);
+        return eventRepository.findEndingSoonEvents(LocalDate.now(), limit);
     }
 
-    public Page<EventResponseDto> getFilteredEvents(EventItemFilterRequestDto request, Pageable pageable){
+    public Page<EventResponseDto> getFilteredEvents(EventItemFilterRequestDto request, Pageable pageable) {
         return eventRepository.findFiltered(request, pageable)
             .map(EventResponseDto::from);
+    }
+
+    public EventDetailResponseDto getEventDetail(UUID contentId) {
+        Event event = eventRepository.findById(contentId)
+            .orElseThrow(EventNotFoundException::new);
+        return EventDetailResponseDto.from(event);
     }
 }
