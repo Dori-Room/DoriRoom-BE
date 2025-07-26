@@ -37,4 +37,7 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
         @Param("areaCode") Integer areaCode, @Param("sigunguCodes") List<Integer> sigunguCodes,
         Pageable pageable
     );
+
+    @Query("SELECT e FROM Event e WHERE e.lclsSystm2 = :categoryCode OR  e.lclsSystm3 = :categoryCode ")
+    Page<Event> findByCategoryCode(@Param("categoryCode") String categoryCode, Pageable pageable);
 }
