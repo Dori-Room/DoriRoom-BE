@@ -73,7 +73,7 @@ public class EventController {
         return ApiResponse.ok(eventService.getEventsByAreaGroup(groupCode, pageable));
     }
 
-    @Operation(summary = "시군구별 축제 조회", description = "지역코드와 시군구코드 리스트로 축제 조회")
+        @Operation(summary = "시군구별 축제 조회", description = "지역코드와 시군구코드 리스트로 축제 조회")
     @GetMapping("/{areaCode}/sigungu")
     public ApiResponse<Page<EventResponseDto>> getEventsByAreaAndSigungu(
         @Parameter(description = "지역코드 (1: 서울, 2: 인천)", example = "1", required = true)
@@ -83,5 +83,15 @@ public class EventController {
         @ParameterObject Pageable pageable
     ) {
         return ApiResponse.ok(eventService.getEventsByAreaAndSigungu(areaCode, sigunguCodes, pageable));
+    }
+
+    @Operation(summary = "분류(카테고리)별 축제 조회", description = "분류코드로 해당 분류의 축제 정보를 조회")
+    @GetMapping("/category/{categoryCode}")
+    public ApiResponse<Page<EventResponseDto>> getEventsByCategory(
+        @Parameter(description = "분류코드 (EV010100: 문화관광축제, EV010200: 문화예술축제, EV02: 공연, EV03: 행사)", example = "EV010100", required = true)
+        @PathVariable @NotNull String categoryCode,
+        @ParameterObject Pageable pageable
+    ) {
+        return ApiResponse.ok(eventService.getEventsByCategoryCode(categoryCode, pageable));
     }
 }
