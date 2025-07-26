@@ -25,10 +25,10 @@ import java.util.List;
 @RequestMapping("/api/tour-api")
 @Validated
 public class TourApiController {
-    private final EventService eventService;
     private final AreaService areaService;
     private final SigunguService sigunguService;
     private final CategoryService categoryService;
+    private final EventService eventService;
 
     @Operation(summary = "전체 지역 정보 조회", description = "지역코드와 지역명 매핑 정보를 목록으로 제공")
     @GetMapping("/area")
@@ -84,7 +84,7 @@ public class TourApiController {
         return ApiResponse.ok(response);
     }
 
-@Operation(
+    @Operation(
         summary = "전체 축제 관련 정보 초기화 (관리자용)",
         description = """
         외부 API에서 최신 축제 정보, 지역 정보, 시군구 정보를 가져와서 데이터베이스에 저장합니다.
@@ -107,5 +107,21 @@ public class TourApiController {
         areaService.initializeAreas();
         sigunguService.initializeAllSigungu();
         return ApiResponse.ok("DB에 축제 관련 데이터 저장 완료");
+    }
+
+    @Operation(
+        summary = "전체 축제 상세 정보 초기화 (관리자용)",
+        description = """
+            외부데이터에서 주회사, 주관사, 가격, 소개, 내용을 가져와 저장합니다.
+            외부 API 호출이 많아 5분 정도 소요됩니다.
+
+            TourAPI 하루 호출 최대 횟수가 5000회인데 이 트리거 한 번으로 약 3400회의 호출이 실행됩니다.
+            **초기 데이터 생성 외에는 누르지 말아주세요.**
+            """
+    )
+    @PostMapping("/initailize/details")
+    public ApiResponse<String> initializeDetails(){
+        eventService.updateAllEventDetails();
+        return ApiResponse.ok("축제 상세정보 초기화 완료");
     }
 } 
