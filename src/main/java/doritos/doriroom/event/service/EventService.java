@@ -3,7 +3,6 @@ package doritos.doriroom.event.service;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
-import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
 import doritos.doriroom.tourApi.service.TourApiService;
 import doritos.doriroom.event.repository.EventRepository;
@@ -96,25 +95,8 @@ public class EventService {
         return  eventRepository.findEndingSoonEvents(LocalDate.now(), limit);
     }
 
-    public Page<EventResponseDto> getEventsByAreaGroup(Integer groupCode, Pageable pageable) {
-        AreaGroup areaGroup = AreaGroup.fromCode(groupCode);
-        return eventRepository.findByAreaCodeIn(areaGroup.getAreaCodes(), pageable)
-            .map(EventResponseDto::from);
-    }
-
-    public Page<EventResponseDto> getEventsByAreaAndSigungu(Integer areaCode, List<Integer> sigunguCodes, Pageable pageable) {
-        return eventRepository.findByAreaCodeAndSigunguCodes(areaCode, sigunguCodes, pageable)
-            .map(EventResponseDto::from);
-    }
-
-    public Page<EventResponseDto> getEventsByCategoryCode(String categoryCode, Pageable pageable) {
-        return eventRepository.findByCategoryCode(categoryCode, pageable)
-            .map(EventResponseDto::from);
-    }
-
     public Page<EventResponseDto> getFilteredEvents(EventItemFilterRequestDto request, Pageable pageable){
         return eventRepository.findFiltered(request, pageable)
             .map(EventResponseDto::from);
     }
-
 }
