@@ -5,11 +5,12 @@ import java.time.format.DateTimeFormatter;
 
 public record EventResponseDto(
     String title,
-    String contentId,
+    int contentId,
     String startDate,
     String endDate,
     String addr1,
-    String firstImage
+    String firstImage,
+    String secondImage
 ) {
     public static EventResponseDto from(Event e) {
         return new EventResponseDto(
@@ -18,7 +19,8 @@ public record EventResponseDto(
             e.getStartDate().format(DateTimeFormatter.ofPattern("yyyy.MM.dd")),
             e.getEndDate().format(DateTimeFormatter.ofPattern("yyyy.MM.dd")),
             e.getAddr1(),
-            e.getFirstImage()
+            e.getFirstImage(),
+            e.getSecondImage()
         );
     }
 }

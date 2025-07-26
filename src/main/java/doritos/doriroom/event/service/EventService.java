@@ -3,6 +3,7 @@ package doritos.doriroom.event.service;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.response.EventApiItemDto;
 import doritos.doriroom.event.repository.EventRepository;
+import java.time.LocalDate;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,16 +43,15 @@ public class EventService {
     public void updateTodayEvents(){
         List<EventApiItemDto> items = tourApiService.fetchTodayEvents();
 
-        List<String> contentIds = new ArrayList<>();
-        for(EventApiItemDto item : items){
-            if(item.getContentid() != null && !item.getContentid().isBlank()){
-                contentIds.add(item.getContentid());
-            }
-        }
+        List<Integer> contentIds = items.stream()
+            .map(EventApiItemDto::getContentid)
+            .filter(id -> id != null && !id.isBlank())
+            .map(Integer::parseInt)
+            .toList();
 
         // 기존 데이터 Map으로 만들기
         List<Event> existingEvents = eventRepository.findEventsByContentIds(contentIds);
-        Map<String, Event> existingEventMap = new HashMap<>();
+        Map<Integer, Event> existingEventMap = new HashMap<>();
         for (Event event : existingEvents) {
             existingEventMap.put(event.getContentId(), event);
         }
@@ -61,8 +61,7 @@ public class EventService {
         int insertCount = 0;
 
         for (EventApiItemDto dto : items) {
-            String contentId = dto.getContentid();
-            if (contentId == null || contentId.isBlank()) continue;
+            int contentId = Integer.parseInt(dto.getContentid());
 
             Event newEvent = Event.fromEntity(dto);
 
@@ -85,5 +84,10 @@ public class EventService {
         Pageable limit = PageRequest.of(0, 4);
 
         return eventRepository.findUpcomingEvents(limit);
+    }
+
+    public List<Event> getEndingSoonEvents(){
+        Pageable limit = PageRequest.of(0, 4);
+        return  eventRepository.findEndingSoonEvents(LocalDate.now(), limit);
     }
 }
