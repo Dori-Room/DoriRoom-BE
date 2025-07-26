@@ -105,4 +105,9 @@ public class EventService {
         return eventRepository.findByAreaCodeAndSigunguCodes(areaCode, sigunguCodes, pageable)
             .map(EventResponseDto::from);
     }
+
+    public Page<EventResponseDto> getEventsByCategoryCode(String categoryCode, Pageable pageable) {
+        return eventRepository.findByCategoryCode(categoryCode, pageable)
+            .map(EventResponseDto::from);
+    }
 }

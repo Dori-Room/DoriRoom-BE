@@ -3,12 +3,16 @@ package doritos.doriroom.tourApi.controller;
 import doritos.doriroom.event.service.EventService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.tourApi.domain.Area;
+import doritos.doriroom.tourApi.domain.Category;
 import doritos.doriroom.tourApi.domain.Sigungu;
 import doritos.doriroom.tourApi.service.AreaService;
+import doritos.doriroom.tourApi.service.CategoryService;
 import doritos.doriroom.tourApi.service.SigunguService;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +28,7 @@ public class TourApiController {
     private final EventService eventService;
     private final AreaService areaService;
     private final SigunguService sigunguService;
+    private final CategoryService categoryService;
 
     @Operation(summary = "전체 지역 정보 조회", description = "지역코드와 지역명 매핑 정보를 목록으로 제공")
     @GetMapping("/area")
@@ -64,7 +69,22 @@ public class TourApiController {
         return ApiResponse.ok(sigungu);
     }
 
-    @Operation(
+    @Operation(summary = "카테고리 조회", description = "축제(문화관광축제, 문화예술축제 등), 공연, 행사 코드를 조회")
+    @GetMapping("/category")
+    public ApiResponse<List<Map<String, Object>>> getAllCategories() {
+        List<Category> categories = categoryService.getAllCategories();
+        List<Map<String, Object>> response = categories.stream()
+            .map(category -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("code", category.getCode());
+                map.put("name", category.getName());
+                return map;
+            })
+            .toList();
+        return ApiResponse.ok(response);
+    }
+
+@Operation(
         summary = "전체 축제 관련 정보 초기화 (관리자용)",
         description = """
         외부 API에서 최신 축제 정보, 지역 정보, 시군구 정보를 가져와서 데이터베이스에 저장합니다.
