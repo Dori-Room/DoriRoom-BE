@@ -46,15 +46,22 @@ public class SearchRepository {
     }
 
     public List<SearchRankDto> getTopKeywordsWithRankChange() {
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String currentHour = getCurrentHourKey();
         String previousHour = getPreviousHourKey();
 
+        String todayKey = SEARCH_KEYWORDS_TODAY + today;
         String currentHourKey = SEARCH_KEYWORDS_HOURLY + currentHour;
         String previousHourKey = SEARCH_KEYWORDS_HOURLY + previousHour;
 
         // 현재 시간대 상위 10개
         Set<ZSetOperations.TypedTuple<Object>> currentTop =
             redisTemplate.opsForZSet().reverseRangeWithScores(currentHourKey, 0, 9);
+
+        // 현재 시간대 데이터가 없으면 오늘 전체 데이터 사용
+        if (currentTop.isEmpty()) {
+            currentTop = redisTemplate.opsForZSet().reverseRangeWithScores(todayKey, 0, 9);
+        }
 
         // 이전 시간대 상위 10개
         Set<ZSetOperations.TypedTuple<Object>> previousTop =
