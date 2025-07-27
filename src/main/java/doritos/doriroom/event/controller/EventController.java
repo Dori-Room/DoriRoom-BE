@@ -6,6 +6,7 @@ import doritos.doriroom.event.dto.response.EventDetailResponseDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.service.EventService;
 import doritos.doriroom.global.dto.ApiResponse;
+import doritos.doriroom.search.service.SearchService;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/event")
 public class EventController {
     private final EventService eventService;
+    private final SearchService searchService;
 
     @Operation(summary = "따끈따끈 신규 축제 조회")
     @GetMapping("/upcoming")
@@ -52,6 +54,11 @@ public class EventController {
         @ParameterObject EventItemFilterRequestDto request,
         @ParameterObject Pageable pageable
     ){
+        //인기검색어 카운트+1
+        if(request.keyword() != null && !request.keyword().trim().isEmpty()){
+            searchService.recordSearch(request.keyword());
+        }
+
         return ApiResponse.ok(eventService.getFilteredEvents(request, pageable));
     }
 
