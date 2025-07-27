@@ -59,7 +59,7 @@ public class SearchRepository {
             redisTemplate.opsForZSet().reverseRangeWithScores(currentHourKey, 0, 9);
 
         // 현재 시간대 데이터가 없으면 오늘 전체 데이터 사용
-        if (currentTop.isEmpty()) {
+        if (currentTop.isEmpty() || currentTop.size() < 10) {
             currentTop = redisTemplate.opsForZSet().reverseRangeWithScores(todayKey, 0, 9);
         }
 
@@ -70,9 +70,7 @@ public class SearchRepository {
         // 순위 변화 계산
         Map<String, Integer> previousRanks = new HashMap<>();
         AtomicInteger rank = new AtomicInteger(1);
-        previousTop.forEach(tuple -> {
-            previousRanks.put((String) tuple.getValue(), rank.getAndIncrement());
-        });
+        previousTop.forEach(tuple -> previousRanks.put((String) tuple.getValue(), rank.getAndIncrement()));
 
         // 결과 생성
         AtomicInteger currentRank = new AtomicInteger(1);
