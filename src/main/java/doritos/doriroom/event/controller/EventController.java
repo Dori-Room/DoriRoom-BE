@@ -7,6 +7,7 @@ import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.service.EventService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.search.service.SearchService;
+import doritos.doriroom.tourApi.domain.AreaGroup;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -69,5 +70,18 @@ public class EventController {
         @PathVariable UUID eventId
     ){
         return ApiResponse.ok(eventService.getEventDetail(eventId));
+    }
+
+    @Operation(summary = "도별 축제 조회", description = "8도 축제 정보 조회")
+    @GetMapping("/area/{areaGroupCode}")
+    public ApiResponse<Page<EventResponseDto>> getEventsByAreaGroup(
+        @Parameter(description = "지역 그룹 코드(1: 서울, 2:경기도)", example = "1", required = true)
+        @PathVariable int areaGroupCode,
+        @ParameterObject Pageable pageable
+    ){
+        AreaGroup areaGroup = AreaGroup.fromCode(areaGroupCode);
+
+        Page<EventResponseDto> events = eventService.getEventsByAreaGroup(areaGroup, pageable);
+        return ApiResponse.ok(events);
     }
 }
