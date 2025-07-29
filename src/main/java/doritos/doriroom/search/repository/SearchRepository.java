@@ -63,12 +63,12 @@ public class SearchRepository {
             redisTemplate.opsForZSet().reverseRangeWithScores(previousWeekKey, 0, 9);
 
         // 현재 주에 데이터가 없으면 저번주 데이터 사용
-        if (currentTop == null || currentTop.isEmpty()) {
+        if (currentTop.isEmpty()) {
             log.info("현재 주에 데이터가 없어 저번주 데이터를 사용합니다.");
             currentTop = redisTemplate.opsForZSet().reverseRangeWithScores(previousWeekKey, 0, 9);
         }
 
-        if(currentTop == null || currentTop.isEmpty()) {
+        if(currentTop.isEmpty()) {
             log.info("데이터가 없어 기본 인기 검색어 생성");
             return createDefaultKeywords();
         }
@@ -76,9 +76,7 @@ public class SearchRepository {
         // 순위 변화 계산
         Map<String, Integer> previousRanks = new HashMap<>();
         AtomicInteger rank = new AtomicInteger(1);
-        previousTop.forEach(tuple -> {
-            previousRanks.put((String) tuple.getValue(), rank.getAndIncrement());
-        });
+        previousTop.forEach(tuple -> previousRanks.put((String) tuple.getValue(), rank.getAndIncrement()));
 
         // 결과 생성
         AtomicInteger currentRank = new AtomicInteger(1);
@@ -113,10 +111,6 @@ public class SearchRepository {
 
     private String getCurrentHourKey() {
         return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd:HH"));
-    }
-
-    private String getPreviousHourKey() {
-        return LocalDateTime.now().minusHours(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd:HH"));
     }
 
     // 기본 인기 검색어 생성 (데이터가 없을 때)
