@@ -5,6 +5,7 @@ import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventDetailResponseDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.exception.EventNotFoundException;
+import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.tourApi.dto.response.TourApiDetailInfoDto;
 import doritos.doriroom.tourApi.dto.response.TourApiDetailIntroDto;
 import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
@@ -155,5 +156,12 @@ public class EventService {
         Event event = eventRepository.findById(contentId)
             .orElseThrow(EventNotFoundException::new);
         return EventDetailResponseDto.from(event);
+    }
+
+    public Page<EventResponseDto> getEventsByAreaGroup(AreaGroup areaGroup, Pageable pageable) {
+        List<Integer> areaCodes = areaGroup.getAreaCodes();
+
+        Page<Event> events = eventRepository.findByAreaCodesIn(areaCodes, pageable);
+        return events.map(EventResponseDto::from);
     }
 }
