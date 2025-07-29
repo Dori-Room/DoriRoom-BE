@@ -46,7 +46,8 @@ public class SigunguService {
                         .queryParam("MobileApp", "DoriRoom")
                         .queryParam("areaCode", areaCode.toString())
                         .queryParam("serviceKey", serviceKey)
-                        .queryParam("_type", "json");
+                        .queryParam("_type", "json")
+                        .queryParam("numOfRows", "1000");
                     return uriBuilder.build();
                 })
                 .retrieve()
