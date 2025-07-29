@@ -23,16 +23,20 @@ public class User {
 
     private String profileImageUrl;
 
+    @Builder.Default
     @Column(nullable = false)
     private Long credit = 0L;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RoomVisibility roomVisibility = RoomVisibility.PUBLIC;
 
+    @Builder.Default
     @Column(nullable = false)
     private int likeCount = 0;
 
+    @Builder.Default
     @Column(nullable = false)
     private int viewCount = 0;
 
