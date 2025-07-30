@@ -112,16 +112,13 @@ public class TourApiController {
     @Operation(
         summary = "전체 축제 상세 정보 초기화 (관리자용)",
         description = """
-            외부데이터에서 주회사, 주관사, 가격, 소개, 내용을 가져와 저장합니다.
-            외부 API 호출이 많아 5분 정도 소요됩니다.
-
-            TourAPI 하루 호출 최대 횟수가 1000회인데 현재 3400회의 호출 필요.
-            이 코드 작동 안됨.
+            한번 작동 시 900회 실행
+            하루 최대 tour API 호출횟수 1000회 
             """
     )
     @PostMapping("/initailize/details")
     public ApiResponse<String> initializeDetails(){
-        eventService.updateAllEventDetails();
+        eventService.updateEventDetails();
         return ApiResponse.ok("축제 상세정보 초기화 완료");
     }
 } 

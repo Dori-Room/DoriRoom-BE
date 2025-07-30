@@ -94,6 +94,9 @@ public class Event {
     @Column(nullable = false)
     private int likeCount = 0;
 
+    @Column
+    private boolean detailUpdated = false;
+
     public static Event fromEntity(TourApiItemDto dto){
         if (dto.getContentid() == null || dto.getContentid().isBlank()) {
             throw new EventNotFoundException();
@@ -152,6 +155,7 @@ public class Event {
             this.sponsor1 = dto.getSponsor1();
             this.sponsor2 = dto.getSponsor2();
             this.useTimeFestival = dto.getUsetimefestival();
+            this.detailUpdated = true;
         }
     }
 
@@ -164,6 +168,7 @@ public class Event {
                     this.eventContent = detailInfo.getInfotext();
                 }
             }
+            this.detailUpdated = true;
         }
     }
 

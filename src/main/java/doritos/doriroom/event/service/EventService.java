@@ -90,50 +90,41 @@ public class EventService {
     }
 
     @Transactional
-    public void updateAllEventDetails() {
-        List<Event> events = eventRepository.findAll();
-        int batchSize = 100;
-        int successCount = 0;
-        int failCount = 0;
+    public void updateEventDetails() {
+        List<Event> events = eventRepository.findEventsNeedingDetailUpdate();
+        int dailyLimit = 900;
+        int processedCount = 0;
 
         log.info("축제 상세정보 업데이트 시작");
 
-        for (int i = 0; i < events.size(); i += batchSize) {
-            int endIndex = Math.min(i + batchSize, events.size());
-            List<Event> batch = events.subList(i, endIndex);
-
-            for (Event event : batch) {
-                try {
-                    // detailIntro2 업데이트
-                    TourApiDetailIntroDto detailIntroDto = tourApiService.fetchEventDetailIntro(event.getContentId());
-                    event.updateDetailFrom(detailIntroDto);
-
-                    // detailInfo2 업데이트
-                    List<TourApiDetailInfoDto> detailInfoList = tourApiService.fetchEventDetailInfo(event.getContentId());
-                    event.updateDetailInfoFrom(detailInfoList);
-
-                    successCount++;
-
-                } catch (Exception e) {
-                    log.error("축제 상세정보 업데이트 실패. contentId: {}, error: {}",
-                        event.getContentId(), e.getMessage());
-                    failCount++;
-                }
-            }
-
-            eventRepository.saveAll(batch);
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+        for (Event event : events) {
+            if (processedCount >= dailyLimit) {
+                log.info("오늘의 업데이트 한도({}개)에 도달했습니다. 남은 이벤트: {}개", dailyLimit, events.size() - processedCount);
                 break;
             }
 
-            log.info("배치 처리 진행상황: {}/{} 완료", endIndex, events.size());
-        }
+            try {
+                // detailIntro2 업데이트
+                TourApiDetailIntroDto detailIntroDto = tourApiService.fetchEventDetailIntro(event.getContentId());
+                event.updateDetailFrom(detailIntroDto);
+                processedCount++;
 
-        log.info("전체 축제 상세정보 업데이트 완료. 성공: {}, 실패: {}", successCount, failCount);
+                // detailInfo2 업데이트
+                List<TourApiDetailInfoDto> detailInfoList = tourApiService.fetchEventDetailInfo(event.getContentId());
+                event.updateDetailInfoFrom(detailInfoList);
+                processedCount++;
+
+                eventRepository.save(event);
+
+                // API 호출 간격 조절
+                Thread.sleep(500);
+
+            } catch (Exception e) {
+                log.error("축제 상세정보 업데이트 실패. contentId: {}, error: {}", event.getContentId(), e.getMessage());
+                processedCount += 2;
+            }
+        }
+        log.info("전체 축제 상세정보 업데이트 완료");
     }
 
 
