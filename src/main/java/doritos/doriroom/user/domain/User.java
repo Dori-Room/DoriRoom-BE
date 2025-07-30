@@ -1,4 +1,5 @@
 package doritos.doriroom.user.domain;
+import doritos.doriroom.user.exception.NotEnoughCreditException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,6 +40,12 @@ public class User {
     @Builder.Default
     @Column(nullable = false)
     private int viewCount = 0;
+
+    // 보유 크레딧 차감
+    public void deductCredit(long price){
+        if(this.credit < price){ throw new NotEnoughCreditException();};
+        this.credit -= price;
+    }
 
     // TODO: 연관관계 매핑
 }
