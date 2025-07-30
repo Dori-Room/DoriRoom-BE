@@ -36,4 +36,11 @@ public interface EventRepository extends JpaRepository<Event, UUID>, EventReposi
         ORDER BY e.startDate ASC
     """)
     Page<Event> findByAreaCodesIn(@Param("areaCodes") List<Integer> areaCodes, Pageable pageable);
+
+    @Query("""
+    SELECT e FROM Event e
+    WHERE e.detailUpdated = false
+    ORDER BY e.startDate ASC
+    """)
+    List<Event> findEventsNeedingDetailUpdate();
 }
