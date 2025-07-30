@@ -3,7 +3,6 @@ package doritos.doriroom.item.controller;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.item.domain.ItemGroup;
 import doritos.doriroom.item.dto.Request.EquipItemRequest;
-import doritos.doriroom.item.dto.Request.ItemGroupRequest;
 import doritos.doriroom.item.dto.Request.PurchaseItemRequest;
 import doritos.doriroom.item.dto.Response.EquipItemResponse;
 import doritos.doriroom.item.dto.Response.ItemResponse;
@@ -26,25 +25,27 @@ public class ItemController {
     private final ItemService itemService;
 
     @GetMapping
-    @Operation(summary = "전체 아이템 조회")
+    @Operation(summary = "전체 아이템 조회", description = "현재 로그인한 유저 기준으로, 모든 아이템을 조회 / 각 아이템의 보유 여부 반환함")
     public ApiResponse<List<ItemResponse>> getAllItems(@AuthenticationPrincipal User user){
         return ApiResponse.ok(itemService.getAllItems(user));
     }
 
     @GetMapping("/group")
-    @Operation(summary = "그룹별(지역/일반과제) 아이템 조회")
+    @Operation(summary = "그룹별(지역/일반과제) 아이템 조회", description = "그룹은 지역과 일반으로 나뉨\n" +
+            "SEOUL," + "GYEONGGI," + "CHUNGCHEONG," + "GANGWON," +
+            "JEJU," + "GYEONGSANG," + "JEOLLA\n" + "COMMON // 일반과제")
     public ApiResponse<List<ItemResponse>> getAllItemsByGroup(@AuthenticationPrincipal User user, @RequestParam ItemGroup group) {
         return ApiResponse.ok(itemService.getAllItemsByGroup(user, group));
     }
 
     @GetMapping("/user")
-    @Operation(summary = "유저 보유 아이템 조회")
+    @Operation(summary = "유저 보유 아이템 조회", description = "아이템 착용 여부 반환함")
     public ApiResponse<List<UserItemResponse>> getUserItems(@AuthenticationPrincipal User user){
         return ApiResponse.ok(itemService.getUserItems(user));
     }
 
     @GetMapping("/user/group")
-    @Operation(summary = "그룹별(지역/일반과제) 유저 보유 아이템 조회")
+    @Operation(summary = "그룹별(지역/일반과제) 유저 보유 아이템 조회", description = "아이템 착용 여부 반환함")
     public ApiResponse<List<UserItemResponse>> getUserItemsByGroup(@AuthenticationPrincipal User user,  @RequestParam ItemGroup group){
         return ApiResponse.ok(itemService.getUserItemsByGroup(user, group));
     }
@@ -56,10 +57,7 @@ public class ItemController {
     }
 
     @PostMapping("/equip")
-    @Operation(
-            summary = "아이템 착용 및 해제",
-            description = "요청한 아이템이 착용 중이면 해제, 착용 중이 아니면 착용 / 같은 타입의 아이템이 이미 착용되어 있을 경우 자동 해제"
-    )
+    @Operation(summary = "아이템 착용 및 해제", description = "요청한 아이템이 착용 중이면 해제, 착용 중이 아니면 착용 / 같은 타입의 아이템이 이미 착용되어 있을 경우 자동 해제")
     public ApiResponse<EquipItemResponse> equip(@AuthenticationPrincipal User user, @RequestBody @Valid EquipItemRequest request) {
         return ApiResponse.ok(itemService.equip(user, request));
     }
