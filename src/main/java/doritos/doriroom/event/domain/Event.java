@@ -92,9 +92,11 @@ public class Event {
     private String eventContent;
 
     @Column(nullable = false)
+    @Builder.Default
     private int likeCount = 0;
 
     @Column
+    @Builder.Default
     private boolean detailUpdated = false;
 
     public static Event fromEntity(TourApiItemDto dto){
