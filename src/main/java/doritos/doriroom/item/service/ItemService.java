@@ -5,7 +5,6 @@ import doritos.doriroom.item.domain.ItemGroup;
 import doritos.doriroom.item.domain.ItemType;
 import doritos.doriroom.item.domain.UserItem;
 import doritos.doriroom.item.dto.Request.EquipItemRequest;
-import doritos.doriroom.item.dto.Request.ItemGroupRequest;
 import doritos.doriroom.item.dto.Request.PurchaseItemRequest;
 import doritos.doriroom.item.dto.Response.EquipItemResponse;
 import doritos.doriroom.item.dto.Response.ItemResponse;
