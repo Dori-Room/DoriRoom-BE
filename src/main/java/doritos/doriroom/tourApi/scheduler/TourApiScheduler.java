@@ -25,4 +25,11 @@ public class TourApiScheduler {
         eventService.updateTodayEvents();
     }
 
+    @Scheduled(cron = "0 0 1 * * ?")  // 매일 새벽 1시에 상세정보 배치 업데이트 (하루에 축제 450개씩)
+    public void updateEventDetailsBatch() {
+        log.info("축제 상세정보 배치 업데이트 시작");
+        eventService.updateEventDetails();
+        log.info("축제 상세정보 배치 업데이트 완료");
+    }
+
 }
