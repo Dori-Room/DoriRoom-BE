@@ -58,7 +58,6 @@ public class EventService {
             .map(Integer::parseInt)
             .toList();
 
-        // 기존 데이터 Map으로 만들기
         List<Event> existingEvents = eventRepository.findEventsByContentIds(contentIds);
         Map<Integer, Event> existingEventMap = new HashMap<>();
         for (Event event : existingEvents) {
