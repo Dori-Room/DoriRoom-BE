@@ -148,6 +148,7 @@ public class EventService {
         return EventDetailResponseDto.from(event);
     }
 
+    //도별 축제 정보 반환
     public Page<EventResponseDto> getEventsByAreaGroup(AreaGroup areaGroup, Pageable pageable) {
         List<Integer> areaCodes = areaGroup.getAreaCodes();
 
