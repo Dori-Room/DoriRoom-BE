@@ -142,6 +142,7 @@ public class EventService {
             .map(EventResponseDto::from);
     }
 
+    @Transactional
     public EventDetailResponseDto getEventDetail(UUID eventId) {
         Event event = eventRepository.findById(eventId)
             .orElseThrow(EventNotFoundException::new);
