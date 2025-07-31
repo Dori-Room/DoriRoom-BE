@@ -79,7 +79,7 @@ public class EventService {
                 toSave.add(existing);
                 updateCount++;
             } else {
-                toSave.add(newEvent); // 신규 insert
+                toSave.add(newEvent);
                 insertCount++;
             }
         }
