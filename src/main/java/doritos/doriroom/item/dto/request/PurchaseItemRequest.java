@@ -1,8 +1,9 @@
-package doritos.doriroom.item.dto.Request;
+package doritos.doriroom.item.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record EquipItemRequest (
+public record PurchaseItemRequest (
+
         @NotBlank
         Long itemId
 ){}

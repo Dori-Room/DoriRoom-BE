@@ -2,11 +2,10 @@ package doritos.doriroom.item.service;
 
 import doritos.doriroom.item.domain.Item;
 import doritos.doriroom.item.domain.ItemGroup;
-import doritos.doriroom.item.domain.ItemType;
 import doritos.doriroom.item.domain.UserItem;
-import doritos.doriroom.item.dto.Request.EquipItemRequest;
-import doritos.doriroom.item.dto.Request.PurchaseItemRequest;
-import doritos.doriroom.item.dto.Response.*;
+import doritos.doriroom.item.dto.request.EquipItemRequest;
+import doritos.doriroom.item.dto.request.PurchaseItemRequest;
+import doritos.doriroom.item.dto.response.*;
 import doritos.doriroom.item.exception.DuplicatedPurchasedItemException;
 import doritos.doriroom.item.exception.ItemNotPurchasableException;
 import doritos.doriroom.item.repository.ItemRepository;
