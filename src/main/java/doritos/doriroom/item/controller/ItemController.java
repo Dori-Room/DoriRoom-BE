@@ -21,18 +21,11 @@ import java.util.List;
 public class ItemController {
     private final ItemService itemService;
 
+    /* 전체 아이템 조회 */
     @GetMapping
     @Operation(summary = "전체 아이템 조회", description = "현재 로그인한 유저 기준으로, 모든 아이템을 조회 / 각 아이템의 보유 여부 반환함")
     public ApiResponse<List<ItemResponse>> getAllItems(@AuthenticationPrincipal User user){
         return ApiResponse.ok(itemService.getAllItems(user));
-    }
-
-    @GetMapping("/group")
-    @Operation(summary = "그룹별(지역/일반과제) 아이템 조회", description = "그룹은 지역과 일반으로 나뉨\n" +
-            "SEOUL," + "GYEONGGI," + "CHUNGCHEONG," + "GANGWON," +
-            "JEJU," + "GYEONGSANG," + "JEOLLA\n" + "COMMON // 일반과제")
-    public ApiResponse<List<ItemResponse>> getAllItemsByGroup(@AuthenticationPrincipal User user, @RequestParam ItemGroup group) {
-        return ApiResponse.ok(itemService.getAllItemsByGroup(user, group));
     }
 
     @GetMapping("/user")
@@ -41,15 +34,33 @@ public class ItemController {
         return ApiResponse.ok(itemService.getUserItems(user));
     }
 
+    /* 그룹별 아이템 조회 */
+    @GetMapping("/group")
+    @Operation(summary = "그룹별(지역/일반과제) 아이템 조회", description = "그룹은 지역과 일반으로 나뉨\n" +
+            "SEOUL," + "GYEONGGI," + "CHUNGCHEONG," + "GANGWON," +
+            "JEJU," + "GYEONGSANG," + "JEOLLA\n" + "COMMON // 일반과제")
+    public ApiResponse<List<ItemResponse>> getAllItemsByGroup(@AuthenticationPrincipal User user, @RequestParam ItemGroup group) {
+        return ApiResponse.ok(itemService.getAllItemsByGroup(user, group));
+    }
+
     @GetMapping("/user/group")
     @Operation(summary = "그룹별(지역/일반과제) 유저 보유 아이템 조회", description = "아이템 착용 여부 반환함")
     public ApiResponse<List<UserItemResponse>> getUserItemsByGroup(@AuthenticationPrincipal User user,  @RequestParam ItemGroup group){
         return ApiResponse.ok(itemService.getUserItemsByGroup(user, group));
     }
 
-    @GetMapping("/{itemId}")
-    @Operation(summary = "아이템 상세 초회 (구매 전 확인창)")
-    public ApiResponse<ItemDetailResponse> getItemDetails(@AuthenticationPrincipal User user, @PathVariable Long itemId) {
+    /* 타입별 아이템 조회 */
+    //TODO: 전체 타입별
+    //TODO: 유저 타입별
+
+
+
+    //TODO: 단일 아이템 상세 정보 조회
+
+    /* 아이템 구매 관련 */
+    @GetMapping("/purchase/{itemId}")
+    @Operation(summary = "아이템 구매 전 결제창 정보 조회")
+    public ApiResponse<PaymentViewResponse> getItemDetails(@AuthenticationPrincipal User user, @PathVariable Long itemId) {
         return ApiResponse.ok(itemService.getItemDetail(user, itemId));
     }
 
@@ -59,9 +70,12 @@ public class ItemController {
         return ApiResponse.ok(itemService.purchase(user, request));
     }
 
+    /* 아이템 착용 관련 */
     @PostMapping("/equip")
     @Operation(summary = "아이템 착용 및 해제", description = "요청한 아이템이 착용 중이면 해제, 착용 중이 아니면 착용 / 같은 타입의 아이템이 이미 착용되어 있을 경우 자동 해제")
     public ApiResponse<EquipItemResponse> equip(@AuthenticationPrincipal User user, @RequestBody @Valid EquipItemRequest request) {
         return ApiResponse.ok(itemService.equip(user, request));
     }
+
+    //TODO: 현재 착용 중인 아이템들
 }
