@@ -1,4 +1,4 @@
-package doritos.doriroom.item.dto.Response;
+package doritos.doriroom.item.dto.response;
 
 import doritos.doriroom.item.domain.CollectionTheme;
 import doritos.doriroom.item.domain.Item;
