@@ -6,10 +6,7 @@ import doritos.doriroom.item.domain.ItemType;
 import doritos.doriroom.item.domain.UserItem;
 import doritos.doriroom.item.dto.Request.EquipItemRequest;
 import doritos.doriroom.item.dto.Request.PurchaseItemRequest;
-import doritos.doriroom.item.dto.Response.EquipItemResponse;
-import doritos.doriroom.item.dto.Response.ItemResponse;
-import doritos.doriroom.item.dto.Response.PurchaseItemResponse;
-import doritos.doriroom.item.dto.Response.UserItemResponse;
+import doritos.doriroom.item.dto.Response.*;
 import doritos.doriroom.item.exception.DuplicatedPurchasedItemException;
 import doritos.doriroom.item.exception.ItemNotPurchasableException;
 import doritos.doriroom.item.repository.ItemRepository;
@@ -65,6 +62,17 @@ public class ItemService {
     public List<UserItemResponse> getUserItemsByGroup(User user, ItemGroup group) {
         return userItemRepository.findByUserAndItem_Group(user, group)
                 .stream().map(UserItemResponse::from).toList();
+    }
+
+    // 아이템 구매 확인 페이지 (구매 시 남은 크레딧 조회)
+    @Transactional(readOnly = true)
+    public ItemDetailResponse getItemDetail(User user, Long itemId) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(ItemNotFoundException::new);
+
+        Long remainingCredit = user.getCredit() - item.getPrice();
+
+        return ItemDetailResponse.from(item, remainingCredit);
     }
 
     // 현재 착용 중인 아이템 조회
