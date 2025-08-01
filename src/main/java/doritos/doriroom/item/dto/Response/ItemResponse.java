@@ -14,7 +14,7 @@ public record ItemResponse (
         ItemType type,
         ItemGroup group,
         CollectionTheme theme, // nullable
-        int price,
+        Long price,
         boolean isPurchasable,
         boolean isOwned
 ){

@@ -28,7 +28,7 @@ public class Item {
     private ItemGroup group;
 
     @Column(nullable = false)
-    private int price;
+    private Long price;
 
     @Enumerated(EnumType.STRING)
     private CollectionTheme theme;

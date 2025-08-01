@@ -4,10 +4,7 @@ import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.item.domain.ItemGroup;
 import doritos.doriroom.item.dto.Request.EquipItemRequest;
 import doritos.doriroom.item.dto.Request.PurchaseItemRequest;
-import doritos.doriroom.item.dto.Response.EquipItemResponse;
-import doritos.doriroom.item.dto.Response.ItemResponse;
-import doritos.doriroom.item.dto.Response.PurchaseItemResponse;
-import doritos.doriroom.item.dto.Response.UserItemResponse;
+import doritos.doriroom.item.dto.Response.*;
 import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,6 +45,12 @@ public class ItemController {
     @Operation(summary = "그룹별(지역/일반과제) 유저 보유 아이템 조회", description = "아이템 착용 여부 반환함")
     public ApiResponse<List<UserItemResponse>> getUserItemsByGroup(@AuthenticationPrincipal User user,  @RequestParam ItemGroup group){
         return ApiResponse.ok(itemService.getUserItemsByGroup(user, group));
+    }
+
+    @GetMapping("/{itemId}")
+    @Operation(summary = "아이템 상세 초회 (구매 전 확인창)")
+    public ApiResponse<ItemDetailResponse> getItemDetails(@AuthenticationPrincipal User user, @PathVariable Long itemId) {
+        return ApiResponse.ok(itemService.getItemDetail(user, itemId));
     }
 
     @PostMapping("/purchase")
