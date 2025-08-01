@@ -1,0 +1,36 @@
+package doritos.doriroom.item.dto.Response;
+
+import doritos.doriroom.item.domain.CollectionTheme;
+import doritos.doriroom.item.domain.Item;
+import doritos.doriroom.item.domain.ItemGroup;
+import doritos.doriroom.item.domain.ItemType;
+import lombok.Builder;
+
+@Builder
+public record ItemDetailResponse (
+//        Long itemId,
+//        String imageUrl,
+//        ItemGroup group,
+//        CollectionTheme theme,
+//        ItemType type,
+//        boolean isPurchasable,
+//        boolean isOwned,
+
+        String name,
+        Long price,
+        Long remainingCredit,
+        boolean isBuyable // 보유 크레딧 상태에 따른 구매 가능 여부
+
+)
+{
+    public static ItemDetailResponse from(Item item, Long remainingCredit){
+        boolean isBuyable = remainingCredit > 0;
+
+        return ItemDetailResponse.builder()
+                .name(item.getName())
+                .price(item.getPrice())
+                .remainingCredit(remainingCredit)
+                .isBuyable(isBuyable)
+                .build();
+    }
+}
