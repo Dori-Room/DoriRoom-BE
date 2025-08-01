@@ -1,4 +1,4 @@
-package doritos.doriroom.item.dto.Response;
+package doritos.doriroom.item.dto.response;
 
 public record PurchaseItemResponse(
         Long itemId,
