@@ -34,7 +34,7 @@ public class UserController {
 
     @PostMapping("/reissue")
     @Operation(summary = "access token 재발급")
-    public ApiResponse<TokenResponseDto> reissue(@RequestBody RefreshTokenRequestDto request){
+    public ApiResponse<TokenResponseDto> reissue(@RequestBody @Valid RefreshTokenRequestDto request){
         return ApiResponse.ok(userService.reissue(request));
     }
 }
