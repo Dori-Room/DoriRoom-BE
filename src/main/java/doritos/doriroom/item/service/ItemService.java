@@ -65,13 +65,13 @@ public class ItemService {
 
     // 아이템 구매 확인 페이지 (구매 시 남은 크레딧 조회)
     @Transactional(readOnly = true)
-    public ItemDetailResponse getItemDetail(User user, Long itemId) {
+    public PaymentViewResponse getItemDetail(User user, Long itemId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(ItemNotFoundException::new);
 
         Long remainingCredit = user.getCredit() - item.getPrice();
 
-        return ItemDetailResponse.from(item, remainingCredit);
+        return PaymentViewResponse.from(item, remainingCredit);
     }
 
     // 현재 착용 중인 아이템 조회
