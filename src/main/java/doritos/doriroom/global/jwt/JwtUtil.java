@@ -1,22 +1,28 @@
 package doritos.doriroom.global.jwt;
 
+import doritos.doriroom.global.exception.ApiException;
 import doritos.doriroom.user.domain.RefreshToken;
+import doritos.doriroom.user.exception.UsernameNotFoundException;
 import doritos.doriroom.user.repository.RefreshTokenRedisRepository;
 import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.repository.UserRepository;
 import io.jsonwebtoken.security.Keys;
 import lombok.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.*;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class JwtUtil {
     private final JwtProperties jwtProperties;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
+    private final UserRepository userRepository;
 
     private Key getSignKey(){
         return Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
@@ -57,6 +63,8 @@ public class JwtUtil {
     }
 
     public boolean validateToken(String token) {
+        if (token == null || token.isBlank())  return false;
+
         try{
             Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token);
             return true;
@@ -70,4 +78,16 @@ public class JwtUtil {
                 .parseClaimsJws(token).getBody().getSubject();
     }
 
+    public User getUserFromToken(String token) {
+        try{
+            String username = getUsernameFromToken(token);
+            if(username == null)    return null;
+
+            return userRepository.findByUsername(username)
+                    .orElseThrow(UsernameNotFoundException::new);
+
+        } catch (Exception e){
+            return null;
+        }
+    }
 }
