@@ -2,9 +2,9 @@ package doritos.doriroom.item.controller;
 
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.item.domain.ItemGroup;
-import doritos.doriroom.item.dto.Request.EquipItemRequest;
-import doritos.doriroom.item.dto.Request.PurchaseItemRequest;
-import doritos.doriroom.item.dto.Response.*;
+import doritos.doriroom.item.dto.request.EquipItemRequest;
+import doritos.doriroom.item.dto.request.PurchaseItemRequest;
+import doritos.doriroom.item.dto.response.*;
 import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
