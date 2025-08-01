@@ -4,7 +4,7 @@ import doritos.doriroom.item.domain.Item;
 import lombok.Builder;
 
 @Builder
-public record ItemDetailResponse (
+public record PaymentViewResponse(
 //        Long itemId,
 //        String imageUrl,
 //        ItemGroup group,
@@ -20,10 +20,10 @@ public record ItemDetailResponse (
 
 )
 {
-    public static ItemDetailResponse from(Item item, Long remainingCredit){
+    public static PaymentViewResponse from(Item item, Long remainingCredit){
         boolean isBuyable = remainingCredit > 0;
 
-        return ItemDetailResponse.builder()
+        return PaymentViewResponse.builder()
                 .name(item.getName())
                 .price(item.getPrice())
                 .remainingCredit(remainingCredit)
