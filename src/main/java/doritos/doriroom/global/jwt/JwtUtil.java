@@ -62,14 +62,13 @@ public class JwtUtil {
         return token;
     }
 
-    public boolean validateToken(String token) {
-        if (token == null || token.isBlank())  return false;
+    public void validateToken(String token) {
+        if (token == null || token.isBlank())  throw new JwtException("토큰이 비어 있습니다.");
 
         try{
             Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token);
-            return true;
-        } catch (JwtException e) {
-            return false;
+        } catch (ExpiredJwtException e) {   throw new TokenExpiredException();
+        } catch (JwtException e) { throw new JwtException("유효하지 않은 토큰 입니다.", e);
         }
     }
 
