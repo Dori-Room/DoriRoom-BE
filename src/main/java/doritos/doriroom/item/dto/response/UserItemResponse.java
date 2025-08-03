@@ -8,8 +8,8 @@ public record UserItemResponse (
         Long itemId,
         String name,
         String imageUrl,
-        ItemType type,
-        ItemGroup group,
+        ItemType itemType,
+        ItemGroup itemGroup,
         CollectionTheme theme, // nullable
         boolean isEquipped
 ){
@@ -19,8 +19,8 @@ public record UserItemResponse (
                 .itemId(i.getItemId())
                 .name(i.getName())
                 .imageUrl(i.getImageUrl())
-                .type(i.getType())
-                .group(i.getGroup())
+                .itemType(i.getItemType())
+                .itemGroup(i.getItemGroup())
                 .theme(i.getTheme())
                 .isEquipped(userItem.isEquipped())
                 .build();

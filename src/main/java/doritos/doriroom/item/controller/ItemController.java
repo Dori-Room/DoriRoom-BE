@@ -39,14 +39,14 @@ public class ItemController {
     @Operation(summary = "그룹별(지역/일반과제) 아이템 조회", description = "그룹은 지역과 일반으로 나뉨\n" +
             "SEOUL," + "GYEONGGI," + "CHUNGCHEONG," + "GANGWON," +
             "JEJU," + "GYEONGSANG," + "JEOLLA\n" + "COMMON // 일반과제")
-    public ApiResponse<List<ItemResponse>> getAllItemsByGroup(@AuthenticationPrincipal User user, @RequestParam ItemGroup group) {
-        return ApiResponse.ok(itemService.getAllItemsByGroup(user, group));
+    public ApiResponse<List<ItemResponse>> getAllItemsByGroup(@AuthenticationPrincipal User user, @RequestParam ItemGroup itemGroup) {
+        return ApiResponse.ok(itemService.getAllItemsByGroup(user, itemGroup));
     }
 
     @GetMapping("/user/group")
     @Operation(summary = "그룹별(지역/일반과제) 유저 보유 아이템 조회", description = "아이템 착용 여부 반환함")
-    public ApiResponse<List<UserItemResponse>> getUserItemsByGroup(@AuthenticationPrincipal User user,  @RequestParam ItemGroup group){
-        return ApiResponse.ok(itemService.getUserItemsByGroup(user, group));
+    public ApiResponse<List<UserItemResponse>> getUserItemsByGroup(@AuthenticationPrincipal User user,  @RequestParam ItemGroup itemGroup){
+        return ApiResponse.ok(itemService.getUserItemsByGroup(user, itemGroup));
     }
 
     /* 타입별 아이템 조회 */
@@ -61,7 +61,7 @@ public class ItemController {
     @GetMapping("/purchase/{itemId}")
     @Operation(summary = "아이템 구매 전 결제창 정보 조회")
     public ApiResponse<PaymentViewResponse> getItemDetails(@AuthenticationPrincipal User user, @PathVariable Long itemId) {
-        return ApiResponse.ok(itemService.getItemDetail(user, itemId));
+        return ApiResponse.ok(itemService.getPaymentInfo(user, itemId));
     }
 
     @PostMapping("/purchase")
