@@ -21,11 +21,11 @@ public class Item {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ItemType type;
+    private ItemType itemType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ItemGroup group;
+    private ItemGroup itemGroup;
 
     @Column(nullable = false)
     private Long price;

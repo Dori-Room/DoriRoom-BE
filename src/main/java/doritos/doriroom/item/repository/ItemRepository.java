@@ -9,5 +9,5 @@ import java.util.Optional;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
     Optional<Item> findById(Long itemId);
-    List<Item> findByGroup(ItemGroup group); //지역별 또는 일반과제 조회
+    List<Item> findByItemGroup(ItemGroup itemGroup); //지역별 또는 일반과제 조회
 }
