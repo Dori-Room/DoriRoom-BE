@@ -38,17 +38,6 @@ public class ItemService {
                 .toList();
     }
 
-    // 전체 그룹별 아이템 조회
-    @Transactional(readOnly = true)
-    public List<ItemResponse> getAllItemsByGroup(User user, ItemGroup group) {
-        Set<Long> ownedItemIds = userItemRepository.findByUserAndItem_Group(user, group)
-                .stream().map(ui-> ui.getItem().getItemId()).collect(Collectors.toSet());
-
-        return itemRepository.findByGroup(group).stream()
-                .map(i -> ItemResponse.from(i, ownedItemIds.contains(i.getItemId())))
-                .toList();
-    }
-
     // 유저 보유 아이템 전체 조회
     @Transactional(readOnly = true)
     public List<UserItemResponse> getUserItems(User user) {
@@ -56,16 +45,28 @@ public class ItemService {
                 .stream().map(UserItemResponse::from).toList();
     }
 
+    // 전체 그룹별 아이템 조회
+    @Transactional(readOnly = true)
+    public List<ItemResponse> getAllItemsByGroup(User user, ItemGroup itemGroup) {
+        Set<Long> ownedItemIds = userItemRepository.findByUserAndItem_ItemGroup(user, itemGroup)
+                .stream().map(ui-> ui.getItem().getItemId()).collect(Collectors.toSet());
+
+        return itemRepository.findByItemGroup(itemGroup).stream()
+                .map(i -> ItemResponse.from(i, ownedItemIds.contains(i.getItemId())))
+                .toList();
+    }
+
     // 유저 보유 아이템 그룹별 조회
     @Transactional(readOnly = true)
-    public List<UserItemResponse> getUserItemsByGroup(User user, ItemGroup group) {
-        return userItemRepository.findByUserAndItem_Group(user, group)
+    public List<UserItemResponse> getUserItemsByGroup(User user, ItemGroup itemGroup) {
+        return userItemRepository.findByUserAndItem_ItemGroup(user, itemGroup)
                 .stream().map(UserItemResponse::from).toList();
     }
 
+
     // 아이템 구매 확인 페이지 (구매 시 남은 크레딧 조회)
     @Transactional(readOnly = true)
-    public PaymentViewResponse getItemDetail(User user, Long itemId) {
+    public PaymentViewResponse getPaymentInfo(User user, Long itemId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(ItemNotFoundException::new);
 
@@ -73,9 +74,6 @@ public class ItemService {
 
         return PaymentViewResponse.from(item, remainingCredit);
     }
-
-    // 현재 착용 중인 아이템 조회
-
 
     // 아이템 구매
     @Transactional
@@ -96,12 +94,7 @@ public class ItemService {
             throw new DuplicatedPurchasedItemException();
         }
 
-//        // credit 보유 여부 확인
-//        if (user.getCredit() < item.getPrice()){
-//            throw new NotEnoughCreditException();
-//        }
-
-        user.deductCredit(item.getPrice()); // 크레딧 차감
+        user.deductCredit(item.getPrice()); // 크레딧 보유 여부 확인 및 차감
 
         // 아이템 저장
         UserItem userItem = UserItem.builder()
@@ -132,7 +125,7 @@ public class ItemService {
                 .orElseThrow(NotOwnedException::new);
 
         // 해당 타입의 기존 착용 아이템 해제
-        userItemRepository.findByUserAndItem_TypeAndIsEquippedTrue(user, item.getType())
+        userItemRepository.findByUserAndItem_ItemTypeAndIsEquippedTrue(user, item.getItemType())
                 .ifPresent(current-> {
                     current.unequip();
                     userItemRepository.save(current);
@@ -147,7 +140,7 @@ public class ItemService {
         return new EquipItemResponse(
                 itemId,
                 item.getName(),
-                item.getType(),
+                item.getItemType(),
                 userItem.isEquipped()
         );
     }

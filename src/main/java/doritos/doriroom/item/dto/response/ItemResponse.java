@@ -11,8 +11,8 @@ public record ItemResponse (
         Long itemId,
         String name,
         String imageUrl,
-        ItemType type,
-        ItemGroup group,
+        ItemType itemType,
+        ItemGroup itemGroup,
         CollectionTheme theme, // nullable
         Long price,
         boolean isPurchasable,
@@ -23,8 +23,8 @@ public record ItemResponse (
                 .itemId(i.getItemId())
                 .name(i.getName())
                 .imageUrl(i.getImageUrl())
-                .type(i.getType())
-                .group(i.getGroup())
+                .itemType(i.getItemType())
+                .itemGroup(i.getItemGroup())
                 .price(i.getPrice())
                 .theme(i.getTheme())
                 .isPurchasable(i.isPurchasable())
