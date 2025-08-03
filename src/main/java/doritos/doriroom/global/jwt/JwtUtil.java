@@ -7,6 +7,7 @@ import doritos.doriroom.user.repository.RefreshTokenRedisRepository;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.repository.UserRepository;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.ServletException;
 import lombok.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
