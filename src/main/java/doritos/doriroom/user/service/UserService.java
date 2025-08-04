@@ -64,9 +64,7 @@ public class UserService {
     }
 
     public TokenResponseDto reissue(RefreshTokenRequestDto request) {
-        if(!jwtUtil.validateToken(request.getRefreshToken())) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다.");
-        }
+        jwtUtil.validateToken(request.getRefreshToken());
 
         RefreshToken storedToken = refreshTokenRedisRepository.findByRefreshToken(request.getRefreshToken())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "존재하지 않는 리프레시 토큰입니다."));
