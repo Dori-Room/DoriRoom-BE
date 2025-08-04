@@ -6,6 +6,7 @@ import doritos.doriroom.item.dto.request.EquipItemRequest;
 import doritos.doriroom.item.dto.request.PurchaseItemRequest;
 import doritos.doriroom.item.dto.response.*;
 import doritos.doriroom.item.service.ItemService;
+import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -36,17 +37,33 @@ public class ItemController {
 
     /* 그룹별 아이템 조회 */
     @GetMapping("/group")
-    @Operation(summary = "그룹별(지역/일반과제) 아이템 조회", description = "그룹은 지역과 일반으로 나뉨\n" +
-            "SEOUL," + "GYEONGGI," + "CHUNGCHEONG," + "GANGWON," +
-            "JEJU," + "GYEONGSANG," + "JEOLLA\n" + "COMMON // 일반과제")
-    public ApiResponse<List<ItemResponse>> getAllItemsByGroup(@AuthenticationPrincipal User user, @RequestParam ItemGroup itemGroup) {
-        return ApiResponse.ok(itemService.getAllItemsByGroup(user, itemGroup));
+    @Operation(
+            summary = "그룹별(지역/일반과제) 전체 아이템 조회",
+            description = """
+    아이템 소유 여부 포함
+    그룹은 지역과 일반으로 나뉨
+    - COMMON: 일반과제
+    - AREA: 지역과제 (아래 AreaGroup 중 하나 필요)
+      → SEOUL, GYEONGGI, CHUNGCHEONG, GANGWON, JEJU, GYEONGSANG, JEOLLA
+    """)
+    public ApiResponse<List<ItemResponse>> getAllItemsByGroup(@AuthenticationPrincipal User user,
+                                                              @RequestParam ItemGroup itemGroup,
+                                                              @RequestParam(required = false) AreaGroup areaGroup) {
+        return ApiResponse.ok(itemService.getAllItemsByGroup(user, itemGroup, areaGroup));
     }
 
     @GetMapping("/user/group")
-    @Operation(summary = "그룹별(지역/일반과제) 유저 보유 아이템 조회", description = "아이템 착용 여부 반환함")
-    public ApiResponse<List<UserItemResponse>> getUserItemsByGroup(@AuthenticationPrincipal User user,  @RequestParam ItemGroup itemGroup){
-        return ApiResponse.ok(itemService.getUserItemsByGroup(user, itemGroup));
+    @Operation(
+            summary = "그룹별(지역/일반과제) 유저 보유 아이템 조회",
+            description = """
+    착용 여부 포함
+    - COMMON: 전체 일반과제 아이템 중 보유한 것
+    - AREA + areaGroup: 특정 지역 아이템 중 보유한 것
+    """)
+    public ApiResponse<List<UserItemResponse>> getUserItemsByGroup(@AuthenticationPrincipal User user,
+                                                                   @RequestParam ItemGroup itemGroup,
+                                                                   @RequestParam(required = false) AreaGroup areaGroup){
+        return ApiResponse.ok(itemService.getUserItemsByGroup(user, itemGroup, areaGroup));
     }
 
     /* 타입별 아이템 조회 */
