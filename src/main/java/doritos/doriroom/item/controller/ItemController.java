@@ -83,12 +83,16 @@ public class ItemController {
     }
 
 
-    //TODO: 단일 아이템 상세 정보 조회
+    @GetMapping("/{itemId}")
+    @Operation(summary = "단일 아이템 상세 정보 조회, 사용자의 보유 여부 포함")
+    public ApiResponse<ItemResponse> getItemDetails(@AuthenticationPrincipal User user, @PathVariable Long itemId) {
+        return ApiResponse.ok(itemService.getItemDetails(user, itemId));
+    }
 
     /* 아이템 구매 관련 */
     @GetMapping("/purchase/{itemId}")
     @Operation(summary = "아이템 구매 전 결제창 정보 조회")
-    public ApiResponse<PaymentViewResponse> getItemDetails(@AuthenticationPrincipal User user, @PathVariable Long itemId) {
+    public ApiResponse<PaymentViewResponse> getPaymentInfo(@AuthenticationPrincipal User user, @PathVariable Long itemId) {
         return ApiResponse.ok(itemService.getPaymentInfo(user, itemId));
     }
 
