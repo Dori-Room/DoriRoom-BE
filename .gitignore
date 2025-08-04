@@ -27,6 +27,7 @@ test-results/
 application-*.yml
 application-*.yaml
 .env
+application.yml
 
 # === Redis 관련 ===
 dump.rdb
