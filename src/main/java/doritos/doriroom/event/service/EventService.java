@@ -142,9 +142,25 @@ public class EventService {
             .map(EventResponseDto::from);
     }
 
-    public EventDetailResponseDto getEventDetail(UUID contentId) {
-        Event event = eventRepository.findById(contentId)
+    @Transactional
+    public EventDetailResponseDto getEventDetail(UUID eventId) {
+        Event event = eventRepository.findById(eventId)
             .orElseThrow(EventNotFoundException::new);
+
+        //DB에 상세정보가 없으면 tourAPI 호출
+        if(!event.isDetailUpdated()){
+            try{
+                TourApiDetailIntroDto detailIntroDto = tourApiService.fetchEventDetailIntro(event.getContentId());
+                event.updateDetailFrom(detailIntroDto);
+
+                List<TourApiDetailInfoDto> detailInfoDto = tourApiService.fetchEventDetailInfo(event.getContentId());
+                event.updateDetailInfoFrom(detailInfoDto);
+
+                eventRepository.save(event);
+            } catch (Exception e){
+                log.error("축제 상세 정보 업데이트 실패: eventId={}, error={}", eventId, e.getMessage());
+            }
+        }
         return EventDetailResponseDto.from(event);
     }
 

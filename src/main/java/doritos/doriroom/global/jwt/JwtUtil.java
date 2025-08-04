@@ -7,6 +7,7 @@ import doritos.doriroom.user.repository.RefreshTokenRedisRepository;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.repository.UserRepository;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.ServletException;
 import lombok.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -62,14 +63,18 @@ public class JwtUtil {
         return token;
     }
 
+
     public boolean validateToken(String token) {
         if (token == null || token.isBlank())  return false;
 
+    public void validateToken(String token) {
+        if (token == null || token.isBlank())  throw new JwtException("토큰이 비어 있습니다.");
+
+
         try{
             Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token);
-            return true;
-        } catch (JwtException e) {
-            return false;
+        } catch (ExpiredJwtException e) {   throw new TokenExpiredException();
+        } catch (JwtException e) { throw new JwtException("유효하지 않은 토큰 입니다.", e);
         }
     }
 
@@ -79,6 +84,7 @@ public class JwtUtil {
     }
 
     public User getUserFromToken(String token) {
+
         try{
             String username = getUsernameFromToken(token);
             if(username == null)    return null;
@@ -89,5 +95,13 @@ public class JwtUtil {
         } catch (Exception e){
             return null;
         }
+
+        String username = getUsernameFromToken(token);
+        if(username == null| username.isBlank())
+            throw new JwtException("토큰에서 username을 추출할 수 없습니다.");
+
+            return userRepository.findByUsername(username)
+                    .orElseThrow(UsernameNotFoundException::new);
+
     }
 }
