@@ -1,6 +1,7 @@
 package doritos.doriroom.event.controller;
 
 import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.dto.request.EventDetailRequestDto;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventDetailResponseDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
@@ -11,7 +12,6 @@ import doritos.doriroom.tourApi.domain.AreaGroup;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -64,12 +64,11 @@ public class EventController {
     }
 
     @Operation(summary = "축제 상세 정보 조회", description = "축제 상세 정보 조회")
-    @GetMapping("/{eventId}")
+    @PostMapping("/detail")
     public ApiResponse<EventDetailResponseDto> getEventDetail(
-        @Parameter(description = "축제 ID(eventId)", example = "01e0b423-af1b-44b3-a041-cf7753d72c53", required = true)
-        @PathVariable UUID eventId
+        @RequestBody EventDetailRequestDto request
     ){
-        return ApiResponse.ok(eventService.getEventDetail(eventId));
+        return ApiResponse.ok(eventService.getEventDetail(request.eventId()));
     }
 
     @Operation(summary = "도별 축제 조회", description = "8도 축제 정보 조회")
