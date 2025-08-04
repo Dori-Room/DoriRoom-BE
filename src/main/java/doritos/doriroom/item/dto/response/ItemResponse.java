@@ -33,6 +33,7 @@ public record ItemResponse (
                 .price(i.getPrice())
                 .theme(i.getTheme())
                 .isPurchasable(i.isPurchasable())
+                .isOwned(isOwned)
                 .build();
     }
 }
