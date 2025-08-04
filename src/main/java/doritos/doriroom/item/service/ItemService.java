@@ -47,6 +47,7 @@ public class ItemService {
                 .stream().map(UserItemResponse::from).toList();
     }
 
+
     // 전체 그룹별 아이템 조회 (유저 보유 여부 포함)
     @Transactional(readOnly = true)
     public List<ItemResponse> getAllItemsByGroup(User user, ItemGroup itemGroup, AreaGroup areaGroup) {
@@ -83,6 +84,7 @@ public class ItemService {
         };
     }
 
+
     // 전체 타입별 아이템 조회 (유저 보유 여부 포함) (상점 UI)
     @Transactional(readOnly = true)
     public List<ItemResponse> getAllItemsByType(User user, ItemType itemType) {
@@ -107,6 +109,16 @@ public class ItemService {
 
         return userItemRepository.findByUserAndItem_ItemType(user, itemType)
                 .stream().map(UserItemResponse::from).toList();
+    }
+
+
+    // 단일 아이템 조회 (유저 보유 여부 포함)
+    @Transactional(readOnly = true)
+    public ItemResponse getItemDetails(User user, Long itemId) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(ItemNotFoundException::new);
+
+        return ItemResponse.from(item, userItemRepository.existsByUserAndItem(user, item));
     }
 
 
@@ -196,6 +208,7 @@ public class ItemService {
     }
 
 
+
     // 요청 유효성 검사 메서드
     private void validateGetItemsByGroupRequest(User user, ItemGroup itemGroup, AreaGroup areaGroup) {
         if (user == null)
@@ -207,7 +220,6 @@ public class ItemService {
         if (itemGroup == ItemGroup.AREA && areaGroup == null)
             throw new IllegalArgumentException("지역 아이템을 조회하려면 areaGroup 값이 필요합니다.");
     }
-
     private void validateGetItemsByTypeRequest(User user, ItemType itemType) {
         if (user == null)
             throw new IllegalArgumentException("요청에 유저 정보가 없습니다.");
