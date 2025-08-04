@@ -207,6 +207,13 @@ public class ItemService {
         );
     }
 
+    // 현재 착용 중인 아이템 조회
+    @Transactional(readOnly = true)
+    public List<EquippedItemResponse> getEquippedItems(User user) {
+        return userItemRepository.findByUserAndIsEquippedTrue(user)
+                .stream().map(EquippedItemResponse::from).toList();
+    }
+
 
 
     // 요청 유효성 검사 메서드
