@@ -1,5 +1,6 @@
 package doritos.doriroom.item.domain;
 
+import doritos.doriroom.tourApi.domain.AreaGroup;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,7 +26,10 @@ public class Item {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ItemGroup itemGroup;
+    private ItemGroup itemGroup; // COMMON | AREA
+
+    @Enumerated(EnumType.STRING)
+    private AreaGroup areaGroup; // itemGroup == ItemGroup.COMMON 이면 null
 
     @Column(nullable = false)
     private Long price;
