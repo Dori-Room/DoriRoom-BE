@@ -83,7 +83,31 @@ public class ItemService {
         };
     }
 
+    // 전체 타입별 아이템 조회 (유저 보유 여부 포함) (상점 UI)
+    @Transactional(readOnly = true)
+    public List<ItemResponse> getAllItemsByType(User user, ItemType itemType) {
+        validateGetItemsByTypeRequest(user, itemType); // 요청 유효성 검사
 
+        // 전체 타입별 아이템 조회
+        List<Item> items = itemRepository.findByItemType(itemType);
+
+        // 유저가 소유한 itemId를 추출 (보유 여부 필드 값으로 사용)
+        Set<Long> ownedItemIds = userItemRepository.findByUserAndItem_ItemType(user, itemType)
+                .stream().map(ui -> ui.getItem().getItemId()).collect(Collectors.toSet());;
+
+        return items.stream()
+                .map(item -> ItemResponse.from(item, ownedItemIds.contains(item.getItemId())))
+                .collect(Collectors.toList());
+    }
+
+    // 유저 보유 타입별 아이템 조회
+    @Transactional(readOnly = true)
+    public List<UserItemResponse> getUserItemsByType(User user, ItemType itemType) {
+        validateGetItemsByTypeRequest(user, itemType); // 요청 유효성 검사
+
+        return userItemRepository.findByUserAndItem_ItemType(user, itemType)
+                .stream().map(UserItemResponse::from).toList();
+    }
 
 
     // 아이템 구매 확인 페이지 (구매 시 남은 크레딧 조회)
