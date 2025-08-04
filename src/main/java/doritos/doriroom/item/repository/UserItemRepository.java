@@ -21,4 +21,5 @@ public interface UserItemRepository extends JpaRepository<UserItem, Long> {
     Optional<UserItem> findByUserAndItem_ItemTypeAndIsEquippedTrue(User user, ItemType itemType); // 유저가 착용한 타입별 아이템 조회
 
     boolean existsByUserAndItem(User user, Item item); // 이미 보유하고 있는지 확인
+    List<UserItem> findByUserAndIsEquippedTrue(User user); // 착용 중인 아이템들 조회
 }

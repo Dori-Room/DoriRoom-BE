@@ -109,5 +109,9 @@ public class ItemController {
         return ApiResponse.ok(itemService.equip(user, request));
     }
 
-    //TODO: 현재 착용 중인 아이템들
+    @GetMapping("/equip")
+    @Operation(summary = "현재 착용 중인 아이템들 조회")
+    public ApiResponse<List<EquippedItemResponse>> getEquippedItems(@AuthenticationPrincipal User user) {
+        return ApiResponse.ok(itemService.getEquippedItems(user));
+    }
 }
