@@ -34,6 +34,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = extractToken(request);
 
+        if (token != null && jwtUtil.validateToken(token)) {
+            User user = jwtUtil.getUserFromToken(token);
+
+            if (user != null) {
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(user, null, null);
+
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+
+
         try {
             if (token != null) {
                 jwtUtil.validateToken(token); // 토큰 유효성 검사
@@ -53,6 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (JwtException e) {
             errorResponse(response, new ApiException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰 입니다."));
             return;
+
         }
 
         filterChain.doFilter(request, response);

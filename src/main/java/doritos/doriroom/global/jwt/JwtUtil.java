@@ -63,8 +63,13 @@ public class JwtUtil {
         return token;
     }
 
+
+    public boolean validateToken(String token) {
+        if (token == null || token.isBlank())  return false;
+
     public void validateToken(String token) {
         if (token == null || token.isBlank())  throw new JwtException("토큰이 비어 있습니다.");
+
 
         try{
             Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token);
@@ -79,11 +84,24 @@ public class JwtUtil {
     }
 
     public User getUserFromToken(String token) {
+
+        try{
+            String username = getUsernameFromToken(token);
+            if(username == null)    return null;
+
+            return userRepository.findByUsername(username)
+                    .orElseThrow(UsernameNotFoundException::new);
+
+        } catch (Exception e){
+            return null;
+        }
+
         String username = getUsernameFromToken(token);
         if(username == null| username.isBlank())
             throw new JwtException("토큰에서 username을 추출할 수 없습니다.");
 
             return userRepository.findByUsername(username)
                     .orElseThrow(UsernameNotFoundException::new);
+
     }
 }
