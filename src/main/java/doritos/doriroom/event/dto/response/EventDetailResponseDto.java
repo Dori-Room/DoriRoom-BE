@@ -16,6 +16,7 @@ public record EventDetailResponseDto(
     int areaCode,
     String firstImage,
     String secondImage,
+    int favoriteCount,
 
     //상세정보
     String sponsor1,
@@ -41,6 +42,7 @@ public record EventDetailResponseDto(
             event.getAreaCode(),
             event.getFirstImage(),
             event.getSecondImage(),
+            event.getFavoriteCount(),
             event.getSponsor1(),
             event.getSponsor2(),
             event.getUseTimeFestival(),
