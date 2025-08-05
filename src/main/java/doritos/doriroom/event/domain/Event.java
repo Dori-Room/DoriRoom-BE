@@ -93,7 +93,7 @@ public class Event {
 
     @Column(nullable = false)
     @Builder.Default
-    private int likeCount = 0;
+    private int favoriteCount = 0;
 
     @Column
     @Builder.Default
@@ -127,7 +127,7 @@ public class Event {
             .lclsSystm1(dto.getLclsSystm1())
             .lclsSystm2(dto.getLclsSystm2())
             .lclsSystm3(dto.getLclsSystm3())
-            .likeCount(0)
+            .favoriteCount(0)
             .build();
     }
 
@@ -174,6 +174,15 @@ public class Event {
         }
     }
 
+    public void increaseFavoriteCount() {
+        this.favoriteCount++;
+    }
+
+    public void decreaseFavoriteCount() {
+        if (this.favoriteCount > 0) {
+            this.favoriteCount--;
+        }
+    }
 
     private static double parseDouble(String value) {
         try {
