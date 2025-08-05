@@ -8,6 +8,7 @@ import doritos.doriroom.event.exception.EventNotFoundException;
 import doritos.doriroom.event.repository.EventFavoriteRepository;
 import doritos.doriroom.event.repository.EventRepository;
 import doritos.doriroom.user.domain.User;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -74,5 +75,24 @@ public class EventFavoriteService {
         Page<EventFavorite> favorites = eventFavoriteRepository.findFavoritesWithEventByUserId(user.getUserId(), pageable);
 
         return favorites.map(favorite -> EventResponseDto.from(favorite.getEvent()));
+    }
+
+    @Transactional
+    public int deleteFavorites(User user, List<UUID> eventIds) {
+        try{
+            int deletedCount = eventFavoriteRepository.deleteByUserIdAndEventIdIn(user.getUserId(), eventIds);
+
+            if (deletedCount > 0) {
+                List<Event> events = eventRepository.findAllById(eventIds);
+                for (Event event : events) {
+                    event.decreaseFavoriteCount();
+                    eventRepository.save(event);
+                }
+            }
+
+            return deletedCount;
+        } catch(Exception e){
+            throw new EventFavoriteException();
+        }
     }
 }
