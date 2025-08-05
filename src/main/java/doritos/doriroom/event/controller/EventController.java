@@ -1,7 +1,7 @@
 package doritos.doriroom.event.controller;
 
 import doritos.doriroom.event.domain.Event;
-import doritos.doriroom.event.dto.request.EventDetailRequestDto;
+import doritos.doriroom.event.dto.request.EventIdRequestDto;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventDetailResponseDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
@@ -66,7 +66,7 @@ public class EventController {
     @Operation(summary = "축제 상세 정보 조회", description = "축제 상세 정보 조회")
     @PostMapping("/detail")
     public ApiResponse<EventDetailResponseDto> getEventDetail(
-        @RequestBody EventDetailRequestDto request
+        @RequestBody EventIdRequestDto request
     ){
         return ApiResponse.ok(eventService.getEventDetail(request.eventId()));
     }
