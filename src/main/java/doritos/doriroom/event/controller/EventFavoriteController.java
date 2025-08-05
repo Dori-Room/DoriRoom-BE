@@ -1,6 +1,6 @@
 package doritos.doriroom.event.controller;
 
-import doritos.doriroom.event.dto.request.EventIdRequestDto;
+import doritos.doriroom.event.dto.request.EventFavoriteRequestDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.service.EventFavoriteService;
 import doritos.doriroom.global.dto.ApiResponse;
@@ -28,16 +28,16 @@ public class EventFavoriteController {
     private final EventFavoriteService eventFavoriteService;
 
     @Operation(summary = "즐겨찾기 버튼", description = "축제 즐겨찾기를 추가 또는 취소")
-    @PostMapping("/")
+    @PostMapping
     public ApiResponse<Boolean> toggleFavorite(
         @AuthenticationPrincipal User user,
-        @RequestBody EventIdRequestDto request
+        @RequestBody EventFavoriteRequestDto request
     ) {
         if (user == null) {
             throw new UsernameNotFoundException();
         }
 
-        boolean isFavorite = eventFavoriteService.toggleFavorite(user, request.eventId());
+        boolean isFavorite = eventFavoriteService.setFavoriteStatus(user, request.eventId(), request.isFavorite());
         return ApiResponse.ok(isFavorite);
     }
 
