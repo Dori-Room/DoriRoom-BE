@@ -1,5 +1,6 @@
 package doritos.doriroom.event.controller;
 
+import doritos.doriroom.event.dto.request.EventFavoriteDeleteRequestDto;
 import doritos.doriroom.event.dto.request.EventFavoriteRequestDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.service.EventFavoriteService;
@@ -68,5 +69,19 @@ public class EventFavoriteController {
 
         Page<EventResponseDto> favorites = eventFavoriteService.getUserFavoriteEvents(user, pageable);
         return ApiResponse.ok(favorites);
+    }
+
+    @Operation(summary = "즐겨찾기 일괄 삭제", description = "여러 축제를 즐겨찾기에서 한번에 삭제")
+    @DeleteMapping("/delete")
+    public ApiResponse<Integer> deleteFavorite(
+        @AuthenticationPrincipal User user,
+        @RequestBody EventFavoriteDeleteRequestDto request
+    ){
+        if(user == null) {
+            throw new UsernameNotFoundException();
+        }
+
+        int deletedCount = eventFavoriteService.deleteFavorites(user, request.eventIds());
+        return ApiResponse.ok(deletedCount);
     }
 }
