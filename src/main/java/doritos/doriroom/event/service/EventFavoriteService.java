@@ -28,30 +28,36 @@ public class EventFavoriteService {
     private final EventRepository eventRepository;
 
     @Transactional
-    public boolean toggleFavorite(User user, UUID eventId) {
+    public boolean setFavoriteStatus(User user, UUID eventId, boolean isFavorite) {
         try {
             Event event = eventRepository.findById(eventId)
                 .orElseThrow(EventNotFoundException::new);
 
             Optional<EventFavorite> existingLike = eventFavoriteRepository.findByUserIdAndEventId(user.getUserId(), eventId);
 
-            if (existingLike.isPresent()) {
-                // 좋아요 취소
-                eventFavoriteRepository.delete(existingLike.get());
-                event.decreaseFavoriteCount();
-                eventRepository.save(event);
-                return false;
-            } else {
-                // 좋아요 추가
-                EventFavorite like = EventFavorite.builder()
-                    .user(user)
-                    .event(event)
-                    .build();
+            if (isFavorite) {
+                if (existingLike.isPresent()) {
+                    return true;
+                } else {
+                    EventFavorite like = EventFavorite.builder()
+                        .user(user)
+                        .event(event)
+                        .build();
 
-                eventFavoriteRepository.save(like);
-                event.increaseFavoriteCount();
-                eventRepository.save(event);
-                return true;
+                    eventFavoriteRepository.save(like);
+                    event.increaseFavoriteCount();
+                    eventRepository.save(event);
+                    return true;
+                }
+            } else {
+                if(existingLike.isPresent()) {
+                    eventFavoriteRepository.delete(existingLike.get());
+                    event.decreaseFavoriteCount();
+                    eventRepository.save(event);
+                    return false;
+                } else {
+                    return false;
+                }
             }
         } catch (EventNotFoundException e) {
             throw e;
