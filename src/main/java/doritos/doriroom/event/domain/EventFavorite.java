@@ -8,7 +8,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "event_favorite")
+@Table(name = "event_favorite", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"user_id", "event_id"})
+})
 @Getter @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class EventFavorite {
@@ -28,11 +30,4 @@ public class EventFavorite {
     @Column(nullable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
-
-    // 복합 유니크 제약조건: 한 사용자가 같은 축제를 중복 즐겨찾기할 수 없음
-    @Table(uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "event_id"})
-    })
-    public static class EventFavoriteId {
-    }
 }
