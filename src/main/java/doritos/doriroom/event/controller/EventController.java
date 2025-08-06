@@ -12,6 +12,7 @@ import doritos.doriroom.tourApi.domain.AreaGroup;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -64,11 +65,12 @@ public class EventController {
     }
 
     @Operation(summary = "축제 상세 정보 조회", description = "축제 상세 정보 조회")
-    @PostMapping("/detail")
+    @GetMapping("/detail/{eventId}")
     public ApiResponse<EventDetailResponseDto> getEventDetail(
-        @RequestBody EventIdRequestDto request
+        @Parameter(description = "축제ID", example = "0002385d-50a7-4cb7-bcd1-0cda5842a4f5", required = true)
+        @PathVariable("eventId") UUID eventId
     ){
-        return ApiResponse.ok(eventService.getEventDetail(request.eventId()));
+        return ApiResponse.ok(eventService.getEventDetail(eventId));
     }
 
     @Operation(summary = "도별 축제 조회", description = "8도 축제 정보 조회")
