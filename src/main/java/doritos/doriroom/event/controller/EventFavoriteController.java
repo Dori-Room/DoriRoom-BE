@@ -43,11 +43,11 @@ public class EventFavoriteController {
     }
 
     @Operation(summary = "즐겨찾기 상태 확인", description = "특정 축제의 즐겨찾기 상태를 확인")
-    @GetMapping("/check")
+    @GetMapping("/check/{eventId}")
     public ApiResponse<Boolean> checkLike(
         @AuthenticationPrincipal User user,
-        @Parameter(description = "축제ID", required = true)
-        @RequestParam("eventId") UUID eventId
+        @Parameter(description = "축제ID", example = "0002385d-50a7-4cb7-bcd1-0cda5842a4f5", required = true)
+        @PathVariable("eventId") UUID eventId
     ) {
         if (user == null) {
             throw new UsernameNotFoundException();
