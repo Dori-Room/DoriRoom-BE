@@ -1,7 +1,6 @@
 package doritos.doriroom.event.controller;
 
 import doritos.doriroom.event.domain.Event;
-import doritos.doriroom.event.dto.request.EventIdRequestDto;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventDetailResponseDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
