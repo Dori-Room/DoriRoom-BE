@@ -67,7 +67,7 @@ public class EventController {
     @Operation(summary = "축제 상세 정보 조회", description = "축제 상세 정보 조회")
     @GetMapping("/detail/{eventId}")
     public ApiResponse<EventDetailResponseDto> getEventDetail(
-        @Parameter(description = "축제ID", example = "0002385d-50a7-4cb7-bcd1-0cda5842a4f5", required = true)
+        @Parameter(description = "축제ID", example = "39eccbae-769f-48cc-b9e8-132a33547280", required = true)
         @PathVariable("eventId") UUID eventId
     ){
         return ApiResponse.ok(eventService.getEventDetail(eventId));

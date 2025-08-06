@@ -46,7 +46,7 @@ public class EventFavoriteController {
     @GetMapping("/check/{eventId}")
     public ApiResponse<Boolean> checkLike(
         @AuthenticationPrincipal User user,
-        @Parameter(description = "축제ID", example = "0002385d-50a7-4cb7-bcd1-0cda5842a4f5", required = true)
+        @Parameter(description = "축제ID", example = "39eccbae-769f-48cc-b9e8-132a33547280", required = true)
         @PathVariable("eventId") UUID eventId
     ) {
         if (user == null) {
