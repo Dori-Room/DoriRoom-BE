@@ -10,6 +10,7 @@ import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,7 +46,10 @@ public class ItemController {
     - AREA: 지역과제 (아래 AreaGroup 중 하나 필요)
       → SEOUL, GYEONGGI, CHUNGCHEONG, GANGWON, JEJU, GYEONGSANG, JEOLLA
     """)
-    public ApiResponse<List<ItemResponse>> getAllItemsByGroup(@AuthenticationPrincipal User user, @RequestParam ItemGroup itemGroup,
+    public ApiResponse<List<ItemResponse>> getAllItemsByGroup(@AuthenticationPrincipal User user,
+                                                              @Parameter(description = "아이템 그룹 (COMMON: 일반과제, AREA: 지역과제)", example = "COMMON", required = true)
+                                                              @RequestParam ItemGroup itemGroup,
+                                                              @Parameter(description = "지역 그룹 (SEOUL, GYEONGGI, ...). itemGroup이 AREA일 때 필요", example = "JEJU", required = false)
                                                               @RequestParam(required = false) AreaGroup areaGroup) {
         return ApiResponse.ok(itemService.getAllItemsByGroup(user, itemGroup, areaGroup));
     }
@@ -56,8 +60,12 @@ public class ItemController {
     - COMMON: 전체 일반과제 아이템 중 보유한 것
     - AREA + areaGroup: 특정 지역 아이템 중 보유한 것
     """)
-    public ApiResponse<List<UserItemResponse>> getUserItemsByGroup(@AuthenticationPrincipal User user, @RequestParam ItemGroup itemGroup,
-                                                                   @RequestParam(required = false) AreaGroup areaGroup){
+    public ApiResponse<List<UserItemResponse>> getUserItemsByGroup(@AuthenticationPrincipal User user,
+                                                                   @Parameter(description = "아이템 그룹 (COMMON: 일반과제, AREA: 지역과제)", example = "AREA")
+                                                                   @RequestParam ItemGroup itemGroup,
+                                                                   @Parameter(description = "지역 그룹 (SEOUL, GYEONGGI, ...). itemGroup이 AREA일 때 필요", example = "JEJU", required = false)
+                                                                   @RequestParam(required = false) AreaGroup areaGroup
+    ){
         return ApiResponse.ok(itemService.getUserItemsByGroup(user, itemGroup, areaGroup));
     }
 
@@ -68,7 +76,9 @@ public class ItemController {
     전체 아이템을 조회하며, 응답에는 사용자의 보유 여부도 함께 포함
     """
     )
-    public ApiResponse<List<ItemResponse>> getAllItemsByType(@AuthenticationPrincipal User user, @RequestParam ItemType itemType) {
+    public ApiResponse<List<ItemResponse>> getAllItemsByType(@AuthenticationPrincipal User user,
+                                                             @Parameter(description = "아이템 타입 (WALL, FLOOR, OBJECT, SHELF, WINDOW, APPAREL)", example = "OBJECT")
+                                                             @RequestParam ItemType itemType) {
         return ApiResponse.ok(itemService.getAllItemsByType(user, itemType));
     }
 
@@ -78,7 +88,9 @@ public class ItemController {
     사용자가 보유 중인 아이템을 조회
     """
     )
-    public ApiResponse<List<UserItemResponse>> getUserItemsByType(@AuthenticationPrincipal User user, @RequestParam ItemType itemType) {
+    public ApiResponse<List<UserItemResponse>> getUserItemsByType(@AuthenticationPrincipal User user,
+                                                                  @Parameter(description = "아이템 타입 (WALL, FLOOR, OBJECT, SHELF, WINDOW, APPAREL)", example = "OBJECT")
+                                                                  @RequestParam ItemType itemType) {
         return ApiResponse.ok(itemService.getUserItemsByType(user, itemType));
     }
 
