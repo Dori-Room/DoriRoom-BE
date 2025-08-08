@@ -38,6 +38,9 @@ public class UserService {
         if (userRepository.existsByNickname(request.getNickname())) {
             throw new DuplicateException("닉네임");
         }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateException("이메일");
+        }
 
         User user = User.builder()
                 .userId(UUID.randomUUID())
