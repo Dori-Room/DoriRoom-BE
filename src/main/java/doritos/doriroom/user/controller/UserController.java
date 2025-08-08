@@ -7,10 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "User", description = "")
 @RestController
@@ -18,6 +15,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+
+        @GetMapping("/check-username")
+        @Operation(summary = "아이디 중복 확인")
+        public ApiResponse<Void> checkUsername(@RequestParam String username){
+            userService.checkUsernameDuplicate(username);
+            return ApiResponse.ok();
+        }
+
+        @GetMapping("/check-nickname")
+        @Operation(summary = "닉네임 중복 확인")
+        public ApiResponse<Void> checkNickname(@RequestParam String nickname){
+            userService.checkNicknameDuplicate(nickname);
+            return ApiResponse.ok();
+        }
 
 //    @PostMapping("/signup")
 //    @Operation(summary = "회원가입")
