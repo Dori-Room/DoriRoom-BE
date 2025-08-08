@@ -6,6 +6,8 @@ import doritos.doriroom.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,34 +20,20 @@ public class UserController {
 
         @GetMapping("/check-username")
         @Operation(summary = "아이디 중복 확인")
-        public ApiResponse<Void> checkUsername(@RequestParam String username){
+        public ApiResponse<Void> checkUsername(@RequestParam
+                                               @Pattern(regexp = "^[a-z0-9]{4,12}$", message = "아이디는 영문 소문자 및 숫자 조합으로 4~12자만 사용할 수 있습니다.")
+                                               String username){
             userService.checkUsernameDuplicate(username);
             return ApiResponse.ok();
         }
 
         @GetMapping("/check-nickname")
         @Operation(summary = "닉네임 중복 확인")
-        public ApiResponse<Void> checkNickname(@RequestParam String nickname){
+        public ApiResponse<Void> checkNickname(@RequestParam
+                                               @Pattern(regexp = "^[가-힣a-zA-Z0-9]{1,10}$", message = "닉네임은 한글, 영문, 숫자 조합으로 1~10자만 가능합니다.")
+                                               String nickname){
             userService.checkNicknameDuplicate(nickname);
             return ApiResponse.ok();
         }
 
-//    @PostMapping("/signup")
-//    @Operation(summary = "회원가입")
-//    public ApiResponse<Void> signup(@RequestBody @Valid SignupRequestDto request){
-//        userService.signup(request);
-//        return ApiResponse.ok();
-//    }
-//
-//    @PostMapping("/login")
-//    @Operation(summary = "로그인")
-//    public ApiResponse<LoginResponseDto> login(@RequestBody @Valid LoginRequestDto request){
-//        return ApiResponse.ok(userService.login(request));
-//    }
-//
-//    @PostMapping("/reissue")
-//    @Operation(summary = "access token 재발급")
-//    public ApiResponse<TokenResponseDto> reissue(@RequestBody @Valid RefreshTokenRequestDto request){
-//        return ApiResponse.ok(userService.reissue(request));
-//    }
 }
