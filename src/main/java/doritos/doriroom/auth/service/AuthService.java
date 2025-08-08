@@ -5,12 +5,14 @@ import doritos.doriroom.auth.dto.request.RefreshTokenRequestDto;
 import doritos.doriroom.auth.dto.request.SignupRequestDto;
 import doritos.doriroom.auth.dto.request.TokenResponseDto;
 import doritos.doriroom.auth.dto.response.LoginResponseDto;
+import doritos.doriroom.auth.exception.InvalidPasswordException;
 import doritos.doriroom.global.exception.ApiException;
 import doritos.doriroom.global.jwt.JwtUtil;
 import doritos.doriroom.auth.domain.RefreshToken;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.DuplicateException;
 import doritos.doriroom.auth.repository.RefreshTokenRedisRepository;
+import doritos.doriroom.user.exception.UsernameNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -52,10 +54,10 @@ public class AuthService {
 
     public LoginResponseDto login(LoginRequestDto request) {
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "등록되지 않은 사용자입니다."));
+                .orElseThrow(() -> new UsernameNotFoundException());
 
         if (!encoder.matches(request.getPassword(), user.getPassword())) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "잘못된 비밀번호 입니다.");
+            throw new InvalidPasswordException();
         }
 
         String accessToken = jwtUtil.generateAccessToken(user);
