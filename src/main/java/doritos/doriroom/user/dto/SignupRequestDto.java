@@ -5,11 +5,9 @@ import lombok.*;
 @Getter
 public class SignupRequestDto {
 
-    @NotBlank
-    private String username;
-    @NotBlank
-    private String password;
-    @NotBlank
-    private String nickname;
+    @NotBlank private String username;
+    @NotBlank private String password;
+    @NotBlank private String email;
+    @NotBlank private String nickname;
     // private String profileImageUrl;
 }
