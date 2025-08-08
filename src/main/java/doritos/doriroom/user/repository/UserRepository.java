@@ -8,9 +8,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
-    // username, nickname 중복 검사
+    // username, nickname, email 중복 검사
     boolean existsByUsername(String username);
     boolean existsByNickname(String nickname);
+    boolean existsByEmail(String email);
 
     // 로그인 시 유저 조회
     Optional<User> findByUsername(String username);
