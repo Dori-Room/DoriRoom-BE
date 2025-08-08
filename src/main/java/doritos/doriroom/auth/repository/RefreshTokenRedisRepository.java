@@ -1,6 +1,6 @@
-package doritos.doriroom.user.repository;
+package doritos.doriroom.auth.repository;
 
-import doritos.doriroom.user.domain.RefreshToken;
+import doritos.doriroom.auth.domain.RefreshToken;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

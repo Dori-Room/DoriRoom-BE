@@ -1,4 +1,4 @@
-package doritos.doriroom.user.dto;
+package doritos.doriroom.auth.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
