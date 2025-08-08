@@ -1,4 +1,4 @@
-package doritos.doriroom.user.domain;
+package doritos.doriroom.auth.domain;
 
 import org.springframework.data.annotation.Id;
 import lombok.Builder;
@@ -18,6 +18,7 @@ public class RefreshToken {
 
     @Indexed
     private String refreshToken;
+
     @TimeToLive
     private Long ttl;
 }

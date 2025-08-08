@@ -1,4 +1,4 @@
-package doritos.doriroom.user.dto;
+package doritos.doriroom.auth.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
