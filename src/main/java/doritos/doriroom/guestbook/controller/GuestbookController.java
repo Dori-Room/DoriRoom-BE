@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@Tag(name = "Guestbook", description = "방명록 관련 API")
+@Tag(name = "방명록", description = "방명록 관련 API")
 @RestController
 @RequestMapping("/api/guestbooks")
 @RequiredArgsConstructor
