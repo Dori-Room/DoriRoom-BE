@@ -35,9 +35,9 @@ public class GuestbookController {
     }
 
     @GetMapping("/room/{roomOwnerId}")
-    @Operation(summary = "방명록 목록 조회", description = "특정 방의 방명록 목록을 최신순으로 조회합니다.")
+    @Operation(summary = "방명록 목록 조회", description = "특정 방의 방명록 목록을 최신순으로 조회합니다. / 개발 편의를 위해 user12의 UUID를 넣어놨습니다.")
     public ApiResponse<Page<GuestbookResponseDto>> getGuestbooksByRoom(
-            @Parameter(description = "방 주인 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @Parameter(description = "방 주인 ID(ex.user12의 UUID) ", example = "353ebc2c-5161-4220-93f4-de84a08f9a5c")
             @PathVariable UUID roomOwnerId,
             @ParameterObject Pageable pageable) {
         Page<GuestbookResponseDto> response = guestbookService.getGuestbooksByRoomOwner(roomOwnerId, pageable);
