@@ -1,10 +1,7 @@
 package doritos.doriroom.auth.controller;
 
 
-import doritos.doriroom.auth.dto.request.LoginRequestDto;
-import doritos.doriroom.auth.dto.request.RefreshTokenRequestDto;
-import doritos.doriroom.auth.dto.request.SignupRequestDto;
-import doritos.doriroom.auth.dto.request.TokenResponseDto;
+import doritos.doriroom.auth.dto.request.*;
 import doritos.doriroom.auth.dto.response.LoginResponseDto;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.auth.service.AuthService;
@@ -22,7 +19,20 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
 
-    //TODO: 이메일 주소 인증 (중복 확인)
+
+    @PostMapping("/email")
+    @Operation(summary = "이메일 인증 번호 발송")
+    public ApiResponse<Void> sendVerificationEmail(@RequestBody @Valid EmailRequest request){
+        authService.sendVerificationEmail(request);
+        return ApiResponse.ok();
+    }
+
+    @PostMapping("/email/verify")
+    @Operation(summary = "이메일 인증 번호 확인")
+    public ApiResponse<Void> verifyEmail(@RequestBody @Valid EmailVerificationRequest request){
+        authService.verifyEmail(request);
+        return ApiResponse.ok();
+    }
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입")
