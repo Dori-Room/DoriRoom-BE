@@ -1,9 +1,6 @@
 package doritos.doriroom.auth.service;
 
-import doritos.doriroom.auth.dto.request.LoginRequestDto;
-import doritos.doriroom.auth.dto.request.RefreshTokenRequestDto;
-import doritos.doriroom.auth.dto.request.SignupRequestDto;
-import doritos.doriroom.auth.dto.request.TokenResponseDto;
+import doritos.doriroom.auth.dto.request.*;
 import doritos.doriroom.auth.dto.response.LoginResponseDto;
 import doritos.doriroom.auth.exception.InvalidPasswordException;
 import doritos.doriroom.global.exception.ApiException;
@@ -28,6 +25,14 @@ public class AuthService {
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
+
+    public void sendVerificationEmail(EmailRequest request){
+
+    }
+
+    public void verifyEmail(EmailVerificationRequest request){
+
+    }
 
     public void signup(SignupRequestDto request) {
         // 중복 아이디, 닉네임 예외 처리
