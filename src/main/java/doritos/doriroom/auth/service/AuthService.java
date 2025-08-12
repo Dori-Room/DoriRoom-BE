@@ -108,6 +108,8 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+
+        redisTemplate.delete(verifiedKey); // 유저 등록 후 인증 상태 삭제
     }
 
     public LoginResponseDto login(LoginRequestDto request) {
