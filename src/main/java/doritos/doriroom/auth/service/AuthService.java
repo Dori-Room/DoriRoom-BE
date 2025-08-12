@@ -2,10 +2,7 @@ package doritos.doriroom.auth.service;
 
 import doritos.doriroom.auth.dto.request.*;
 import doritos.doriroom.auth.dto.response.LoginResponseDto;
-import doritos.doriroom.auth.exception.EmailSendFailedException;
-import doritos.doriroom.auth.exception.InvalidOrExpiredVerificationCodeException;
-import doritos.doriroom.auth.exception.InvalidPasswordException;
-import doritos.doriroom.auth.exception.RefreshTokenNotFoundException;
+import doritos.doriroom.auth.exception.*;
 import doritos.doriroom.global.jwt.JwtUtil;
 import doritos.doriroom.auth.domain.RefreshToken;
 import doritos.doriroom.user.domain.User;
@@ -83,6 +80,14 @@ public class AuthService {
     }
 
     public void signup(SignupRequestDto request) {
+        // 이메일 인증 완료 여부 확인
+        String verifiedKey = VERIFIED_KEY_PREFIX + request.getEmail();
+        String verified = (String) redisTemplate.opsForValue().get(verifiedKey);
+
+        if (verified == null) {
+            throw new EmailNotVerifiedException();
+        }
+
         // 중복 아이디, 닉네임 예외 처리
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new DuplicateException("아이디");
