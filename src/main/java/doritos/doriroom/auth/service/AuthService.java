@@ -50,7 +50,7 @@ public class AuthService {
     private boolean skipEmailVerification; // 개발 편의용 이메일 인증 스킵 조건
 
     public void sendVerificationEmail(EmailRequestDto request){
-        String email = request.getEmail();
+        String email = request.email();
 
         if (userRepository.existsByEmail(email)) { // 중복 이메일 확인
             throw new DuplicateException("이메일");
@@ -66,8 +66,8 @@ public class AuthService {
     }
 
     public void verifyEmail(EmailVerificationRequestDto request){
-        String email = request.getEmail();
-        String input = request.getVerificationCode();
+        String email = request.email();
+        String input = request.verificationCode();
 
         // 인증 코드 조회
         String verificationKey = VERIFICATION_KEY_PREFIX + email;
@@ -86,20 +86,20 @@ public class AuthService {
     public void signup(SignupRequestDto request) {
 
         // 중복 아이디, 닉네임 예외 처리
-        if (userRepository.existsByUsername(request.getUsername())) {
+        if (userRepository.existsByUsername(request.username())) {
             throw new DuplicateException("아이디");
         }
-        if (userRepository.existsByNickname(request.getNickname())) {
+        if (userRepository.existsByNickname(request.nickname())) {
             throw new DuplicateException("닉네임");
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(request.email())) {
             throw new DuplicateException("이메일");
         }
 
         // 이메일 인증 완료 여부 확인
         if (!skipEmailVerification) {
 
-            String verifiedKey = VERIFIED_KEY_PREFIX + request.getEmail();
+            String verifiedKey = VERIFIED_KEY_PREFIX + request.email();
             String verified = (String) redisTemplate.opsForValue().get(verifiedKey);
 
             if (verified == null) {
@@ -108,26 +108,26 @@ public class AuthService {
             redisTemplate.delete(verifiedKey); // 유저 등록 후 인증 상태 삭제
         } else {
             // 개발 테스트 시 로직 스킵
-            log.debug("개발 모드: 이메일 인증 스킵됨 - {}", request.getEmail());
+            log.debug("개발 모드: 이메일 인증 스킵됨 - {}", request.email());
         }
 
 
         User user = User.builder()
                 .userId(UUID.randomUUID())
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .password(encoder.encode(request.getPassword()))
-                .nickname(request.getNickname())
+                .username(request.username())
+                .email(request.email())
+                .password(encoder.encode(request.password()))
+                .nickname(request.nickname())
                 .build();
 
         userRepository.save(user);
     }
 
     public LoginResponseDto login(LoginRequestDto request) {
-        User user = userRepository.findByUsername(request.getUsername())
+        User user = userRepository.findByUsername(request.username())
                 .orElseThrow(() -> new UsernameNotFoundException());
 
-        if (!encoder.matches(request.getPassword(), user.getPassword())) {
+        if (!encoder.matches(request.password(), user.getPassword())) {
             throw new InvalidPasswordException();
         }
 
@@ -138,9 +138,9 @@ public class AuthService {
     }
 
     public TokenResponseDto reissue(RefreshTokenRequestDto request) {
-        jwtUtil.validateToken(request.getRefreshToken());
+        jwtUtil.validateToken(request.refreshToken());
 
-        RefreshToken storedToken = refreshTokenRedisRepository.findByRefreshToken(request.getRefreshToken())
+        RefreshToken storedToken = refreshTokenRedisRepository.findByRefreshToken(request.refreshToken())
                 .orElseThrow(RefreshTokenNotFoundException::new);
 
         UUID userId = storedToken.getUserId();
