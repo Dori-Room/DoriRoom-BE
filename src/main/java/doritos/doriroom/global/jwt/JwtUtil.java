@@ -91,22 +91,22 @@ public class JwtUtil {
     }
 
     public User getUserFromToken(String token) {
-        String username = getUsernameFromToken(token);
+        if (token == null || token.isBlank())  throw new InvalidTokenException("토큰이 비어 있습니다.");
+
+        Claims claims;
+        try{
+            claims = Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token).getBody();
+        } catch (ExpiredJwtException e) {   throw new TokenExpiredException();
+        } catch (JwtException e) { throw new InvalidTokenException("유효하지 않은 토큰 입니다.");
+        }
+
+        String username = claims.getSubject();
         if(username == null| username.isBlank())
             throw new InvalidTokenException("토큰에서 username을 추출할 수 없습니다.");
 
             return userRepository.findByUsername(username)
                     .orElseThrow(UsernameNotFoundException::new);
     }
-
-//    public Long getRemainingMillis(String token) { // 토큰의 남은 유효시간 계산
-//        try {
-//            Date exp = Jwts.parserBuilder().setSigningKey(getSignKey()).build()
-//                    .parseClaimsJws(token).getBody().getExpiration();
-//
-//            return (exp.getTime() - System.currentTimeMillis());
-//        } catch (ExpiredJwtException e) { return 0L; } // 이미 만료된 토큰은 0
-//    }
 
     public Claims parseClaims(String token) {
         try {
