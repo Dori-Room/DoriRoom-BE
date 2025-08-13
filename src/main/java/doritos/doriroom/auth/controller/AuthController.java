@@ -7,6 +7,7 @@ import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.auth.service.AuthService;
 import doritos.doriroom.global.jwt.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -55,7 +56,13 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "로그아웃")
+    @Operation(summary = "로그아웃", description = """
+        사용자의 세션을 종료
+        - 저장된 리프레시 토큰 삭제
+        - 요청에 사용된 액세스 토큰 블랙리스트 처리
+        클라이언트는 로그아웃 이후 로컬의 액세스/리프레시 토큰을 삭제해야 합니다.
+        """)
+    @SecurityRequirement(name = "bearerAuth")
     public ApiResponse<Void> logout(HttpServletRequest request){
         String token = jwtUtil.extractToken(request);
         authService.logout(token);
