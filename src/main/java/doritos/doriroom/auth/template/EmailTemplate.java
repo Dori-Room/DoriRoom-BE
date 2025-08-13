@@ -1,5 +1,8 @@
 package doritos.doriroom.auth.template;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class EmailTemplate {
     public static class Subject { // 이메일 제목
         public static final String VERIFICATION = "[DoriRoom] 이메일 인증번호입니다";
