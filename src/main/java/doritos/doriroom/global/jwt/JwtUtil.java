@@ -6,6 +6,7 @@ import doritos.doriroom.auth.repository.RefreshTokenRedisRepository;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.repository.UserRepository;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.*;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.*;
@@ -67,6 +68,14 @@ public class JwtUtil {
         } catch (ExpiredJwtException e) {   throw new TokenExpiredException();
         } catch (JwtException e) { throw new JwtException("유효하지 않은 토큰 입니다.", e);
         }
+    }
+
+    public String extractToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
     }
 
     public String getUsernameFromToken(String token) {
