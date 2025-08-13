@@ -98,4 +98,22 @@ public class JwtUtil {
             return userRepository.findByUsername(username)
                     .orElseThrow(UsernameNotFoundException::new);
     }
+
+//    public Long getRemainingMillis(String token) { // 토큰의 남은 유효시간 계산
+//        try {
+//            Date exp = Jwts.parserBuilder().setSigningKey(getSignKey()).build()
+//                    .parseClaimsJws(token).getBody().getExpiration();
+//
+//            return (exp.getTime() - System.currentTimeMillis());
+//        } catch (ExpiredJwtException e) { return 0L; } // 이미 만료된 토큰은 0
+//    }
+
+    public Claims parseClaims(String token) {
+        try {
+            return Jwts.parserBuilder().setSigningKey(getSignKey()).build()
+                    .parseClaimsJws(token).getBody();
+        } catch (ExpiredJwtException e) {
+            return e.getClaims();
+        } catch (JwtException e) { throw new InvalidTokenException("유효하지 않은 토큰 입니다.");}
+    }
 }
