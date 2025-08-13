@@ -3,6 +3,7 @@ package doritos.doriroom.auth.template;
 public class EmailTemplate {
     public static class Subject { // 이메일 제목
         public static final String VERIFICATION = "[DoriRoom] 이메일 인증번호입니다";
+        public static final String PASSWORD_RESET = "[DoriRoom] 비밀번호 재설정 링크입니다";
     }
 
     public String createVerificationEmailContent(String verificationCode) { // 이메일 content 예시
@@ -18,5 +19,22 @@ public class EmailTemplate {
                 <p>감사합니다.</p>
             </div>
             """.formatted(verificationCode);
+    }
+
+    public String createPasswordResetEmailContent(String resetLink) {
+        return """
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+                <h2 style="color: #333;">비밀번호 재설정</h2>
+                <p>안녕하세요! DoriRoom입니다.</p>
+                <p>아래 링크를 클릭하여 비밀번호를 재설정해주세요.</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="%s" style="background-color: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px;">
+                        비밀번호 재설정하기
+                    </a>
+                </div>
+                <p><strong>링크는 10분간 유효합니다.</strong></p>
+                <p>감사합니다.</p>
+            </div>
+            """.formatted(resetLink);
     }
 }
