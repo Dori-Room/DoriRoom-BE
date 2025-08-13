@@ -81,8 +81,13 @@ public class JwtUtil {
     }
 
     public String getUsernameFromToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(getSignKey()).build()
-                .parseClaimsJws(token).getBody().getSubject();
+        try {
+            return Jwts.parserBuilder().setSigningKey(getSignKey()).build()
+                    .parseClaimsJws(token).getBody().getSubject();
+        } catch (ExpiredJwtException e) {
+            return e.getClaims().getSubject();
+        } catch (JwtException e) { throw new InvalidTokenException("유효하지 않은 토큰 입니다.");
+        }
     }
 
     public User getUserFromToken(String token) {
