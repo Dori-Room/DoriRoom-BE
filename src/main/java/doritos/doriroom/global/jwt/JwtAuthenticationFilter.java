@@ -1,6 +1,7 @@
 package doritos.doriroom.global.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import doritos.doriroom.auth.exception.InvalidTokenException;
 import doritos.doriroom.auth.exception.TokenExpiredException;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.global.exception.ApiException;
@@ -52,7 +53,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             errorResponse(response, e);
             return;
         } catch (JwtException e) {
-            errorResponse(response, new ApiException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰 입니다."));
+            errorResponse(response, new InvalidTokenException("유효하지 않은 토큰 입니다."));
             return;
         }
 
