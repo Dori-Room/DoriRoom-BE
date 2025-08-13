@@ -1,6 +1,7 @@
 package doritos.doriroom.global.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import doritos.doriroom.auth.exception.TokenExpiredException;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.global.exception.ApiException;
 import doritos.doriroom.user.domain.User;

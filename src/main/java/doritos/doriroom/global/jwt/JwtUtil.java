@@ -1,6 +1,7 @@
 package doritos.doriroom.global.jwt;
 
 import doritos.doriroom.auth.domain.RefreshToken;
+import doritos.doriroom.auth.exception.TokenExpiredException;
 import doritos.doriroom.user.exception.UsernameNotFoundException;
 import doritos.doriroom.auth.repository.RefreshTokenRedisRepository;
 import doritos.doriroom.user.domain.User;
