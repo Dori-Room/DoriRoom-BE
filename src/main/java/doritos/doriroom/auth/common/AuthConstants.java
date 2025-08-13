@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum AuthConstants {
 
     BLACKLIST_KEY_PREFIX("blacklist_token:"),
+    BLACKLIST_VALUE("blacklisted"),
     VERIFICATION_KEY_PREFIX("email_verification:"),
     VERIFIED_KEY_PREFIX("email_verified:");
 

@@ -71,7 +71,7 @@ public class AuthService {
         String input = request.verificationCode();
 
         // 인증 코드 조회
-        String verificationKey = VERIFICATION_KEY_PREFIX + email;
+        String verificationKey = VERIFICATION_KEY_PREFIX.getValue() + email;
         String storedCode = (String) redisTemplate.opsForValue().get(verificationKey);
 
         if (storedCode == null || !storedCode.equals(input)) {
@@ -80,7 +80,7 @@ public class AuthService {
 
         redisTemplate.delete(verificationKey); // 인증 성공 후 삭제
 
-        String verifiedKey = VERIFIED_KEY_PREFIX + email; // 인증됨 상태 저장
+        String verifiedKey = VERIFIED_KEY_PREFIX.getValue() + email; // 인증됨 상태 저장
         redisTemplate.opsForValue().set(verifiedKey, "verified", Duration.ofSeconds(VERIFIED_EXPIRE_SECONDS));
     }
 
@@ -100,7 +100,7 @@ public class AuthService {
         // 이메일 인증 완료 여부 확인
         if (!skipEmailVerification) {
 
-            String verifiedKey = VERIFIED_KEY_PREFIX + request.email();
+            String verifiedKey = VERIFIED_KEY_PREFIX.getValue() + request.email();
             String verified = (String) redisTemplate.opsForValue().get(verifiedKey);
 
             if (verified == null) {
@@ -172,8 +172,8 @@ public class AuthService {
         // 토큰의 남은 유효시간 동안 redis에 저장하여 블랙리스트 처리
         long remainingTimeMillis = claims.getExpiration().getTime() - System.currentTimeMillis();
         if (remainingTimeMillis > 0) {
-            String tokenKey = BLACKLIST_KEY_PREFIX + accessToken;
-            redisTemplate.opsForValue().set(tokenKey, "blacklisted", Duration.ofMillis(remainingTimeMillis));
+            String tokenKey = BLACKLIST_KEY_PREFIX.getValue() + accessToken;
+            redisTemplate.opsForValue().set(tokenKey, BLACKLIST_VALUE, Duration.ofMillis(remainingTimeMillis));
         }
     }
 
