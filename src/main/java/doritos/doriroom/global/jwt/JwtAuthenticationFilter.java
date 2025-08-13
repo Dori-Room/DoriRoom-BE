@@ -48,9 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     throw new InvalidTokenException("로그아웃된 토큰입니다.");
                 }
 
-                jwtUtil.validateToken(token); // 토큰 유효성 검사
-
-                User user = jwtUtil.getUserFromToken(token);
+                User user = jwtUtil.getUserFromToken(token); // 토큰 유효성 검사 및 유저 추출
 
                 // SecurityContext 설정
                 UsernamePasswordAuthenticationToken authentication =
