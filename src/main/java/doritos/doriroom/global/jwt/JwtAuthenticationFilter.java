@@ -23,6 +23,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import static doritos.doriroom.auth.common.AuthConstants.BLACKLIST_KEY_PREFIX;
+
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -41,7 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             if (token != null) {
-                String blacklistedKey = "blacklist_token:" + token;
+                String blacklistedKey = BLACKLIST_KEY_PREFIX + token;
                 if (redisTemplate.hasKey(blacklistedKey)) {
                     throw new InvalidTokenException("로그아웃된 토큰입니다.");
                 }

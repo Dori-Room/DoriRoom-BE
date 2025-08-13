@@ -28,6 +28,8 @@ import java.time.Duration;
 import java.util.Random;
 import java.util.UUID;
 
+import static doritos.doriroom.auth.common.AuthConstants.*;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -40,11 +42,6 @@ public class AuthService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final JavaMailSender mailSender;
     private final EmailTemplate emailTemplate;
-
-    // redis 키
-    private static final String VERIFICATION_KEY_PREFIX = "email_verification:";
-    private static final String VERIFIED_KEY_PREFIX = "email_verified:";
-    private static final String BLACKLIST_KEY_PREFIX = "blacklist_token:";
 
     // ttl
     private static final long VERIFICATION_EXPIRE_SECONDS = 300; // 5분 (인증 번호 확인 시간)
