@@ -8,7 +8,6 @@ import doritos.doriroom.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,17 +18,16 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
 
-
     @PostMapping("/email")
     @Operation(summary = "이메일 인증 번호 발송")
-    public ApiResponse<Void> sendVerificationEmail(@RequestBody @Valid EmailRequest request){
+    public ApiResponse<Void> sendVerificationEmail(@RequestBody @Valid EmailRequestDto request){
         authService.sendVerificationEmail(request);
         return ApiResponse.ok();
     }
 
     @PostMapping("/email/verify")
     @Operation(summary = "이메일 인증 번호 확인")
-    public ApiResponse<Void> verifyEmail(@RequestBody @Valid EmailVerificationRequest request){
+    public ApiResponse<Void> verifyEmail(@RequestBody @Valid EmailVerificationRequestDto request){
         authService.verifyEmail(request);
         return ApiResponse.ok();
     }
@@ -51,5 +49,11 @@ public class AuthController {
     @Operation(summary = "access token 재발급")
     public ApiResponse<TokenResponseDto> reissue(@RequestBody @Valid RefreshTokenRequestDto request){
         return ApiResponse.ok(authService.reissue(request));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "로그아웃")
+    public ApiResponse<Void> logout(){
+        return ApiResponse.ok();
     }
 }

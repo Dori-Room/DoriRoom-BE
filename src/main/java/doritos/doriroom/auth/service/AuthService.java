@@ -49,7 +49,7 @@ public class AuthService {
     @Value("${app.dev.skip-email-verification:false}")
     private boolean skipEmailVerification; // 개발 편의용 이메일 인증 스킵 조건
 
-    public void sendVerificationEmail(EmailRequest request){
+    public void sendVerificationEmail(EmailRequestDto request){
         String email = request.getEmail();
 
         if (userRepository.existsByEmail(email)) { // 중복 이메일 확인
@@ -65,7 +65,7 @@ public class AuthService {
         sendEmail(email, verificationCode);
     }
 
-    public void verifyEmail(EmailVerificationRequest request){
+    public void verifyEmail(EmailVerificationRequestDto request){
         String email = request.getEmail();
         String input = request.getVerificationCode();
 
