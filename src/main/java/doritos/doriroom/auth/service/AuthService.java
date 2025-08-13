@@ -11,6 +11,7 @@ import doritos.doriroom.user.exception.DuplicateException;
 import doritos.doriroom.auth.repository.RefreshTokenRedisRepository;
 import doritos.doriroom.user.exception.UsernameNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
+import io.jsonwebtoken.Claims;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
@@ -43,6 +44,7 @@ public class AuthService {
     // redis 키
     private static final String VERIFICATION_KEY_PREFIX = "email_verification:";
     private static final String VERIFIED_KEY_PREFIX = "email_verified:";
+    private static final String BLACKLIST_KEY_PREFIX = "blacklist_token:";
 
     // ttl
     private static final long VERIFICATION_EXPIRE_SECONDS = 300; // 5분 (인증 번호 확인 시간)
@@ -156,6 +158,26 @@ public class AuthService {
         String refreshToken = jwtUtil.generateRefresh(user);
 
         return new TokenResponseDto(accessToken, refreshToken);
+    }
+
+    public void logout(String accessToken) {
+        Claims claims = jwtUtil.parseClaims(accessToken);
+        String username = claims.getSubject();
+
+        if(username == null | username.isBlank())
+            throw new InvalidTokenException("토큰에서 username을 추출할 수 없습니다.");
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(UsernameNotFoundException::new);
+
+        refreshTokenRedisRepository.deleteById(user.getUserId()); // 추출한 User의 리프레시 토큰 삭제
+
+        // 토큰의 남은 유효시간 동안 redis에 저장하여 블랙리스트 처리
+        long remainingTimeMillis = claims.getExpiration().getTime() - System.currentTimeMillis();
+        if (remainingTimeMillis > 0) {
+            String tokenKey = BLACKLIST_KEY_PREFIX + accessToken;
+            redisTemplate.opsForValue().set(tokenKey, "blacklisted", Duration.ofMillis(remainingTimeMillis));
+        }
     }
 
     private void sendEmail(String email, String verificationCode) {
