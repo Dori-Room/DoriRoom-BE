@@ -14,9 +14,9 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.util.Random;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -43,7 +44,10 @@ public class AuthService {
 
     // ttl
     private static final long VERIFICATION_EXPIRE_SECONDS = 300; // 5분 (인증 번호 확인 시간)
-    private static final long VERIFIED_EXPIRE_SECONDS = 3600;    // 1시간(인증 성공 유효 시간)_
+    private static final long VERIFIED_EXPIRE_SECONDS = 3600;    // 1시간(인증 성공 유효 시간)
+
+    @Value("${app.dev.skip-email-verification:false}")
+    private boolean skipEmailVerification; // 개발 편의용 이메일 인증 스킵 조건
 
     public void sendVerificationEmail(EmailRequest request){
         String email = request.getEmail();
@@ -80,13 +84,6 @@ public class AuthService {
     }
 
     public void signup(SignupRequestDto request) {
-        // 이메일 인증 완료 여부 확인
-        String verifiedKey = VERIFIED_KEY_PREFIX + request.getEmail();
-        String verified = (String) redisTemplate.opsForValue().get(verifiedKey);
-
-        if (verified == null) {
-            throw new EmailNotVerifiedException();
-        }
 
         // 중복 아이디, 닉네임 예외 처리
         if (userRepository.existsByUsername(request.getUsername())) {
@@ -99,6 +96,22 @@ public class AuthService {
             throw new DuplicateException("이메일");
         }
 
+        // 이메일 인증 완료 여부 확인
+        if (!skipEmailVerification) {
+
+            String verifiedKey = VERIFIED_KEY_PREFIX + request.getEmail();
+            String verified = (String) redisTemplate.opsForValue().get(verifiedKey);
+
+            if (verified == null) {
+                throw new EmailNotVerifiedException();
+            }
+            redisTemplate.delete(verifiedKey); // 유저 등록 후 인증 상태 삭제
+        } else {
+            // 개발 테스트 시 로직 스킵
+            log.debug("개발 모드: 이메일 인증 스킵됨 - {}", request.getEmail());
+        }
+
+
         User user = User.builder()
                 .userId(UUID.randomUUID())
                 .username(request.getUsername())
@@ -108,8 +121,6 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
-
-        redisTemplate.delete(verifiedKey); // 유저 등록 후 인증 상태 삭제
     }
 
     public LoginResponseDto login(LoginRequestDto request) {
