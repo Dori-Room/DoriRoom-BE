@@ -5,8 +5,10 @@ import doritos.doriroom.auth.dto.request.*;
 import doritos.doriroom.auth.dto.response.LoginResponseDto;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.auth.service.AuthService;
+import doritos.doriroom.global.jwt.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final JwtUtil jwtUtil;
 
     @PostMapping("/email")
     @Operation(summary = "이메일 인증 번호 발송")
@@ -53,7 +56,9 @@ public class AuthController {
 
     @PostMapping("/logout")
     @Operation(summary = "로그아웃")
-    public ApiResponse<Void> logout(){
+    public ApiResponse<Void> logout(HttpServletRequest request){
+        String token = jwtUtil.extractToken(request);
+        authService.logout(token);
         return ApiResponse.ok();
     }
 }
