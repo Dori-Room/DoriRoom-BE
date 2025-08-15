@@ -51,11 +51,11 @@ public class Diary {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "event_id", nullable = false)
-    private UUID eventId;
-
     @Column(name = "user_id", nullable = false)
     private UUID userId;
+
+    @Column(name = "event_id", nullable = false)
+    private UUID eventId;
 
     @PrePersist
     protected void onCreate() {
@@ -73,8 +73,8 @@ public class Diary {
             .likes(0)
             .visitedAt(request.visitedAt())
             .createdAt(LocalDateTime.now())
-            .eventId(request.eventId())
             .userId(userId)
+            .eventId(request.eventId())
             .build();
     }
 
