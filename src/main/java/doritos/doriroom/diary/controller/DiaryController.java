@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -43,5 +44,14 @@ public class DiaryController {
         @RequestBody @Valid DiaryUpdateRequestDto request) {
         DiaryResponseDto response = diaryService.updateDiary(user.getUserId(), diaryId, request);
         return ApiResponse.ok(response);
+    }
+
+    @Operation(summary = "일기 삭제", description = "일기를 삭제합니다.")
+    @DeleteMapping("/{diaryId}")
+    public ApiResponse<Void> deleteDiary(
+        @AuthenticationPrincipal User user,
+        @PathVariable UUID diaryId) {
+        diaryService.deleteDiary(user.getUserId(), diaryId);
+        return ApiResponse.ok(null);
     }
 }

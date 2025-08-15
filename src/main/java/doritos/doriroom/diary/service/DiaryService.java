@@ -45,4 +45,15 @@ public class DiaryService {
         return DiaryResponseDto.from(updatedDiary);
     }
 
+    @Transactional
+    public void deleteDiary(UUID userId, UUID diaryId) {
+        Diary diary = diaryRepository.findById(diaryId).orElseThrow(DiaryNotFoundException::new);
+
+        if(!diary.getUserId().equals(userId)) {
+            throw new DiaryAuthorizationException();
+        }
+
+        diaryRepository.delete(diary);
+    }
+
 }
