@@ -1,6 +1,7 @@
 package doritos.doriroom.diary.controller;
 
 import doritos.doriroom.diary.dto.request.DiaryCreateRequestDto;
+import doritos.doriroom.diary.dto.request.DiaryUpdateRequestDto;
 import doritos.doriroom.diary.dto.response.DiaryResponseDto;
 import doritos.doriroom.diary.service.DiaryService;
 import doritos.doriroom.global.dto.ApiResponse;
@@ -8,9 +9,12 @@ import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +32,16 @@ public class DiaryController {
         @AuthenticationPrincipal User user,
         @RequestBody @Valid DiaryCreateRequestDto request){
         DiaryResponseDto response = diaryService.createDiary(user.getUserId(), request);
+        return ApiResponse.ok(response);
+    }
+
+    @Operation(summary = "일기 수정", description = "일기를 수정합니다.")
+    @PutMapping("/{diaryId}")
+    public ApiResponse<DiaryResponseDto> updateDiary(
+        @AuthenticationPrincipal User user,
+        @PathVariable UUID diaryId,
+        @RequestBody @Valid DiaryUpdateRequestDto request) {
+        DiaryResponseDto response = diaryService.updateDiary(user.getUserId(), diaryId, request);
         return ApiResponse.ok(response);
     }
 }

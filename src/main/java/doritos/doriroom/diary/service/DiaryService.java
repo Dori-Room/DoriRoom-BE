@@ -2,7 +2,10 @@ package doritos.doriroom.diary.service;
 
 import doritos.doriroom.diary.domain.Diary;
 import doritos.doriroom.diary.dto.request.DiaryCreateRequestDto;
+import doritos.doriroom.diary.dto.request.DiaryUpdateRequestDto;
 import doritos.doriroom.diary.dto.response.DiaryResponseDto;
+import doritos.doriroom.diary.exception.DiaryAuthorizationException;
+import doritos.doriroom.diary.exception.DiaryNotFoundException;
 import doritos.doriroom.diary.repository.DiaryRepository;
 import doritos.doriroom.user.exception.UsernameNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
@@ -24,6 +27,22 @@ public class DiaryService {
 
         Diary diary = Diary.from(userId, request);
         return DiaryResponseDto.from(diaryRepository.save(diary));
+    }
+
+    @Transactional
+    public DiaryResponseDto updateDiary(UUID userId, UUID diaryId, DiaryUpdateRequestDto request) {
+        Diary diary = diaryRepository.findById(diaryId).orElseThrow(DiaryNotFoundException::new);
+
+        if (!diary.getUserId().equals(userId)) {
+            throw new DiaryAuthorizationException();
+        }
+
+        // 일기 정보 업데이트
+        diary.updateDiary(request);
+
+        Diary updatedDiary = diaryRepository.save(diary);
+
+        return DiaryResponseDto.from(updatedDiary);
     }
 
 }
