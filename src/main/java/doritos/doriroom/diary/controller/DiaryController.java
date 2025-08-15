@@ -4,6 +4,7 @@ import doritos.doriroom.diary.dto.request.DiaryCreateRequestDto;
 import doritos.doriroom.diary.dto.request.DiaryUpdateRequestDto;
 import doritos.doriroom.diary.dto.response.DiaryDetailResponseDto;
 import doritos.doriroom.diary.dto.response.DiaryResponseDto;
+import doritos.doriroom.diary.dto.response.DiaryWritingStatusResponseDto;
 import doritos.doriroom.diary.service.DiaryService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name="일기 관련", description = "일기 관련 API")
@@ -62,6 +64,16 @@ public class DiaryController {
     public ApiResponse<DiaryDetailResponseDto> getDiaryDetail(
         @PathVariable UUID diaryId) {
         DiaryDetailResponseDto response = diaryService.getDiaryDetail(diaryId);
+        return ApiResponse.ok(response);
+    }
+
+    @Operation(summary = "월별 일기 작성 여부 조회", description = "특정 월의 일기 작성 여부를 일별로 조회합니다.")
+    @GetMapping("/writing-status")
+    public ApiResponse<DiaryWritingStatusResponseDto> getMonthlyWritingStatus(
+        @AuthenticationPrincipal User user,
+        @RequestParam int year,
+        @RequestParam int month) {
+        DiaryWritingStatusResponseDto response = diaryService.getDiaryWritingStatus(user.getUserId(), year, month);
         return ApiResponse.ok(response);
     }
 }
