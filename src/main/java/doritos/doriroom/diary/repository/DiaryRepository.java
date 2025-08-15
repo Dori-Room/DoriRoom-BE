@@ -11,4 +11,6 @@ import org.springframework.stereotype.Repository;
 public interface DiaryRepository extends JpaRepository<Diary, UUID> {
     List<Diary> findByUserIdAndVisitedAtBetweenOrderByVisitedAt(
         UUID userId, LocalDate startDate, LocalDate endDate);
+
+    List<Diary> findByUserIdAndVisitedAtOrderByCreatedAtDesc(UUID userId, LocalDate visitedAt);
 }

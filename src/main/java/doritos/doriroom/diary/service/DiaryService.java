@@ -3,6 +3,7 @@ package doritos.doriroom.diary.service;
 import doritos.doriroom.diary.domain.Diary;
 import doritos.doriroom.diary.dto.request.DiaryCreateRequestDto;
 import doritos.doriroom.diary.dto.request.DiaryUpdateRequestDto;
+import doritos.doriroom.diary.dto.response.DailyDiaryListResponseDto;
 import doritos.doriroom.diary.dto.response.DiaryDetailResponseDto;
 import doritos.doriroom.diary.dto.response.DiaryResponseDto;
 import doritos.doriroom.diary.dto.response.DiaryWritingStatusResponseDto;
@@ -106,6 +107,17 @@ public class DiaryService {
         }
 
         return DiaryWritingStatusResponseDto.from(userId, year, month, dailyStatus);
+    }
+
+    //일별 작성한 일기 목록 조회
+    public DailyDiaryListResponseDto getDailyDiaries(UUID userId, LocalDate date) {
+        List<Diary> diaries = diaryRepository.findByUserIdAndVisitedAtOrderByCreatedAtDesc(userId, date);
+
+        List<DiaryResponseDto> diaryList = diaries.stream()
+            .map(DiaryResponseDto::from)
+            .toList();
+
+        return DailyDiaryListResponseDto.from(userId, date, diaryList);
     }
 
 }

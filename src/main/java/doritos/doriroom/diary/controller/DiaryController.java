@@ -2,6 +2,7 @@ package doritos.doriroom.diary.controller;
 
 import doritos.doriroom.diary.dto.request.DiaryCreateRequestDto;
 import doritos.doriroom.diary.dto.request.DiaryUpdateRequestDto;
+import doritos.doriroom.diary.dto.response.DailyDiaryListResponseDto;
 import doritos.doriroom.diary.dto.response.DiaryDetailResponseDto;
 import doritos.doriroom.diary.dto.response.DiaryResponseDto;
 import doritos.doriroom.diary.dto.response.DiaryWritingStatusResponseDto;
@@ -9,10 +10,13 @@ import doritos.doriroom.diary.service.DiaryService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -74,6 +78,21 @@ public class DiaryController {
         @RequestParam int year,
         @RequestParam int month) {
         DiaryWritingStatusResponseDto response = diaryService.getDiaryWritingStatus(user.getUserId(), year, month);
+        return ApiResponse.ok(response);
+    }
+
+    @Operation(summary = "일별 일기 목록 조회", description = "특정 날짜에 작성된 일기 목록을 조회합니다.")
+    @GetMapping("/daily")
+    public ApiResponse<DailyDiaryListResponseDto> getDailyDiaries(
+        @AuthenticationPrincipal User user,
+        @RequestParam
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @Schema(
+            description = "조회할 날짜 (YYYY-MM-DD 형식)",
+            example = "2025-08-10"
+        )
+        LocalDate date) {
+        DailyDiaryListResponseDto response = diaryService.getDailyDiaries(user.getUserId(), date);
         return ApiResponse.ok(response);
     }
 }
