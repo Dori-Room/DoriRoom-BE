@@ -1,14 +1,17 @@
 package doritos.doriroom.event.controller;
 
+import doritos.doriroom.diary.service.DiaryService;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventDetailResponseDto;
+import doritos.doriroom.event.dto.response.EventDiaryResponseDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.service.EventService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.search.service.SearchService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import io.swagger.v3.oas.annotations.*;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class EventController {
     private final EventService eventService;
     private final SearchService searchService;
+    private final DiaryService diaryService;
 
     @Operation(summary = "따끈따끈 신규 축제 조회")
     @GetMapping("/upcoming")
@@ -83,5 +87,14 @@ public class EventController {
 
         Page<EventResponseDto> events = eventService.getEventsByAreaGroup(areaGroup, pageable);
         return ApiResponse.ok(events);
+    }
+
+    @GetMapping("/{eventId}/diaries")
+    public ApiResponse<EventDiaryResponseDto> getEventDiaries(
+        @PathVariable @Schema(description = "축제 ID", example = "550e8400-e29b-41d4-a716-446655440002")
+        UUID eventId,
+        @ParameterObject Pageable pageable) {
+        EventDiaryResponseDto response = diaryService.getDiariesByEventId(eventId, pageable);
+        return ApiResponse.ok(response);
     }
 }

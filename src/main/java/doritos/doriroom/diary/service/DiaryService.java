@@ -11,6 +11,7 @@ import doritos.doriroom.diary.exception.DiaryAuthorizationException;
 import doritos.doriroom.diary.exception.DiaryNotFoundException;
 import doritos.doriroom.diary.repository.DiaryRepository;
 import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.dto.response.EventDiaryResponseDto;
 import doritos.doriroom.event.exception.EventNotFoundException;
 import doritos.doriroom.event.repository.EventRepository;
 import doritos.doriroom.user.domain.User;
@@ -22,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -118,6 +121,20 @@ public class DiaryService {
             .toList();
 
         return DailyDiaryListResponseDto.from(userId, date, diaryList);
+    }
+
+    //축제별 일기 조회
+    public EventDiaryResponseDto getDiariesByEventId(UUID eventId, Pageable pageable) {
+        // 축제 존재 여부 확인
+        Event event = eventRepository.findById(eventId).orElseThrow(EventNotFoundException::new);
+
+        Page<Diary> diaryPage = diaryRepository.findPublicDiariesByEventId(eventId, pageable);
+
+        List<DiaryResponseDto> diaries = diaryPage.getContent().stream()
+            .map(DiaryResponseDto::from)
+            .toList();
+
+        return EventDiaryResponseDto.from(event, diaries);
     }
 
 }
