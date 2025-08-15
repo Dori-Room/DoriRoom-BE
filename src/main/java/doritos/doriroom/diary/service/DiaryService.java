@@ -137,4 +137,13 @@ public class DiaryService {
         return EventDiaryResponseDto.from(event, diaries);
     }
 
+    //특정 유저의 일기 목록 조회
+    public Page<DiaryResponseDto> getUserDiaries(UUID userId, Pageable pageable) {
+        userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+
+        Page<Diary> diaries = diaryRepository.findPublicByUserIdOrderByVisitedAtDesc(userId, pageable);
+
+        return diaries.map(DiaryResponseDto::from);
+    }
+
 }

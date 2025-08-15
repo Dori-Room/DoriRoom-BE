@@ -16,6 +16,9 @@ import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -93,6 +96,16 @@ public class DiaryController {
         )
         LocalDate date) {
         DailyDiaryListResponseDto response = diaryService.getDailyDiaries(user.getUserId(), date);
+        return ApiResponse.ok(response);
+    }
+
+    @Operation(summary = "특정 유저의 공개 일기 조회", description = "특정 유저가 작성한 공개 일기 목록을 페이징하여 조회합니다.")
+    @GetMapping("/user/{userId}")
+    public ApiResponse<Page<DiaryResponseDto>> getUserPublicDiaries(
+        @PathVariable @Schema(description = "유저 ID", example = "43d1a5a2-58dc-4786-8dba-27c62cae1943")
+        UUID userId,
+        @ParameterObject Pageable pageable) {
+        Page<DiaryResponseDto> response = diaryService.getUserDiaries(userId, pageable);
         return ApiResponse.ok(response);
     }
 }
