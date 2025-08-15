@@ -1,11 +1,7 @@
 package doritos.doriroom.diary.controller;
 
-import doritos.doriroom.diary.dto.request.DiaryCreateRequestDto;
-import doritos.doriroom.diary.dto.request.DiaryUpdateRequestDto;
-import doritos.doriroom.diary.dto.response.DailyDiaryListResponseDto;
-import doritos.doriroom.diary.dto.response.DiaryDetailResponseDto;
-import doritos.doriroom.diary.dto.response.DiaryResponseDto;
-import doritos.doriroom.diary.dto.response.DiaryWritingStatusResponseDto;
+import doritos.doriroom.diary.dto.request.*;
+import doritos.doriroom.diary.dto.response.*;
 import doritos.doriroom.diary.service.DiaryService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
@@ -21,15 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name="일기 관련", description = "일기 관련 API")
 @RestController
