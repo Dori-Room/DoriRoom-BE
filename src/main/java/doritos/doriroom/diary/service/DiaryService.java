@@ -3,10 +3,15 @@ package doritos.doriroom.diary.service;
 import doritos.doriroom.diary.domain.Diary;
 import doritos.doriroom.diary.dto.request.DiaryCreateRequestDto;
 import doritos.doriroom.diary.dto.request.DiaryUpdateRequestDto;
+import doritos.doriroom.diary.dto.response.DiaryDetailResponseDto;
 import doritos.doriroom.diary.dto.response.DiaryResponseDto;
 import doritos.doriroom.diary.exception.DiaryAuthorizationException;
 import doritos.doriroom.diary.exception.DiaryNotFoundException;
 import doritos.doriroom.diary.repository.DiaryRepository;
+import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.exception.EventNotFoundException;
+import doritos.doriroom.event.repository.EventRepository;
+import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.UsernameNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 import java.util.UUID;
@@ -20,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DiaryService {
     private final DiaryRepository diaryRepository;
     private final UserRepository userRepository;
+    private final EventRepository eventRepository;
 
     @Transactional
     public DiaryResponseDto createDiary(UUID userId, DiaryCreateRequestDto request){
@@ -54,6 +60,19 @@ public class DiaryService {
         }
 
         diaryRepository.delete(diary);
+    }
+
+    public DiaryDetailResponseDto getDiaryDetail(UUID diaryId) {
+        Diary diary = diaryRepository.findById(diaryId)
+            .orElseThrow(DiaryNotFoundException::new);
+
+        User user = userRepository.findById(diary.getUserId())
+            .orElseThrow(UsernameNotFoundException::new);
+
+        Event event = eventRepository.findById(diary.getEventId())
+            .orElseThrow(EventNotFoundException::new);
+
+        return DiaryDetailResponseDto.from(diary, user, event);
     }
 
 }

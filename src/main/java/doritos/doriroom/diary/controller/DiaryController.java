@@ -2,6 +2,7 @@ package doritos.doriroom.diary.controller;
 
 import doritos.doriroom.diary.dto.request.DiaryCreateRequestDto;
 import doritos.doriroom.diary.dto.request.DiaryUpdateRequestDto;
+import doritos.doriroom.diary.dto.response.DiaryDetailResponseDto;
 import doritos.doriroom.diary.dto.response.DiaryResponseDto;
 import doritos.doriroom.diary.service.DiaryService;
 import doritos.doriroom.global.dto.ApiResponse;
@@ -13,6 +14,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -53,5 +55,13 @@ public class DiaryController {
         @PathVariable UUID diaryId) {
         diaryService.deleteDiary(user.getUserId(), diaryId);
         return ApiResponse.ok(null);
+    }
+
+    @Operation(summary = "일기 상세 조회", description = "일기 상세 정보를 조회합니다.")
+    @GetMapping("/{diaryId}")
+    public ApiResponse<DiaryDetailResponseDto> getDiaryDetail(
+        @PathVariable UUID diaryId) {
+        DiaryDetailResponseDto response = diaryService.getDiaryDetail(diaryId);
+        return ApiResponse.ok(response);
     }
 }
