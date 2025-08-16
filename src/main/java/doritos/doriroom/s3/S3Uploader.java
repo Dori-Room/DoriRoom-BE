@@ -13,6 +13,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -85,9 +86,9 @@ public class S3Uploader {
         String key = dirName + "/" + fileName;
 
         // s3 업로드
-        try  {
+        try (InputStream inputStream = multipartFile.getInputStream()) {
             s3Client.putObject(
-                    new PutObjectRequest(bucket, key, multipartFile.getInputStream(), null)
+                    new PutObjectRequest(bucket, key, inputStream, null)
                             .withCannedAcl(CannedAccessControlList.PublicRead)  );
             log.info("S3 이미지 업로드 성공: {}", key);
         } catch (IOException e) {
