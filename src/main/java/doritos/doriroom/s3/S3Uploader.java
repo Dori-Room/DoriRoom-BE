@@ -8,6 +8,7 @@ import doritos.doriroom.s3.exception.ImageUploadException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -110,7 +111,7 @@ public class S3Uploader {
         if (fileName == null || fileName.isEmpty() || !fileName.contains(".")) {
             throw new ImageUploadException("잘못된 파일명입니다.");
         }
-        return  fileName.substring(fileName.lastIndexOf(".") + 1);
+        return StringUtils.getFilenameExtension(fileName);
     }
 
 }
