@@ -3,6 +3,7 @@ package doritos.doriroom.s3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.AmazonS3URI;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import doritos.doriroom.s3.exception.ImageUploadException;
 import lombok.RequiredArgsConstructor;
@@ -85,10 +86,16 @@ public class S3Uploader {
         String fileName = generateFileName(multipartFile.getOriginalFilename());
         String key = dirName + "/" + fileName;
 
+        // 메타 데이터 추가
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(multipartFile.getContentType());
+        metadata.setContentLength(multipartFile.getSize());
+
+
         // s3 업로드
         try (InputStream inputStream = multipartFile.getInputStream()) {
             s3Client.putObject(
-                    new PutObjectRequest(bucket, key, inputStream, null)
+                    new PutObjectRequest(bucket, key, inputStream, metadata)
                             .withCannedAcl(CannedAccessControlList.PublicRead)  );
             log.info("S3 이미지 업로드 성공: {}", key);
         } catch (IOException e) {
@@ -106,6 +113,10 @@ public class S3Uploader {
         String extension = getFileExtension(file.getOriginalFilename()).toLowerCase();
         if (! ALLOWED_EXTENSIONS.contains(extension)){
             throw new ImageUploadException("지원하지 않는 파일 형식입니다. (지원하는 형식: "+ ALLOWED_EXTENSIONS +")");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new ImageUploadException("이미지 파일만 업로드 가능합니다.");
         }
     }
 
