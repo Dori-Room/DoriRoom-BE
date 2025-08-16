@@ -3,7 +3,6 @@ package doritos.doriroom.diary.dto.response;
 import doritos.doriroom.diary.domain.Diary;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.response.EventInfoResponseDto;
-import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.user.domain.RoomVisibility;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.response.UserInfoResponseDto;
