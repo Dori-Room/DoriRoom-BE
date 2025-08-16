@@ -6,6 +6,7 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import doritos.doriroom.s3.exception.ImageUploadException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3Uploader {
@@ -58,7 +60,11 @@ public class S3Uploader {
         try {
             AmazonS3URI s3Uri = new AmazonS3URI(fileUrl); // URI 파싱
             s3Client.deleteObject(s3Uri.getBucket(), s3Uri.getKey()); // 이미지 삭제
+            log.info("S3 파일 삭제 성공: {}", fileUrl);
+        } catch (IllegalArgumentException e) {
+            log.warn("유효하지 않은 S3 URL 형식입니다: {}", fileUrl);
         } catch (Exception e) {
+            log.error("S3 파일 삭제 중 오류가 발생했습니다.", e);
             throw new ImageUploadException("이미지 삭제 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
@@ -83,7 +89,9 @@ public class S3Uploader {
             s3Client.putObject(
                     new PutObjectRequest(bucket, key, multipartFile.getInputStream(), null)
                             .withCannedAcl(CannedAccessControlList.PublicRead)  );
+            log.info("S3 이미지 업로드 성공: {}", key);
         } catch (IOException e) {
+            log.error("S3 파일 업로드 중 IO 에러 발생", e);
             throw new ImageUploadException("파일 업로드에 실패했습니다.");
         }
         return s3Client.getUrl(bucket, key).toString(); // 업로드된 파일의 url
