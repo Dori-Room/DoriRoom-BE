@@ -15,8 +15,10 @@ import doritos.doriroom.user.exception.UsernameNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,24 +33,26 @@ public class DiaryService {
 
     @Transactional
     public DiaryResponseDto createDiary(UUID userId, DiaryCreateRequestDto request){
-        userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+        User user = userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+        Event event = eventRepository.findById(request.eventId()).orElseThrow(EventNotFoundException::new);
 
         Diary diary = Diary.from(userId, request);
 
         //축제의 일기 count 증가
         if (request.visibility() == RoomVisibility.PUBLIC) {
-            Event event = eventRepository.findById(request.eventId())
-                .orElseThrow(EventNotFoundException::new);
             event.incrementDiaryCount();
             eventRepository.save(event);
         }
+        diaryRepository.save(diary);
 
-        return DiaryResponseDto.from(diaryRepository.save(diary));
+        return DiaryResponseDto.from(diary, user, event);
     }
 
     @Transactional
     public DiaryResponseDto updateDiary(UUID userId, UUID diaryId, DiaryUpdateRequestDto request) {
         Diary diary = diaryRepository.findById(diaryId).orElseThrow(DiaryNotFoundException::new);
+        User user = userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+        Event event = eventRepository.findById(diary.getEventId()).orElseThrow(EventNotFoundException::new);
 
         if (!diary.getUserId().equals(userId)) {
             throw new DiaryAuthorizationException();
@@ -56,9 +60,6 @@ public class DiaryService {
 
         // 공개 설정이 변경된 경우 축제의 diary count 변경
         if (request.visibility() != null && !request.visibility().equals(diary.getDiaryVisibility())) {
-            Event event = eventRepository.findById(diary.getEventId())
-                .orElseThrow(EventNotFoundException::new);
-
             if (request.visibility() == RoomVisibility.PUBLIC && diary.getDiaryVisibility() == RoomVisibility.PRIVATE) {
                 // 비공개 → 공개로 변경: 카운트 증가
                 event.incrementDiaryCount();
@@ -69,12 +70,10 @@ public class DiaryService {
             eventRepository.save(event);
         }
 
-        // 일기 정보 업데이트
         diary.updateDiary(request);
-
         Diary updatedDiary = diaryRepository.save(diary);
 
-        return DiaryResponseDto.from(updatedDiary);
+        return DiaryResponseDto.from(updatedDiary, user, event);
     }
 
     @Transactional
@@ -166,8 +165,25 @@ public class DiaryService {
     public DailyDiaryListResponseDto getDailyDiaries(UUID userId, LocalDate date) {
         List<Diary> diaries = diaryRepository.findByUserIdAndVisitedAtOrderByCreatedAtDesc(userId, date);
 
+        if (diaries.isEmpty()) {
+            return DailyDiaryListResponseDto.from(userId, date, List.of());
+        }
+
+        User user = userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+
+        List<UUID> eventIds = diaries.stream()
+            .map(Diary::getEventId)
+            .distinct()
+            .toList();
+
+        Map<UUID, Event> eventMap = eventRepository.findByEventIdIn(eventIds).stream()
+            .collect(Collectors.toMap(Event::getEventId, event -> event));
+
         List<DiaryResponseDto> diaryList = diaries.stream()
-            .map(DiaryResponseDto::from)
+            .map(diary -> {
+                Event event = eventMap.get(diary.getEventId());
+                return DiaryResponseDto.from(diary, user, event);
+            })
             .toList();
 
         return DailyDiaryListResponseDto.from(userId, date, diaryList);
@@ -177,11 +193,25 @@ public class DiaryService {
     public EventDiaryResponseDto getDiariesByEventId(UUID eventId, Pageable pageable) {
         // 축제 존재 여부 확인
         Event event = eventRepository.findById(eventId).orElseThrow(EventNotFoundException::new);
-
         Page<Diary> diaryPage = diaryRepository.findPublicDiariesByEventId(eventId, pageable);
 
+        if (diaryPage.isEmpty()) {
+            return EventDiaryResponseDto.from(event, List.of());
+        }
+
+        List<UUID> userIds = diaryPage.getContent().stream()
+            .map(Diary::getUserId)
+            .distinct()
+            .toList();
+
+        Map<UUID, User> userMap = userRepository.findByUserIdIn(userIds).stream()
+            .collect(Collectors.toMap(User::getUserId, user -> user));
+
         List<DiaryResponseDto> diaries = diaryPage.getContent().stream()
-            .map(DiaryResponseDto::from)
+            .map(diary -> {
+                User user = userMap.get(diary.getUserId());
+                return DiaryResponseDto.from(diary, user, event);
+            })
             .toList();
 
         return EventDiaryResponseDto.from(event, diaries);
@@ -189,11 +219,32 @@ public class DiaryService {
 
     //특정 유저의 일기 목록 조회
     public Page<DiaryResponseDto> getUserDiaries(UUID userId, Pageable pageable) {
-        userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+        User user = userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
 
         Page<Diary> diaries = diaryRepository.findPublicByUserIdOrderByVisitedAtDesc(userId, pageable);
 
-        return diaries.map(DiaryResponseDto::from);
+        if (diaries.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<UUID> eventIds = diaries.getContent().stream()
+            .map(Diary::getEventId)
+            .distinct()
+            .toList();
+
+        Map<UUID, Event> eventMap = eventRepository.findByEventIdIn(eventIds).stream()
+            .collect(Collectors.toMap(Event::getEventId, event -> event));
+
+        // Page의 content만 변환하고 Page 객체는 유지
+        List<DiaryResponseDto> diaryResponseList = diaries.getContent().stream()
+            .map(diary -> {
+                Event event = eventMap.get(diary.getEventId());
+                return DiaryResponseDto.from(diary, user, event);
+            })
+            .toList();
+
+        // 새로운 Page 객체 생성
+        return new PageImpl<>(diaryResponseList, pageable, diaries.getTotalElements());
     }
 
 }

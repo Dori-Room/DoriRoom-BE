@@ -1,7 +1,12 @@
 package doritos.doriroom.diary.dto.response;
 
 import doritos.doriroom.diary.domain.Diary;
+import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.dto.response.EventInfoResponseDto;
+import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.user.domain.RoomVisibility;
+import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.dto.response.UserInfoResponseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -29,14 +34,14 @@ public record DiaryResponseDto(
     
     @Schema(description = "생성 일시", example = "2025-08-11T14:30:00")
     String createdAt,
-    
-    @Schema(description = "작성자 ID", example = "43d1a5a2-58dc-4786-8dba-27c62cae1943")
-    UUID userId,
-    
-    @Schema(description = "축제 ID", example = "002cecce-05e2-4dbf-8994-6ed0922a8722")
-    UUID eventId
+
+    @Schema(description = "작성자 정보")
+    UserInfoResponseDto userInfo,
+
+    @Schema(description = "축제 정보")
+    EventInfoResponseDto eventInfo
 ) {
-    public static DiaryResponseDto from(Diary diary) {
+    public static DiaryResponseDto from(Diary diary, User user, Event event) {
         return new DiaryResponseDto(
             diary.getDiaryId(),
             diary.getContent(),
@@ -45,8 +50,8 @@ public record DiaryResponseDto(
             diary.getLikes(),
             diary.getVisitedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
             diary.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-            diary.getUserId(),
-            diary.getEventId()
+            UserInfoResponseDto.from(user),
+            EventInfoResponseDto.from(event)
         );
     }
 }
