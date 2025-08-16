@@ -23,4 +23,16 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
 
     @Query("SELECT d FROM Diary d WHERE d.userId = :userId AND d.diaryVisibility = 'PUBLIC' ORDER BY d.visitedAt DESC, d.createdAt DESC")
     Page<Diary> findPublicByUserIdOrderByVisitedAtDesc(@Param("userId") UUID userId, Pageable pageable);
+
+    @Query("""
+        SELECT d FROM Diary d 
+        WHERE d.userId = :userId 
+        AND d.diaryVisibility = 'PUBLIC'
+        AND d.visitedAt BETWEEN :startDate AND :endDate 
+        ORDER BY d.visitedAt
+        """)
+    List<Diary> findPublicByUserIdAndVisitedAtBetweenOrderByVisitedAt(
+        @Param("userId") UUID userId,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate);
 }

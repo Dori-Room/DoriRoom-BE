@@ -115,13 +115,38 @@ public class DiaryService {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
 
-        // 해당 월에 작성된 일기 조회
         List<Diary> diaries = diaryRepository.findByUserIdAndVisitedAtBetweenOrderByVisitedAt(
             userId, startDate, endDate);
 
-        // 일별 작성 여부 맵 생성
+        return createDiaryWritingStatus(userId, year, month, diaries);
+    }
+
+    //다른 유저의 월별 일기 작성 여부 조회
+    public DiaryWritingStatusResponseDto getOtherUserDiaryWritingStatus(UUID userId, int year, int month) {
+        userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+
+        // 해당 월의 시작일과 종료일 계산
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.plusMonths(1).minusDays(1);
+
+        /**
+         * 추후 여기에 follow 관계인지 확인하는 로직 추가
+         * 현재는 다른 유저의 public 일기만 조회
+         */
+
+        // 해당 월에 작성된 public 일기만 조회
+        List<Diary> diaries = diaryRepository.findPublicByUserIdAndVisitedAtBetweenOrderByVisitedAt(
+            userId, startDate, endDate);
+
+        return createDiaryWritingStatus(userId, year, month, diaries);
+    }
+
+    // 일기 작성 여부 상태 생성 공통 메서드
+    private DiaryWritingStatusResponseDto createDiaryWritingStatus(UUID userId, int year, int month, List<Diary> diaries) {
         Map<String, Boolean> dailyStatus = new HashMap<>();
-        int daysInMonth = endDate.getDayOfMonth();
+
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        int daysInMonth = startDate.lengthOfMonth();
 
         // 모든 일을 false로 초기화
         for (int day = 1; day <= daysInMonth; day++) {
