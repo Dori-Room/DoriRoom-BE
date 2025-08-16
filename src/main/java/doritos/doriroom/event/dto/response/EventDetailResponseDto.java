@@ -17,6 +17,7 @@ public record EventDetailResponseDto(
     String firstImage,
     String secondImage,
     int favoriteCount,
+    long diaryCount,
 
     //상세정보
     String sponsor1,
@@ -43,6 +44,7 @@ public record EventDetailResponseDto(
             event.getFirstImage(),
             event.getSecondImage(),
             event.getFavoriteCount(),
+            event.getDiaryCount(),
             event.getSponsor1(),
             event.getSponsor2(),
             event.getUseTimeFestival(),

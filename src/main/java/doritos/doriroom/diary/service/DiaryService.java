@@ -9,6 +9,7 @@ import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.response.EventDiaryResponseDto;
 import doritos.doriroom.event.exception.EventNotFoundException;
 import doritos.doriroom.event.repository.EventRepository;
+import doritos.doriroom.user.domain.RoomVisibility;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.UsernameNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
@@ -33,6 +34,15 @@ public class DiaryService {
         userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
 
         Diary diary = Diary.from(userId, request);
+
+        //축제의 일기 count 증가
+        if (request.visibility() == RoomVisibility.PUBLIC) {
+            Event event = eventRepository.findById(request.eventId())
+                .orElseThrow(EventNotFoundException::new);
+            event.incrementDiaryCount();
+            eventRepository.save(event);
+        }
+
         return DiaryResponseDto.from(diaryRepository.save(diary));
     }
 
@@ -42,6 +52,21 @@ public class DiaryService {
 
         if (!diary.getUserId().equals(userId)) {
             throw new DiaryAuthorizationException();
+        }
+
+        // 공개 설정이 변경된 경우 축제의 diary count 변경
+        if (request.visibility() != null && !request.visibility().equals(diary.getDiaryVisibility())) {
+            Event event = eventRepository.findById(diary.getEventId())
+                .orElseThrow(EventNotFoundException::new);
+
+            if (request.visibility() == RoomVisibility.PUBLIC && diary.getDiaryVisibility() == RoomVisibility.PRIVATE) {
+                // 비공개 → 공개로 변경: 카운트 증가
+                event.incrementDiaryCount();
+            } else if (request.visibility() == RoomVisibility.PRIVATE && diary.getDiaryVisibility() == RoomVisibility.PUBLIC) {
+                // 공개 → 비공개로 변경: 카운트 감소
+                event.decrementDiaryCount();
+            }
+            eventRepository.save(event);
         }
 
         // 일기 정보 업데이트
@@ -59,6 +84,14 @@ public class DiaryService {
         if(!diary.getUserId().equals(userId)) {
             throw new DiaryAuthorizationException();
         }
+
+        if (diary.getDiaryVisibility() == RoomVisibility.PUBLIC) {
+            Event event = eventRepository.findById(diary.getEventId())
+                .orElseThrow(EventNotFoundException::new);
+            event.decrementDiaryCount();
+            eventRepository.save(event);
+        }
+
 
         diaryRepository.delete(diary);
     }
