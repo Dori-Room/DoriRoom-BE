@@ -89,6 +89,7 @@ public class EventController {
         return ApiResponse.ok(events);
     }
 
+    @Operation(summary = "축제별 일기 조회", description = "축제별 일기 리스트 조회")
     @GetMapping("/{eventId}/diaries")
     public ApiResponse<EventDiaryResponseDto> getEventDiaries(
         @PathVariable @Schema(description = "축제 ID", example = "550e8400-e29b-41d4-a716-446655440002")
