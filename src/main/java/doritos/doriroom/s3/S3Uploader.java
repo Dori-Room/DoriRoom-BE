@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -48,11 +49,32 @@ public class S3Uploader {
         if (multipartFiles.size() > MAX_FILE_COUNT) {
             throw new ImageUploadException("한 번에 최대 " + MAX_FILE_COUNT+"개의 파일만 업로드할 수 있습니다.");
         }
-        return multipartFiles.stream()
-                .filter(file -> file != null && !file.isEmpty())
-                .peek(this::validateFile)
-                .map(file -> uploadToS3(file, dirName))
-                .collect(Collectors.toList());
+
+        // 트랜잭션 수동 롤백 처리
+        List<String> uploadedFiles = new ArrayList<>();
+
+        try {
+            for (MultipartFile file : multipartFiles) {
+                if (file != null && !file.isEmpty()) {
+                    validateFile(file);
+                    uploadedFiles.add(uploadToS3(file, dirName)); // 업로드 된 파일의 url 추가
+                }
+            }
+            log.info("다중 파일 업로드 완료: {} 개 파일", uploadedFiles.size());
+            return uploadedFiles;
+        }  catch (Exception e) {
+            log.error("다중 파일 업로드 실패", e);
+
+            uploadedFiles.forEach(file -> { // 업로드된 일부 파일들을 삭제
+                try {
+                    deleteFile(file);
+                    log.info("롤백: 파일 삭제 완료 - {}", file);
+                } catch (Exception de){
+                    log.warn("롤백 중 파일 삭제 실패: {}", file, de);
+                }
+            });
+            throw e;
+        }
     }
 
     // 단일 이미지 삭제
