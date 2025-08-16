@@ -2,7 +2,6 @@ package doritos.doriroom.s3;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.AmazonS3URI;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import doritos.doriroom.s3.exception.ImageUploadException;
@@ -11,11 +10,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -26,7 +23,6 @@ public class S3Uploader {
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
-
 
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "bmp", "webp"); // 파일 확장자 지정
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 파일 크기 지정 (10MB)
@@ -74,8 +70,6 @@ public class S3Uploader {
     }
 
 
-
-
     /* 내부 메서드 */
 
     // s3에 파일 업로드
@@ -119,11 +113,4 @@ public class S3Uploader {
         return  fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 
-//    // url에서 key 추출
-//    private String getKeyFromUrl(String url) {
-//        if (!url.startsWith(BASE_URL)) {
-//            throw new ImageUploadException("유효하지 않은 S3 URL입니다. (" + url +")");
-//        }
-//        return url.substring(BASE_URL.length());
-//    }
 }
