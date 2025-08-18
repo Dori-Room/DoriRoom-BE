@@ -42,7 +42,6 @@ public class GuestbookService {
     }
 
     public Page<GuestbookResponseDto> getGuestbooksByRoomOwner(UUID roomOwnerId, Pageable pageable) {
-        // 방 주인 존재 여부 확인
         if (!userRepository.existsById(roomOwnerId)) {
             throw new UsernameNotFoundException();
         }
