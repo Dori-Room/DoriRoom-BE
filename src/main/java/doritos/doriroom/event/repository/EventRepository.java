@@ -43,4 +43,7 @@ public interface EventRepository extends JpaRepository<Event, UUID>, EventReposi
     ORDER BY e.startDate ASC
     """)
     List<Event> findEventsNeedingDetailUpdate();
+
+    @Query("SELECT e FROM Event e WHERE e.eventId IN :eventIds")
+    List<Event> findByEventIdIn(@Param("eventIds") List<UUID> eventIds);
 }

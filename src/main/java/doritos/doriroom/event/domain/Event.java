@@ -95,6 +95,9 @@ public class Event {
     @Builder.Default
     private int favoriteCount = 0;
 
+    @Column(name = "diary_count", nullable = false)
+    private long diaryCount = 0L;
+
     @Column
     @Builder.Default
     private boolean detailUpdated = false;
@@ -181,6 +184,16 @@ public class Event {
     public void decreaseFavoriteCount() {
         if (this.favoriteCount > 0) {
             this.favoriteCount--;
+        }
+    }
+
+    public void incrementDiaryCount() {
+        this.diaryCount++;
+    }
+
+    public void decrementDiaryCount() {
+        if (this.diaryCount > 0) {
+            this.diaryCount--;
         }
     }
 
