@@ -92,4 +92,14 @@ public class Diary {
             this.diaryVisibility = request.visibility();
         }
     }
+
+    public void incrementLikes() {
+        this.likes++;
+    }
+
+    public void decrementLikes() {
+        if (this.likes > 0) {
+            this.likes--;
+        }
+    }
 }
