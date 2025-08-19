@@ -18,6 +18,7 @@ public class ChallengeReward { // 도전과제에 대한 보상 크레딧, 경�
     @JoinColumn(name = "challenge_id", nullable = false)
     private Challenge challenge;
 
+    @Enumerated(EnumType.STRING)
     private RewardType rewardType; // CREDIT, EXP, ITEM
 
     private Long amount; // CREDIT/EXP일 경우 사용
