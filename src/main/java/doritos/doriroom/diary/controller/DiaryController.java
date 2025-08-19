@@ -3,7 +3,6 @@ package doritos.doriroom.diary.controller;
 import doritos.doriroom.diary.domain.Diary;
 import doritos.doriroom.diary.dto.request.*;
 import doritos.doriroom.diary.dto.response.*;
-import doritos.doriroom.diary.exception.DiaryAuthorizationException;
 import doritos.doriroom.diary.service.DiaryService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.s3.S3Uploader;
