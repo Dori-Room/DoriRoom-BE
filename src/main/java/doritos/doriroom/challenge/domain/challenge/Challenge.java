@@ -26,15 +26,16 @@ public class Challenge {
     @Column(nullable = false)
     private Long rewardCredits; // 보상 크레딧
 
-//    @Column(nullable = false)
-//    private Long rewardExps; // 보상 경험치 -> 도감 달성도에 반영
-    // 경험치는 지역별로 다르게 주어야함
+    @Column(nullable = false)
+    private Long rewardExps; // 보상 경험치 -> 지역별로 도감 달성도에 반영
+
 
     @Column(nullable = false)
     private LocalDate startDate;
 
     @Column(nullable = false)
     private LocalDate endDate;
+
 
     @Enumerated(EnumType.STRING) @Column(nullable = false)
     private ChallengeType challengeType; // 과제 형식. (예: 축제 방문, 지역 퀴즈, 일기 10개 작성)
