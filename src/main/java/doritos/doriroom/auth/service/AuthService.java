@@ -9,7 +9,7 @@ import doritos.doriroom.auth.domain.RefreshToken;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.DuplicateException;
 import doritos.doriroom.auth.repository.RefreshTokenRedisRepository;
-import doritos.doriroom.user.exception.UsernameNotFoundException;
+import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.mail.MessagingException;
@@ -126,7 +126,7 @@ public class AuthService {
 
     public LoginResponseDto login(LoginRequestDto request) {
         User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new UsernameNotFoundException());
+                .orElseThrow(() -> new UserNotFoundException());
 
         if (!encoder.matches(request.password(), user.getPassword())) {
             throw new InvalidPasswordException();
@@ -147,7 +147,7 @@ public class AuthService {
         UUID userId = storedToken.getUserId();
         String username = jwtUtil.getUsernameFromToken(storedToken.getRefreshToken());
         User user = userRepository.findByUsername(username)
-                .orElseThrow(UsernameNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         refreshTokenRedisRepository.deleteById(userId);
 
@@ -165,7 +165,7 @@ public class AuthService {
             throw new InvalidTokenException("토큰에서 username을 추출할 수 없습니다.");
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(UsernameNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         refreshTokenRedisRepository.deleteById(user.getUserId()); // 추출한 User의 리프레시 토큰 삭제
 

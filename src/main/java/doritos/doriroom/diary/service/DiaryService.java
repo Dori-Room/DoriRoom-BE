@@ -11,7 +11,7 @@ import doritos.doriroom.event.exception.EventNotFoundException;
 import doritos.doriroom.event.repository.EventRepository;
 import doritos.doriroom.user.domain.RoomVisibility;
 import doritos.doriroom.user.domain.User;
-import doritos.doriroom.user.exception.UsernameNotFoundException;
+import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.*;
@@ -33,7 +33,7 @@ public class DiaryService {
 
     @Transactional
     public DiaryResponseDto createDiary(UUID userId, DiaryCreateRequestDto request){
-        User user = userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         Event event = eventRepository.findById(request.eventId()).orElseThrow(EventNotFoundException::new);
 
         Diary diary = Diary.from(userId, request);
@@ -51,7 +51,7 @@ public class DiaryService {
     @Transactional
     public DiaryResponseDto updateDiary(UUID userId, UUID diaryId, DiaryUpdateRequestDto request) {
         Diary diary = diaryRepository.findById(diaryId).orElseThrow(DiaryNotFoundException::new);
-        User user = userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         Event event = eventRepository.findById(diary.getEventId()).orElseThrow(EventNotFoundException::new);
 
         if (!diary.getUserId().equals(userId)) {
@@ -100,7 +100,7 @@ public class DiaryService {
             .orElseThrow(DiaryNotFoundException::new);
 
         User user = userRepository.findById(diary.getUserId())
-            .orElseThrow(UsernameNotFoundException::new);
+            .orElseThrow(UserNotFoundException::new);
 
         Event event = eventRepository.findById(diary.getEventId())
             .orElseThrow(EventNotFoundException::new);
@@ -122,7 +122,7 @@ public class DiaryService {
 
     //다른 유저의 월별 일기 작성 여부 조회
     public DiaryWritingStatusResponseDto getOtherUserDiaryWritingStatus(UUID userId, int year, int month) {
-        userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+        userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         // 해당 월의 시작일과 종료일 계산
         LocalDate startDate = LocalDate.of(year, month, 1);
@@ -169,7 +169,7 @@ public class DiaryService {
             return DailyDiaryListResponseDto.from(userId, date, List.of());
         }
 
-        User user = userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         List<UUID> eventIds = diaries.stream()
             .map(Diary::getEventId)
@@ -219,7 +219,7 @@ public class DiaryService {
 
     //특정 유저의 일기 목록 조회
     public Page<DiaryResponseDto> getUserDiaries(UUID userId, Pageable pageable) {
-        User user = userRepository.findById(userId).orElseThrow(UsernameNotFoundException::new);
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         Page<Diary> diaries = diaryRepository.findPublicByUserIdOrderByVisitedAtDesc(userId, pageable);
 

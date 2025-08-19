@@ -3,7 +3,7 @@ package doritos.doriroom.global.jwt;
 import doritos.doriroom.auth.domain.RefreshToken;
 import doritos.doriroom.auth.exception.InvalidTokenException;
 import doritos.doriroom.auth.exception.TokenExpiredException;
-import doritos.doriroom.user.exception.UsernameNotFoundException;
+import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.auth.repository.RefreshTokenRedisRepository;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.repository.UserRepository;
@@ -105,7 +105,7 @@ public class JwtUtil {
             throw new InvalidTokenException("토큰에서 username을 추출할 수 없습니다.");
 
             return userRepository.findByUsername(username)
-                    .orElseThrow(UsernameNotFoundException::new);
+                    .orElseThrow(UserNotFoundException::new);
     }
 
     public Claims parseClaims(String token) {

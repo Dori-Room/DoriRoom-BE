@@ -9,7 +9,7 @@ import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
 import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
 import doritos.doriroom.user.dto.response.UserMyPageInfoResponseDto;
 import doritos.doriroom.user.exception.DuplicateException;
-import doritos.doriroom.user.exception.UsernameNotFoundException;
+import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,7 +40,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserMyPageInfoResponseDto getUserInfo(User user){
         User foundUser = userRepository.findByUserId(user.getUserId())
-                .orElseThrow(UsernameNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         return UserMyPageInfoResponseDto.from(foundUser);
     }
@@ -49,7 +49,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserMyPageInfoDetailResponseDto getUserInfoDetail(User user){
         User foundUser = userRepository.findByUserId(user.getUserId())
-                .orElseThrow(UsernameNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         return UserMyPageInfoDetailResponseDto.from(foundUser);
     }
@@ -58,7 +58,7 @@ public class UserService {
     @Transactional
     public void updateProfile(User user, UpdateProfileRequestDto request){
         User foundUser = userRepository.findByUserId(user.getUserId())
-                .orElseThrow(UsernameNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         if (!foundUser.getNickname().equals(request.nickname())){ // 닉네임 변경 여부 확인
             checkNicknameDuplicate(request.nickname()); // 닉네임 중복 검사
@@ -71,7 +71,7 @@ public class UserService {
     @Transactional
     public ProfileImageResponseDto uploadProfileImage(User user, MultipartFile file){
         User foundUser = userRepository.findByUserId(user.getUserId())
-                .orElseThrow(UsernameNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         if (StringUtils.hasText(foundUser.getProfileImageUrl())) { // 기존 프로필 이미지가 있으면, s3에서 삭제
             s3Uploader.deleteFile(foundUser.getProfileImageUrl());
@@ -88,7 +88,7 @@ public class UserService {
     @Transactional
     public void deleteProfileImage(User user){
         User foundUser = userRepository.findByUserId(user.getUserId())
-                .orElseThrow(UsernameNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         if (StringUtils.hasText(foundUser.getProfileImageUrl())) { // 기존 프로필 이미지가 있는지 확인 없으면 수행하지 않음
             s3Uploader.deleteFile(foundUser.getProfileImageUrl()); // s3에서 삭제
@@ -100,7 +100,7 @@ public class UserService {
     @Transactional
     public void changePassword(User user, ChangePasswordRequestDto request) {
         User foundUser = userRepository.findByUserId(user.getUserId())
-                .orElseThrow(UsernameNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         if (!encoder.matches(request.currentPassword(), foundUser.getPassword())){ // 기존 비밀번호와 현재 입력한 비밀번호가 일치한지 확인
             throw new InvalidPasswordException("현재 비밀번호가 일치하지 않습니다.");

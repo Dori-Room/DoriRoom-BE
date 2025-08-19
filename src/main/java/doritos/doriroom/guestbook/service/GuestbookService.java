@@ -8,7 +8,7 @@ import doritos.doriroom.guestbook.exception.GuestbookNotFoundException;
 import doritos.doriroom.guestbook.exception.SelfGuestbookNotAllowedException;
 import doritos.doriroom.guestbook.repository.GuestbookRepository;
 import doritos.doriroom.user.domain.User;
-import doritos.doriroom.user.exception.UsernameNotFoundException;
+import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,7 +29,7 @@ public class GuestbookService {
     public GuestbookResponseDto createGuestbook(UUID writerId, GuestbookRequestDto request) {
         // 방 주인 존재 여부 확인
         userRepository.findById(request.roomOwnerId())
-                .orElseThrow(UsernameNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         // 자신의 방에 방명록을 작성하려는 경우 예외 처리
         if (writerId.equals(request.roomOwnerId())) {
@@ -43,14 +43,14 @@ public class GuestbookService {
 
     public Page<GuestbookResponseDto> getGuestbooksByRoomOwner(UUID roomOwnerId, Pageable pageable) {
         if (!userRepository.existsById(roomOwnerId)) {
-            throw new UsernameNotFoundException();
+            throw new UserNotFoundException();
         }
 
         Page<Guestbook> guestbooks = guestbookRepository.findByRoomOwnerIdOrderByCreatedAtDesc(roomOwnerId, pageable);
 
         return guestbooks.map(guestbook -> {
             userRepository.findById(guestbook.getWriterId())
-                    .orElseThrow(UsernameNotFoundException::new);
+                    .orElseThrow(UserNotFoundException::new);
             return GuestbookResponseDto.from(guestbook);
         });
     }
