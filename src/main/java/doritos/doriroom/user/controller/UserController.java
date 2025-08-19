@@ -64,7 +64,13 @@ public class UserController {
         }
 
         @PostMapping("/me/profile-image")
-        @Operation(summary = "프로필 이미지 업로드")
+        @Operation(summary = "프로필 이미지 업로드", description = """
+            로그인한 사용자의 프로필 이미지를 업로드(또는 변경)합니다. `multipart/form-data` 형식으로 요청해야 합니다.
+            
+            **[제약 조건]**
+            - 파일 형식: `jpg`, `jpeg`, `png`, `gif`, `bmp`, `webp`
+            - 파일 크기: 최대 10MB
+            """)
         public ApiResponse<ProfileImageResponseDto> uploadProfileImage(@AuthenticationPrincipal User user,
                                                                        @RequestParam("file") MultipartFile file) {
             return ApiResponse.ok(userService.uploadProfileImage(user, file));
