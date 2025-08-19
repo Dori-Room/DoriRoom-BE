@@ -21,11 +21,7 @@ public record DiaryCreateRequestDto(
     @PastOrPresent(message = "방문 날짜는 과거 또는 현재 날짜여야 합니다.")
     LocalDate visitedAt,
 
-    @Schema(
-        description = "이미지 URL 목록 (선택사항, 최대 5개)",
-        example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]",
-        type = "array"
-    )
+    @Schema(description = "업로드할 이미지 파일들", type = "array")
     List<String> imageUrls,
 
     @Schema(description = "일기 내용", example = "오늘 축제에 다녀왔습니다. 정말 즐거웠어요!")
