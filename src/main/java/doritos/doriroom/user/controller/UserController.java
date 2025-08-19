@@ -2,14 +2,21 @@ package doritos.doriroom.user.controller;
 
 
 import doritos.doriroom.global.dto.ApiResponse;
+import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
+import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
+import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
+import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
+import doritos.doriroom.user.dto.response.UserMyPageInfoResponseDto;
 import doritos.doriroom.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "User", description = "")
 @RestController
@@ -36,4 +43,45 @@ public class UserController {
             return ApiResponse.ok();
         }
 
+        @GetMapping("/me")
+        @Operation(summary = "내 정보 조회 - 마이페이지")
+        public ApiResponse<UserMyPageInfoResponseDto> getUserInfo(@AuthenticationPrincipal User user){
+            return ApiResponse.ok(userService.getUserInfo(user));
+        }
+
+        @GetMapping("/me/detail")
+        @Operation(summary = "내 정보 상세 조회 - 내 정보 수정 페이지")
+        public ApiResponse<UserMyPageInfoDetailResponseDto> getUserInfoDetail(@AuthenticationPrincipal User user){
+            return ApiResponse.ok(userService.getUserInfoDetail(user));
+        }
+
+        @PutMapping("/me/profile")
+        @Operation(summary = "프로필 정보 수정 (닉네임)")
+        public ApiResponse<Void> updateProfile(@AuthenticationPrincipal User user,
+                                               @Valid @RequestBody UpdateProfileRequestDto request) {
+            userService.updateProfile(user, request);
+            return ApiResponse.ok();
+        }
+
+        @PostMapping("/me/profile-image")
+        @Operation(summary = "프로필 이미지 업로드")
+        public ApiResponse<ProfileImageResponseDto> uploadProfileImage(@AuthenticationPrincipal User user,
+                                                                       @RequestParam("file") MultipartFile file) {
+            return ApiResponse.ok(userService.uploadProfileImage(user, file));
+        }
+
+        @DeleteMapping("/me/profile-image")
+        @Operation(summary = "프로필 이미지 삭제")
+        public ApiResponse<Void> deleteProfileImage(@AuthenticationPrincipal User user) {
+            userService.deleteProfileImage(user);
+            return ApiResponse.ok();
+        }
+
+        @PutMapping("/me/password")
+        @Operation(summary = "비밀번호 변경")
+        public ApiResponse<Void> changePassword(@AuthenticationPrincipal User user,
+                                                @Valid @RequestBody ChangePasswordRequestDto request) {
+            userService.changePassword(user, request);
+            return ApiResponse.ok();
+        }
 }
