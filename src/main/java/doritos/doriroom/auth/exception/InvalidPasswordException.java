@@ -7,4 +7,7 @@ public class InvalidPasswordException extends ApiException {
     public InvalidPasswordException() {
         super(HttpStatus.BAD_REQUEST, "잘못된 비밀번호 입니다.");
     }
+    public InvalidPasswordException(String message) {
+        super(HttpStatus.BAD_REQUEST, message);
+    }
 }
