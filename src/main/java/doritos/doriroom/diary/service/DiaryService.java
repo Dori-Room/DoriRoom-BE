@@ -9,6 +9,7 @@ import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.response.EventDiaryResponseDto;
 import doritos.doriroom.event.exception.EventNotFoundException;
 import doritos.doriroom.event.repository.EventRepository;
+import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.RoomVisibility;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.UserNotFoundException;
@@ -30,6 +31,7 @@ public class DiaryService {
     private final DiaryRepository diaryRepository;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
+    private final S3Uploader s3Uploader;
 
     @Transactional
     public DiaryResponseDto createDiary(UUID userId, DiaryCreateRequestDto request){
@@ -82,6 +84,10 @@ public class DiaryService {
 
         if(!diary.getUserId().equals(userId)) {
             throw new DiaryAuthorizationException();
+        }
+
+        if (diary.getImageUrls() != null && !diary.getImageUrls().isEmpty()) {
+            s3Uploader.deleteFiles(diary.getImageUrls());
         }
 
         if (diary.getDiaryVisibility() == RoomVisibility.PUBLIC) {
@@ -247,4 +253,8 @@ public class DiaryService {
         return new PageImpl<>(diaryResponseList, pageable, diaries.getTotalElements());
     }
 
+    public Diary getDiaryById(UUID diaryId) {
+        return diaryRepository.findById(diaryId)
+            .orElseThrow(DiaryNotFoundException::new);
+    }
 }
