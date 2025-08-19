@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -23,19 +25,15 @@ public class Challenge {
 
     private String content; // 필요 시 사용
 
-    @Column(nullable = false)
-    private Long rewardCredits; // 보상 크레딧
-
-    @Column(nullable = false)
-    private Long rewardExps; // 보상 경험치 -> 지역별로 도감 달성도에 반영
-
+    @Builder.Default
+    @OneToMany(mappedBy = "challenge", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChallengeReward> rewards = new ArrayList<>(); // 해당 도전과제에 대한 보상들 리스트
 
     @Column(nullable = false)
     private LocalDate startDate;
 
     @Column(nullable = false)
     private LocalDate endDate;
-
 
     @Enumerated(EnumType.STRING) @Column(nullable = false)
     private ChallengeType challengeType; // 과제 형식. (예: 축제 방문, 지역 퀴즈, 일기 10개 작성)
@@ -49,13 +47,6 @@ public class Challenge {
     @Enumerated(EnumType.STRING)
     private AreaGroup areaGroup; // 지역과제라면 (challengeGroup == AREA)
                                     // 지역 값 포함. (일반 과제인 경우 null)
-
-//    private UUID itemId;
-//    private UUID eventId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id")
-    private Item item; // 과제에 보상 아이템이 있는 경우 값을 가짐
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
