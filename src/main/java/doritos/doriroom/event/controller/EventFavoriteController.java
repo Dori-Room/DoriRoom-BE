@@ -6,7 +6,7 @@ import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.service.EventFavoriteService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
-import doritos.doriroom.user.exception.UsernameNotFoundException;
+import doritos.doriroom.user.exception.UserNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,7 +35,7 @@ public class EventFavoriteController {
         @RequestBody EventFavoriteRequestDto request
     ) {
         if (user == null) {
-            throw new UsernameNotFoundException();
+            throw new UserNotFoundException();
         }
 
         boolean isFavorite = eventFavoriteService.setFavoriteStatus(user, request.eventId(), request.isFavorite());
@@ -50,7 +50,7 @@ public class EventFavoriteController {
         @PathVariable("eventId") UUID eventId
     ) {
         if (user == null) {
-            throw new UsernameNotFoundException();
+            throw new UserNotFoundException();
         }
 
         boolean isLiked = eventFavoriteService.isLiked(user, eventId);
@@ -64,7 +64,7 @@ public class EventFavoriteController {
         @ParameterObject Pageable pageable
     ) {
         if (user == null) {
-            throw new UsernameNotFoundException();
+            throw new UserNotFoundException();
         }
 
         Page<EventResponseDto> favorites = eventFavoriteService.getUserFavoriteEvents(user, pageable);
@@ -78,7 +78,7 @@ public class EventFavoriteController {
         @RequestBody EventFavoriteDeleteRequestDto request
     ){
         if(user == null) {
-            throw new UsernameNotFoundException();
+            throw new UserNotFoundException();
         }
 
         int deletedCount = eventFavoriteService.deleteFavorites(user, request.eventIds());
