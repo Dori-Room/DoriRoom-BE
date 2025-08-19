@@ -93,10 +93,6 @@ public class Diary {
         }
     }
 
-    public void updateImageUrls(List<String> imageUrls) {
-        this.imageUrls = imageUrls;
-    }
-
     public void incrementLikes() {
         this.likes++;
     }
