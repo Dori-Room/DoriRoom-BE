@@ -1,23 +1,30 @@
 package doritos.doriroom.diary.controller;
 
+import doritos.doriroom.diary.domain.Diary;
 import doritos.doriroom.diary.dto.request.*;
 import doritos.doriroom.diary.dto.response.*;
+import doritos.doriroom.diary.exception.DiaryAuthorizationException;
 import doritos.doriroom.diary.service.DiaryService;
 import doritos.doriroom.global.dto.ApiResponse;
+import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name="일기 관련", description = "일기 관련 API")
 @RestController
@@ -25,23 +32,73 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/diary")
 public class DiaryController {
     private final DiaryService diaryService;
+    private final S3Uploader s3Uploader;
 
-    @Operation(summary = "일기 작성", description = "일기를 작성합니다.")
-    @PostMapping("/create")
+    @Operation(summary = "일기 작성", description = "일기를 작성합니다. '\n' 자세한 내용은 노션 참고해주세요. ")
+    @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<DiaryResponseDto> createDiary(
         @AuthenticationPrincipal User user,
-        @RequestBody @Valid DiaryCreateRequestDto request){
-        DiaryResponseDto response = diaryService.createDiary(user.getUserId(), request);
+        @RequestPart("diary") @Valid DiaryCreateRequestDto request,
+        @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+
+        // 이미지가 있으면 S3에 업로드
+        List<String> imageUrls = new ArrayList<>();
+        if (images != null && !images.isEmpty()) {
+            imageUrls = s3Uploader.uploadFiles(images, "diary");
+        }
+
+        DiaryCreateRequestDto requestWithImages = new DiaryCreateRequestDto(
+            request.eventId(),
+            request.visitedAt(),
+            imageUrls,
+            request.content(),
+            request.visibility()
+        );
+
+        DiaryResponseDto response = diaryService.createDiary(user.getUserId(), requestWithImages);
         return ApiResponse.ok(response);
     }
 
     @Operation(summary = "일기 수정", description = "일기를 수정합니다.")
-    @PutMapping("/{diaryId}")
+    @PutMapping(value = "/{diaryId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<DiaryResponseDto> updateDiary(
         @AuthenticationPrincipal User user,
         @PathVariable UUID diaryId,
-        @RequestBody @Valid DiaryUpdateRequestDto request) {
-        DiaryResponseDto response = diaryService.updateDiary(user.getUserId(), diaryId, request);
+        @RequestPart("diary") @Valid DiaryUpdateRequestDto request,
+        @RequestPart(value = "images", required = false) List<MultipartFile> newImages) {
+
+        // 기존 일기 가져오기
+        Diary oldDiary = diaryService.getDiaryById(diaryId);
+
+        // 유지할 이미지 목록
+        List<String> keepUrls = (request.imageUrls() != null) ? request.imageUrls() : new ArrayList<>();
+
+        // 기존 DB 이미지 중에서 삭제 대상 찾기
+        List<String> toDelete = oldDiary.getImageUrls().stream()
+            .filter(url -> !keepUrls.contains(url))
+            .toList();
+
+        if (!toDelete.isEmpty()) {
+            s3Uploader.deleteFiles(toDelete);
+        }
+
+        // 새 이미지 업로드
+        List<String> newUrls = new ArrayList<>();
+        if (newImages != null && !newImages.isEmpty()) {
+            newUrls = s3Uploader.uploadFiles(newImages, "diary");
+        }
+
+        // 최종 이미지 목록 = 유지할 것 + 새로 추가한 것
+        List<String> finalUrls = new ArrayList<>(keepUrls);
+        finalUrls.addAll(newUrls);
+        DiaryUpdateRequestDto requestWithImages = new DiaryUpdateRequestDto(
+            request.visitedAt(),
+            finalUrls,
+            request.content(),
+            request.visibility()
+        );
+
+        DiaryResponseDto response = diaryService.updateDiary(user.getUserId(), diaryId, requestWithImages);
         return ApiResponse.ok(response);
     }
 
