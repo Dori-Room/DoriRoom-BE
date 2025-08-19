@@ -11,8 +11,7 @@ public record DiaryUpdateRequestDto(
     LocalDate visitedAt,
 
     @Schema(
-        description = "이미지 URL 목록 (선택사항, 최대 5개)",
-        example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]",
+        description = "이미지 URL 목록 / 유지할 기존 이미지 URL",
         type = "array"
     )
     List<String> imageUrls,
