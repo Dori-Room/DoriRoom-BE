@@ -15,9 +15,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByUsername(String username);
     boolean existsByNickname(String nickname);
     boolean existsByEmail(String email);
-
-    // 로그인 시 유저 조회
-    Optional<User> findByUsername(String username);
+    
+    Optional<User> findByUsername(String username); // 로그인 시 유저 조회
+    Optional<User> findByUserId(UUID userId);
 
     @Query("SELECT u FROM User u WHERE u.userId IN :userIds")
     List<User> findByUserIdIn(@Param("userIds") List<UUID> userIds);
