@@ -98,6 +98,9 @@ public class Event {
     @Column(name = "diary_count", nullable = false)
     private long diaryCount = 0L;
 
+    @Column(columnDefinition = "json")
+    private String polygon;
+
     @Column
     @Builder.Default
     private boolean detailUpdated = false;
