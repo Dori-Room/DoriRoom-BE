@@ -12,6 +12,7 @@ import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -125,5 +126,13 @@ public class ItemController {
     @Operation(summary = "현재 착용 중인 아이템들 조회")
     public ApiResponse<List<EquippedItemResponse>> getEquippedItems(@AuthenticationPrincipal User user) {
         return ApiResponse.ok(itemService.getEquippedItems(user));
+    }
+
+    @GetMapping("/equip/{userId}")
+    @Operation(summary = "다른 유저의 착용 아이템 조회", description = "특정 유저의 아이템 착용 여부 반환함")
+    public ApiResponse<List<EquippedItemResponse>> getOtherUserEquippedItems(
+        @Parameter(description = "조회할 유저 ID", example = "550e8400-e29b-41d4-a716-446655440001")
+        @PathVariable UUID userId){
+        return ApiResponse.ok(itemService.getOtherUserEquippedItems(userId));
     }
 }
