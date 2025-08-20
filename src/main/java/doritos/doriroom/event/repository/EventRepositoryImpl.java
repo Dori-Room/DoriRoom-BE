@@ -2,8 +2,10 @@ package doritos.doriroom.event.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import doritos.doriroom.diary.domain.QDiary;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.domain.QEvent;
+import doritos.doriroom.event.domain.QEventFavorite;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import java.time.LocalDate;
 import java.util.List;
@@ -50,6 +52,32 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
             .fetchOne();
 
         return new PageImpl<>(results, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public List<Event> findPopularEvents(int limit) {
+        QEvent event = QEvent.event;
+        QDiary diary = QDiary.diary;
+        QEventFavorite eventFavorite = QEventFavorite.eventFavorite;
+
+        LocalDate today = LocalDate.now();
+
+        return queryFactory
+            .selectFrom(event)
+            .leftJoin(diary).on(diary.eventId.eq(event.eventId))
+            .leftJoin(eventFavorite).on(eventFavorite.event.eventId.eq(event.eventId))
+            .where(
+                event.startDate.loe(today.plusDays(7))  // 시작일 <= 오늘+7일
+                    .and(event.endDate.goe(today.minusDays(7)))  // 종료일 >= 오늘-7일
+            )
+            .groupBy(event.eventId)
+            .orderBy(
+                diary.count().multiply(3)
+                    .add(eventFavorite.count().multiply(2))
+                    .desc()
+            )
+            .limit(limit)
+            .fetch();
     }
 
     private BooleanExpression eqAreaCode(Integer areaCode, QEvent event) {
