@@ -53,6 +53,18 @@ public class EventController {
         return ApiResponse.ok(response);
     }
 
+    @Operation(summary = "지금 뜨는 축제 조회")
+    @GetMapping("/popular")
+    public ApiResponse<List<EventResponseDto>> getPopularEvents(){
+        List<Event> events = eventService.getPopularEvents();
+
+        List<EventResponseDto> response = events.stream()
+            .map(EventResponseDto::from)
+            .toList();
+
+        return ApiResponse.ok(response);
+    }
+
     @Operation(summary = "축제 조회", description = "필터링 조건에 따라 축제 조회")
     @GetMapping("/filtered")
     public ApiResponse<Page<EventResponseDto>> getFilteredEvents(
