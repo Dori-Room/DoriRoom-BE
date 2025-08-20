@@ -20,7 +20,8 @@ public record EventResponseDto(
     String firstImage,
     String secondImage,
     int favoriteCount,
-    long diaryCount
+    long diaryCount,
+    String polygon
 ) {
     public static EventResponseDto from(Event e) {
         String categoryCode = getCategoryCode(e.getLclsSystm2(), e.getLclsSystm3());
@@ -39,7 +40,8 @@ public record EventResponseDto(
             e.getFirstImage(),
             e.getSecondImage(),
             e.getFavoriteCount(),
-            e.getDiaryCount()
+            e.getDiaryCount(),
+            e.getPolygon()
         );
     }
 
