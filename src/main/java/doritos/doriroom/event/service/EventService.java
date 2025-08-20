@@ -137,6 +137,10 @@ public class EventService {
         return eventRepository.findEndingSoonEvents(LocalDate.now(), limit);
     }
 
+    public List<Event> getPopularEvents(){
+        return eventRepository.findPopularEvents(4);
+    }
+
     public Page<EventResponseDto> getFilteredEvents(EventItemFilterRequestDto request, Pageable pageable) {
         return eventRepository.findFiltered(request, pageable)
             .map(EventResponseDto::from);
