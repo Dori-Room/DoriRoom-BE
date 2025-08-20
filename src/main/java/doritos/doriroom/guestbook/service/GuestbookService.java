@@ -7,9 +7,12 @@ import doritos.doriroom.guestbook.exception.GuestbookDeletionAuthorizationExcept
 import doritos.doriroom.guestbook.exception.GuestbookNotFoundException;
 import doritos.doriroom.guestbook.exception.SelfGuestbookNotAllowedException;
 import doritos.doriroom.guestbook.repository.GuestbookRepository;
+import doritos.doriroom.item.dto.response.EquippedItemResponse;
+import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +27,7 @@ import java.util.UUID;
 public class GuestbookService {
     private final GuestbookRepository guestbookRepository;
     private final UserRepository userRepository;
+    private final ItemService itemService;
 
     @Transactional
     public GuestbookResponseDto createGuestbook(UUID writerId, GuestbookRequestDto request) {
@@ -36,9 +40,12 @@ public class GuestbookService {
             throw new SelfGuestbookNotAllowedException();
         }
 
-        Guestbook guestbook = Guestbook.from(writerId, request);
+        User user = userRepository.findById(writerId).orElseThrow(UserNotFoundException::new);
 
-        return GuestbookResponseDto.from(guestbookRepository.save(guestbook));
+        Guestbook guestbook = Guestbook.from(writerId, request);
+        List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(writerId);
+
+        return GuestbookResponseDto.from(guestbookRepository.save(guestbook), user.getNickname(), equippedItems);
     }
 
     public Page<GuestbookResponseDto> getGuestbooksByRoomOwner(UUID roomOwnerId, Pageable pageable) {
@@ -49,9 +56,10 @@ public class GuestbookService {
         Page<Guestbook> guestbooks = guestbookRepository.findByRoomOwnerIdOrderByCreatedAtDesc(roomOwnerId, pageable);
 
         return guestbooks.map(guestbook -> {
-            userRepository.findById(guestbook.getWriterId())
-                    .orElseThrow(UserNotFoundException::new);
-            return GuestbookResponseDto.from(guestbook);
+            User writer = userRepository.findById(guestbook.getWriterId()).orElseThrow(UserNotFoundException::new);
+
+            List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(writer.getUserId());
+            return GuestbookResponseDto.from(guestbook, writer.getNickname(), equippedItems);
         });
     }
 
