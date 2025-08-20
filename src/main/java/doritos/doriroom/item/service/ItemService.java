@@ -13,7 +13,10 @@ import doritos.doriroom.item.repository.ItemRepository;
 import doritos.doriroom.item.repository.UserItemRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.repository.UserRepository;
+import java.util.UUID;
 import lombok.*;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import doritos.doriroom.item.exception.ItemNotFoundException;
 import doritos.doriroom.item.exception.NotOwnedException;
@@ -28,6 +31,7 @@ import java.util.stream.Collectors;
 public class ItemService {
     private final ItemRepository itemRepository;
     private final UserItemRepository userItemRepository;
+    private final UserRepository userRepository;
 
     // 전체 아이템 조회 (유저 보유 여부 포함)
     @Transactional(readOnly = true)
@@ -214,6 +218,14 @@ public class ItemService {
                 .stream().map(EquippedItemResponse::from).toList();
     }
 
+    //다른 유저 착용 아이템 조회
+    public List<EquippedItemResponse> getOtherUserEquippedItems(UUID userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
+
+        return userItemRepository.findByUserAndIsEquippedTrue(user)
+            .stream().map(EquippedItemResponse::from).toList();
+    }
 
 
     // 요청 유효성 검사 메서드
