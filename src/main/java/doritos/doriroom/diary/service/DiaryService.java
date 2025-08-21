@@ -41,6 +41,11 @@ public class DiaryService {
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         Event event = eventRepository.findById(request.eventId()).orElseThrow(EventNotFoundException::new);
 
+        boolean alreadyWroteDiary = diaryRepository.existsByUserIdAndEventId(userId, request.eventId());
+        if (alreadyWroteDiary) {
+            throw new DuplicateDiaryException();
+        }
+
         Diary diary = Diary.from(userId, request);
 
         //축제의 일기 count 증가

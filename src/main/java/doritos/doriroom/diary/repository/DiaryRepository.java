@@ -35,4 +35,6 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         @Param("userId") UUID userId,
         @Param("startDate") LocalDate startDate,
         @Param("endDate") LocalDate endDate);
+
+    boolean existsByUserIdAndEventId(UUID userId, UUID eventId);
 }
