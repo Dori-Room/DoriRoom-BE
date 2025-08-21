@@ -44,6 +44,11 @@ public class User {
     @Column(nullable = false)
     private int viewCount = 0;
 
+    // 포인트 관련 메서드 추가
+    public void addCredit(int credit) {
+        this.credit += credit;
+    }
+
     // 보유 크레딧 차감
     public void deductCredit(long price){
         if(this.credit < price){ throw new NotEnoughCreditException();};
