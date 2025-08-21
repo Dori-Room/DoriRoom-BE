@@ -64,11 +64,11 @@ public class Diary {
         }
     }
 
-    public static Diary from(UUID userId, DiaryCreateRequestDto request){
+    public static Diary from(UUID userId, DiaryCreateRequestDto request, List<String> imageUrls){
         return Diary.builder()
             .diaryId(UUID.randomUUID())
             .content(request.content())
-            .imageUrls(request.imageUrls())
+            .imageUrls(imageUrls)
             .diaryVisibility(request.visibility())
             .likes(0)
             .visitedAt(request.visitedAt())
