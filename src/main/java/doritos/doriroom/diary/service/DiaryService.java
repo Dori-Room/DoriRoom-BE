@@ -237,33 +237,17 @@ public class DiaryService {
     }
 
     //특정 유저의 일기 목록 조회
-    public Page<DiaryResponseDto> getUserDiaries(UUID userId, Pageable pageable) {
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+    public Page<DiaryResponseDto> getUserDiaries(UUID currentUserId, UUID targetUserId, Pageable pageable) {
+        User targetUser = userRepository.findById(targetUserId).orElseThrow(UserNotFoundException::new);
 
-        Page<Diary> diaries = diaryRepository.findPublicByUserIdOrderByVisitedAtDesc(userId, pageable);
+        //자신의 일기인지 확인
+        boolean isOwnDiary = currentUserId.equals(targetUserId);
 
-        if (diaries.isEmpty()) {
-            return Page.empty(pageable);
-        }
+        Page<Diary> diaries = isOwnDiary ?
+            diaryRepository.findByUserIdOrderByVisitedAtDesc(targetUserId, pageable) :
+            diaryRepository.findPublicByUserIdOrderByVisitedAtDesc(targetUserId, pageable);
 
-        List<UUID> eventIds = diaries.getContent().stream()
-            .map(Diary::getEventId)
-            .distinct()
-            .toList();
-
-        Map<UUID, Event> eventMap = eventRepository.findByEventIdIn(eventIds).stream()
-            .collect(Collectors.toMap(Event::getEventId, event -> event));
-
-        // Page의 content만 변환하고 Page 객체는 유지
-        List<DiaryResponseDto> diaryResponseList = diaries.getContent().stream()
-            .map(diary -> {
-                Event event = eventMap.get(diary.getEventId());
-                return DiaryResponseDto.from(diary, user, event);
-            })
-            .toList();
-
-        // 새로운 Page 객체 생성
-        return new PageImpl<>(diaryResponseList, pageable, diaries.getTotalElements());
+        return createDiaryResponsePage(diaries, targetUser, pageable);
     }
 
     public Diary getDiaryById(UUID diaryId) {
@@ -281,4 +265,32 @@ public class DiaryService {
 
         return credit;
     }
+
+    //자신의 일기 조회
+    private Page<DiaryResponseDto> createDiaryResponsePage(Page<Diary> diaries, User user, Pageable pageable) {
+        if (diaries.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 이벤트 정보 조회
+        List<UUID> eventIds = diaries.getContent().stream()
+            .map(Diary::getEventId)
+            .distinct()
+            .toList();
+
+        Map<UUID, Event> eventMap = eventRepository.findByEventIdIn(eventIds).stream()
+            .collect(Collectors.toMap(Event::getEventId, event -> event));
+
+        // DiaryResponseDto로 변환
+        List<DiaryResponseDto> diaryResponseList = diaries.getContent().stream()
+            .map(diary -> {
+                Event event = eventMap.get(diary.getEventId());
+                return DiaryResponseDto.from(diary, user, event);
+            })
+            .toList();
+
+        return new PageImpl<>(diaryResponseList, pageable, diaries.getTotalElements());
+    }
+
+
 }
