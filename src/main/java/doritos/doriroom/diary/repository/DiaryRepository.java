@@ -37,4 +37,7 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         @Param("endDate") LocalDate endDate);
 
     boolean existsByUserIdAndEventId(UUID userId, UUID eventId);
+
+    Page<Diary> findByUserIdOrderByVisitedAtDesc(UUID userId, Pageable pageable);
+
 }
