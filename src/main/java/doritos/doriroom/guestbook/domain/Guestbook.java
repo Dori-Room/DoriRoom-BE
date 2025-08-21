@@ -18,7 +18,7 @@ public class Guestbook {
     @Id
     private UUID guestbookId;
 
-    @Column(length = 500, nullable = false)
+    @Column(length = 200, nullable = false)
     private String content;
 
     @Column(nullable = false)

@@ -14,7 +14,7 @@ public record GuestbookRequestDto(
 
     @Schema(description = "방명록 내용", example = "방이 너무 예쁘네요. 방문하고 갑니다!")
     @NotBlank(message = "방명록 내용을 입력해주세요.")
-    @Size(max = 500, message = "방명록은 500자를 초과할 수 없습니다.")
+    @Size(max = 200, message = "방명록은 200자를 초과할 수 없습니다.")
     String content
 ) {
 }
