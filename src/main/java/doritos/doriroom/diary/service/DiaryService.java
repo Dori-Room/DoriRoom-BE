@@ -23,6 +23,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional(readOnly = true)
@@ -37,26 +38,35 @@ public class DiaryService {
     private static final int PHOTO_ATTACHMENT_BONUS_CREDIT = 5;
 
     @Transactional
-    public DiaryResponseDto createDiary(UUID userId, DiaryCreateRequestDto request){
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+    public DiaryResponseDto createDiary(User user, DiaryCreateRequestDto request, List<MultipartFile> images){
+        userRepository.findById(user.getUserId()).orElseThrow(UserNotFoundException::new);
+
         Event event = eventRepository.findById(request.eventId()).orElseThrow(EventNotFoundException::new);
 
-        boolean alreadyWroteDiary = diaryRepository.existsByUserIdAndEventId(userId, request.eventId());
+        boolean alreadyWroteDiary = diaryRepository.existsByUserIdAndEventId(user.getUserId(), request.eventId());
         if (alreadyWroteDiary) {
             throw new DuplicateDiaryException();
         }
 
-        Diary diary = Diary.from(userId, request);
+        //S3에 이미지 업로드
+        List<String> imageUrls = new ArrayList<>();
+        if (images != null && !images.isEmpty()) {
+            String path = "diary/" + user.getUserId().toString();
+            imageUrls = s3Uploader.uploadFiles(images, path);
+        }
+
+        Diary diary = Diary.from(user.getUserId(), request, imageUrls);
 
         //축제의 일기 count 증가
         if (request.visibility() == RoomVisibility.PUBLIC) {
             event.incrementDiaryCount();
             eventRepository.save(event);
         }
+
         diaryRepository.save(diary);
 
         // 포인트 지급
-        int totalCredit = calculateDiaryCredit(request.imageUrls());
+        int totalCredit = calculateDiaryCredit(imageUrls);
         user.addCredit(totalCredit);
         userRepository.save(user);
 
