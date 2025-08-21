@@ -104,24 +104,15 @@ public class DiaryController {
         return ApiResponse.ok(response);
     }
 
-    @Operation(summary = "자신의 월별 일기 작성 여부 조회", description = "특정 월의 자신의 일기 작성 여부를 일별로 조회합니다.")
-    @GetMapping("/writing-status")
-    public ApiResponse<DiaryWritingStatusResponseDto> getMonthlyWritingStatus(
-        @AuthenticationPrincipal User user,
-        @RequestParam int year,
-        @RequestParam int month) {
-        DiaryWritingStatusResponseDto response = diaryService.getDiaryWritingStatus(user.getUserId(), year, month);
-        return ApiResponse.ok(response);
-    }
-
-    @Operation(summary = "다른 유저의 월별 일기 작성 여부 조회", description = "특정 유저의 public 일기 작성 여부를 일별로 조회합니다.")
+    @Operation(summary = "월별 일기 작성 여부 조회", description = "특정 유저의 일기 작성 여부를 일별로 조회합니다.")
     @GetMapping("/user/{userId}/writing-status")
     public ApiResponse<DiaryWritingStatusResponseDto> getUserMonthlyWritingStatus(
+        @AuthenticationPrincipal User user,
         @PathVariable @Schema(description = "유저 ID", example = "550e8400-e29b-41d4-a716-446655440001")
         UUID userId,
         @RequestParam int year,
         @RequestParam int month) {
-        DiaryWritingStatusResponseDto response = diaryService.getOtherUserDiaryWritingStatus(userId, year, month);
+        DiaryWritingStatusResponseDto response = diaryService.getUserDiaryWritingStatus(user.getUserId(), userId, year, month);
         return ApiResponse.ok(response);
     }
 
