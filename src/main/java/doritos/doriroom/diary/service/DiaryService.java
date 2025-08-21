@@ -138,56 +138,46 @@ public class DiaryService {
     }
 
     //월별 일기 작성 여부 조회
-    public DiaryWritingStatusResponseDto getDiaryWritingStatus(UUID userId, int year, int month) {
-        // 해당 월의 시작일과 종료일 계산
-        LocalDate startDate = LocalDate.of(year, month, 1);
-        LocalDate endDate = startDate.plusMonths(1).minusDays(1);
-
-        List<Diary> diaries = diaryRepository.findByUserIdAndVisitedAtBetweenOrderByVisitedAt(
-            userId, startDate, endDate);
-
-        return createDiaryWritingStatus(userId, year, month, diaries);
-    }
-
-    //다른 유저의 월별 일기 작성 여부 조회
-    public DiaryWritingStatusResponseDto getOtherUserDiaryWritingStatus(UUID userId, int year, int month) {
-        userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
-
-        // 해당 월의 시작일과 종료일 계산
-        LocalDate startDate = LocalDate.of(year, month, 1);
-        LocalDate endDate = startDate.plusMonths(1).minusDays(1);
-
-        /**
-         * 추후 여기에 follow 관계인지 확인하는 로직 추가
-         * 현재는 다른 유저의 public 일기만 조회
-         */
-
-        // 해당 월에 작성된 public 일기만 조회
-        List<Diary> diaries = diaryRepository.findPublicByUserIdAndVisitedAtBetweenOrderByVisitedAt(
-            userId, startDate, endDate);
-
-        return createDiaryWritingStatus(userId, year, month, diaries);
-    }
-
-    // 일기 작성 여부 상태 생성 공통 메서드
-    private DiaryWritingStatusResponseDto createDiaryWritingStatus(UUID userId, int year, int month, List<Diary> diaries) {
-        Map<String, Boolean> dailyStatus = new HashMap<>();
+    public DiaryWritingStatusResponseDto getUserDiaryWritingStatus(UUID currentUserId, UUID targetUserId, int year, int month) {
+        boolean isOwner = currentUserId.equals(targetUserId);
 
         LocalDate startDate = LocalDate.of(year, month, 1);
-        int daysInMonth = startDate.lengthOfMonth();
+        int lastDayOfMonth = startDate.lengthOfMonth();
+        LocalDate endDate = LocalDate.of(year, month, lastDayOfMonth);
 
-        // 모든 일을 false로 초기화
-        for (int day = 1; day <= daysInMonth; day++) {
-            dailyStatus.put(String.valueOf(day), false);
+        List<Diary> diaries;
+        if (isOwner) {
+            // 자신의 일기: 모든 공개 범위의 일기를 조회
+            diaries = diaryRepository.findByUserIdAndVisitedAtBetweenOrderByVisitedAt(
+                targetUserId, startDate, endDate);
+        } else {
+            // 다른 사용자의 일기: PUBLIC 일기만 조회
+            diaries = diaryRepository.findPublicByUserIdAndVisitedAtBetweenOrderByVisitedAt(
+                targetUserId, startDate, endDate);
         }
 
-        // 작성된 일기를 true로 설정
+        // 해당 월의 모든 날짜에 대해 초기화
+        Map<String, DiaryWritingStatusResponseDto.DailyStatusInfo> dailyStatusMap = new LinkedHashMap<>();
+        for (int day = 1; day <= lastDayOfMonth; day++) {
+            dailyStatusMap.put(String.valueOf(day), DiaryWritingStatusResponseDto.DailyStatusInfo.notWritten());
+        }
+
+        // 조회된 일기 정보를 바탕으로 상태 업데이트
         for (Diary diary : diaries) {
-            int day = diary.getVisitedAt().getDayOfMonth();
-            dailyStatus.put(String.valueOf(day), true);
+            String dayKey = String.valueOf(diary.getVisitedAt().getDayOfMonth());
+
+            String representativeImageUrl = null;
+            if (diary.getImageUrls() != null && !diary.getImageUrls().isEmpty()) {
+                representativeImageUrl = diary.getImageUrls().get(0);
+            }
+
+            dailyStatusMap.put(
+                dayKey,
+                new DiaryWritingStatusResponseDto.DailyStatusInfo(true, representativeImageUrl)
+            );
         }
 
-        return DiaryWritingStatusResponseDto.from(userId, year, month, dailyStatus);
+        return DiaryWritingStatusResponseDto.from(targetUserId, year, month, dailyStatusMap);
     }
 
     //일별 작성한 일기 목록 조회
