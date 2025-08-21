@@ -154,13 +154,14 @@ public class DiaryController {
         return ApiResponse.ok(response);
     }
 
-    @Operation(summary = "특정 유저의 공개 일기 조회", description = "특정 유저가 작성한 공개 일기 목록을 페이징하여 조회합니다.")
+    @Operation(summary = "특정 유저의 일기 목록 조회", description = "특정 유저가 작성한 일기 목록을 페이징하여 조회합니다. userId가 자신이면 public, follow, private 모든 일기 조회. 자신이 아니면 public 조회")
     @GetMapping("/user/{userId}")
     public ApiResponse<Page<DiaryResponseDto>> getUserPublicDiaries(
         @PathVariable @Schema(description = "유저 ID", example = "43d1a5a2-58dc-4786-8dba-27c62cae1943")
         UUID userId,
+        @AuthenticationPrincipal User user,
         @ParameterObject Pageable pageable) {
-        Page<DiaryResponseDto> response = diaryService.getUserDiaries(userId, pageable);
+        Page<DiaryResponseDto> response = diaryService.getUserDiaries(user.getUserId(), userId, pageable);
         return ApiResponse.ok(response);
     }
 }
