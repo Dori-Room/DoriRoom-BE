@@ -33,6 +33,9 @@ public class DiaryService {
     private final EventRepository eventRepository;
     private final S3Uploader s3Uploader;
 
+    private static final int DIARY_WRITE_BASE_CREDIT = 10;
+    private static final int PHOTO_ATTACHMENT_BONUS_CREDIT = 5;
+
     @Transactional
     public DiaryResponseDto createDiary(UUID userId, DiaryCreateRequestDto request){
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
@@ -46,6 +49,11 @@ public class DiaryService {
             eventRepository.save(event);
         }
         diaryRepository.save(diary);
+
+        // 포인트 지급
+        int totalCredit = calculateDiaryCredit(request.imageUrls());
+        user.addCredit(totalCredit);
+        userRepository.save(user);
 
         return DiaryResponseDto.from(diary, user, event);
     }
@@ -256,5 +264,16 @@ public class DiaryService {
     public Diary getDiaryById(UUID diaryId) {
         return diaryRepository.findById(diaryId)
             .orElseThrow(DiaryNotFoundException::new);
+    }
+
+    //일기 작성 시 포인트 지급
+    private int calculateDiaryCredit(List<String> imageUrls) {
+        int credit = DIARY_WRITE_BASE_CREDIT;
+
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            credit += PHOTO_ATTACHMENT_BONUS_CREDIT;
+        }
+
+        return credit;
     }
 }
