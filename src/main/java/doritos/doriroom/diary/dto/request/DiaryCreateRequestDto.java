@@ -21,9 +21,6 @@ public record DiaryCreateRequestDto(
     @PastOrPresent(message = "방문 날짜는 과거 또는 현재 날짜여야 합니다.")
     LocalDate visitedAt,
 
-    @Schema(description = "업로드할 이미지 파일들", type = "array")
-    List<String> imageUrls,
-
     @Schema(description = "일기 내용", example = "오늘 축제에 다녀왔습니다. 정말 즐거웠어요!")
     @NotBlank(message = "내용을 입력해주세요.")
     @Size(max = 500, message = "일기 내용은 500자를 초과할 수 없습니다.")
@@ -33,15 +30,4 @@ public record DiaryCreateRequestDto(
     RoomVisibility visibility
 
 ) {
-    public DiaryCreateRequestDto {
-        if (imageUrls == null || imageUrls.isEmpty()) {
-            imageUrls = List.of();
-        } else {
-            imageUrls = imageUrls.stream()
-                .filter(url -> url != null && !url.trim().isEmpty())
-                .distinct() // 중복 제거
-                .limit(5)   // 최대 5개로 제한
-                .toList();
-        }
-    }
-} 
+}

@@ -40,21 +40,7 @@ public class DiaryController {
         @RequestPart("diary") @Valid DiaryCreateRequestDto request,
         @RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
-        // 이미지가 있으면 S3에 업로드
-        List<String> imageUrls = new ArrayList<>();
-        if (images != null && !images.isEmpty()) {
-            imageUrls = s3Uploader.uploadFiles(images, "diary");
-        }
-
-        DiaryCreateRequestDto requestWithImages = new DiaryCreateRequestDto(
-            request.eventId(),
-            request.visitedAt(),
-            imageUrls,
-            request.content(),
-            request.visibility()
-        );
-
-        DiaryResponseDto response = diaryService.createDiary(user.getUserId(), requestWithImages);
+        DiaryResponseDto response = diaryService.createDiary(user, request, images);
         return ApiResponse.ok(response);
     }
 
