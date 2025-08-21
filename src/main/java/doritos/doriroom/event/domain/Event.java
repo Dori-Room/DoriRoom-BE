@@ -96,6 +96,7 @@ public class Event {
     private int favoriteCount = 0;
 
     @Column(name = "diary_count", nullable = false)
+    @Builder.Default
     private long diaryCount = 0L;
 
     @Column
