@@ -4,7 +4,7 @@ import doritos.doriroom.diary.dto.request.DiaryLikeRequestDto;
 import doritos.doriroom.diary.service.DiaryLikeService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
-import doritos.doriroom.user.exception.UsernameNotFoundException;
+import doritos.doriroom.user.exception.UserNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,7 +34,7 @@ class DiaryLikeController {
         @RequestBody DiaryLikeRequestDto request
     ) {
         if (user == null) {
-            throw new UsernameNotFoundException();
+            throw new UserNotFoundException();
         }
 
         boolean isLiked = diaryLikeService.setLikeStatus(user, request.diaryId(), request.isLiked());
@@ -49,7 +49,7 @@ class DiaryLikeController {
         @PathVariable("diaryId") UUID diaryId
     ) {
         if (user == null) {
-            throw new UsernameNotFoundException();
+            throw new UserNotFoundException();
         }
 
         boolean isLiked = diaryLikeService.isLiked(user, diaryId);
