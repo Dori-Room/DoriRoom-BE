@@ -22,7 +22,9 @@ public class DataInitializer implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
         // 애플리케이션 시작 시 Atlas 데이터가 없으면 초기 데이터를 생성
-        createInitialAtlases();
+        if (atlasRepository.count() == 0) {
+            createInitialAtlases();
+        }
     }
 
 
