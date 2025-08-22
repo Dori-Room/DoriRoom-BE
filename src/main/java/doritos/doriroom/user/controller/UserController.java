@@ -37,7 +37,7 @@ public class UserController {
         @GetMapping("/check-nickname")
         @Operation(summary = "닉네임 중복 확인")
         public ApiResponse<Void> checkNickname(@RequestParam
-                                               @Pattern(regexp = "^[가-힣a-zA-Z0-9]{1,10}$", message = "닉네임은 한글, 영문, 숫자 조합으로 1~10자만 가능합니다.")
+                                               @Pattern(regexp = "^[가-힣a-zA-Z0-9]{2,10}$", message = "닉네임은 한글, 영문, 숫자 조합으로 1~10자만 가능합니다.")
                                                String nickname){
             userService.checkNicknameDuplicate(nickname);
             return ApiResponse.ok();
