@@ -20,8 +20,8 @@ public record SignupRequestDto (
         @Schema(description = "이메일 주소", example = "user@example.com")
         @NotBlank String email,
 
-        @Pattern(regexp = "^[가-힣a-zA-Z0-9]{1,10}$",
-                message = "닉네임은 한글, 영문, 숫자 조합으로 1~10자만 가능합니다.")
+        @Pattern(regexp = "^[가-힣a-zA-Z0-9]{2,10}$",
+                message = "닉네임은 한글, 영문, 숫자 조합으로 2~10자만 가능합니다.")
         @Schema(description = "닉네임(한글/영문/숫자/_, 2~16자)", example = "홍길동")
         @NotBlank String nickname
 ){}
