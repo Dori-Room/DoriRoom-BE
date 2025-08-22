@@ -7,7 +7,6 @@ import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
 import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
 import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
 import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
-import doritos.doriroom.user.dto.response.UserMyPageInfoResponseDto;
 import doritos.doriroom.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,14 +42,9 @@ public class UserController {
             return ApiResponse.ok();
         }
 
-        @GetMapping("/me")
-        @Operation(summary = "내 정보 조회 - 마이페이지")
-        public ApiResponse<UserMyPageInfoResponseDto> getUserInfo(@AuthenticationPrincipal User user){
-            return ApiResponse.ok(userService.getUserInfo(user));
-        }
 
-        @GetMapping("/me/detail")
-        @Operation(summary = "내 정보 상세 조회 - 내 정보 수정 페이지")
+        @GetMapping("/me")
+        @Operation(summary = "내 정보 상세 조회")
         public ApiResponse<UserMyPageInfoDetailResponseDto> getUserInfoDetail(@AuthenticationPrincipal User user){
             return ApiResponse.ok(userService.getUserInfoDetail(user));
         }
