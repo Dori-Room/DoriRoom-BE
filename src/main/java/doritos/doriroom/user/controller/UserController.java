@@ -6,6 +6,7 @@ import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
 import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
 import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
+import doritos.doriroom.user.dto.response.UserCreditResponseDto;
 import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
 import doritos.doriroom.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,6 +48,11 @@ public class UserController {
         @Operation(summary = "내 정보 상세 조회")
         public ApiResponse<UserMyPageInfoDetailResponseDto> getUserInfoDetail(@AuthenticationPrincipal User user){
             return ApiResponse.ok(userService.getUserInfoDetail(user));
+        }
+
+        @GetMapping("/me/credit")
+        public ApiResponse<UserCreditResponseDto> getMyCredit(@AuthenticationPrincipal User user) {
+            return ApiResponse.ok(userService.getUserCredit(user));
         }
 
         @PutMapping("/me/profile")

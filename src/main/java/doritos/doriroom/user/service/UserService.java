@@ -6,6 +6,7 @@ import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
 import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
 import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
+import doritos.doriroom.user.dto.response.UserCreditResponseDto;
 import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
 import doritos.doriroom.user.exception.DuplicateException;
 import doritos.doriroom.user.exception.UserNotFoundException;
@@ -42,6 +43,14 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
 
         return UserMyPageInfoDetailResponseDto.from(foundUser);
+    }
+
+    // 내 크레딧 조회
+    @Transactional(readOnly = true)
+    public UserCreditResponseDto getUserCredit(User user) {
+        User foundUser =  userRepository.findByUserId(user.getUserId())
+                .orElseThrow(UserNotFoundException::new);
+        return  UserCreditResponseDto.from(foundUser);
     }
 
     // 닉네임 변경
