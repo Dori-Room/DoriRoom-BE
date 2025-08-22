@@ -29,7 +29,7 @@ public class User {
 
     @Builder.Default
     @Column(nullable = false)
-    private Long credit = 0L;
+    private Long credit = 10000L; //TODO: 개발 편의용 크레딧 추가
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
