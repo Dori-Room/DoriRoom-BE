@@ -7,7 +7,6 @@ import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
 import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
 import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
 import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
-import doritos.doriroom.user.dto.response.UserMyPageInfoResponseDto;
 import doritos.doriroom.user.exception.DuplicateException;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
@@ -37,15 +36,6 @@ public class UserService {
     }
 
     // 내 정보 조회 (마이페이지)
-    @Transactional(readOnly = true)
-    public UserMyPageInfoResponseDto getUserInfo(User user){
-        User foundUser = userRepository.findByUserId(user.getUserId())
-                .orElseThrow(UserNotFoundException::new);
-
-        return UserMyPageInfoResponseDto.from(foundUser);
-    }
-
-    // 내 정보 조회 (수정 페이지)
     @Transactional(readOnly = true)
     public UserMyPageInfoDetailResponseDto getUserInfoDetail(User user){
         User foundUser = userRepository.findByUserId(user.getUserId())
