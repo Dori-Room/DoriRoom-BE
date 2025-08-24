@@ -34,8 +34,8 @@ public class DiaryService {
     private final EventRepository eventRepository;
     private final S3Uploader s3Uploader;
 
-    private static final int DIARY_WRITE_BASE_CREDIT = 10;
-    private static final int PHOTO_ATTACHMENT_BONUS_CREDIT = 5;
+    private static final int DIARY_WRITE_BASE_CREDIT = 3;
+    private static final int PHOTO_ATTACHMENT_BONUS_CREDIT = 2;
 
     @Transactional
     public DiaryResponseDto createDiary(User user, DiaryCreateRequestDto request, List<MultipartFile> images){
@@ -70,7 +70,7 @@ public class DiaryService {
         user.addCredit(totalCredit);
         userRepository.save(user);
 
-        return DiaryResponseDto.from(diary, user, event);
+        return DiaryResponseDto.from(diary, totalCredit, user, event);
     }
 
     @Transactional
@@ -98,7 +98,7 @@ public class DiaryService {
         diary.updateDiary(request);
         Diary updatedDiary = diaryRepository.save(diary);
 
-        return DiaryResponseDto.from(updatedDiary, user, event);
+        return DiaryResponseDto.from(updatedDiary, 0, user, event);
     }
 
     @Transactional
@@ -201,7 +201,7 @@ public class DiaryService {
         List<DiaryResponseDto> diaryList = diaries.stream()
             .map(diary -> {
                 Event event = eventMap.get(diary.getEventId());
-                return DiaryResponseDto.from(diary, user, event);
+                return DiaryResponseDto.from(diary, 0, user, event);
             })
             .toList();
 
@@ -229,7 +229,7 @@ public class DiaryService {
         List<DiaryResponseDto> diaries = diaryPage.getContent().stream()
             .map(diary -> {
                 User user = userMap.get(diary.getUserId());
-                return DiaryResponseDto.from(diary, user, event);
+                return DiaryResponseDto.from(diary, 0, user, event);
             })
             .toList();
 
@@ -285,7 +285,7 @@ public class DiaryService {
         List<DiaryResponseDto> diaryResponseList = diaries.getContent().stream()
             .map(diary -> {
                 Event event = eventMap.get(diary.getEventId());
-                return DiaryResponseDto.from(diary, user, event);
+                return DiaryResponseDto.from(diary, 0, user, event);
             })
             .toList();
 

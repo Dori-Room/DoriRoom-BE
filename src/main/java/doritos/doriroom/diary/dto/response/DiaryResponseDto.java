@@ -27,7 +27,10 @@ public record DiaryResponseDto(
     
     @Schema(description = "좋아요 수", example = "5")
     int likes,
-    
+
+    @Schema(description = "지급된 크레딧", example = "3")
+    int credit,
+
     @Schema(description = "방문 날짜", example = "2025-08-10")
     String visitedAt,
     
@@ -40,13 +43,14 @@ public record DiaryResponseDto(
     @Schema(description = "축제 정보")
     EventInfoResponseDto eventInfo
 ) {
-    public static DiaryResponseDto from(Diary diary, User user, Event event) {
+    public static DiaryResponseDto from(Diary diary, int totalCredit, User user, Event event) {
         return new DiaryResponseDto(
             diary.getDiaryId(),
             diary.getContent(),
             diary.getImageUrls(),
             diary.getDiaryVisibility(),
             diary.getLikes(),
+            totalCredit,
             diary.getVisitedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
             diary.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
             UserInfoResponseDto.from(user),
