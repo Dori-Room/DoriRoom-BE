@@ -100,14 +100,14 @@ public class UserController {
             return ApiResponse.ok();
         }
 
-        @GetMapping("/my/room")
+        @GetMapping("/room")
         @Operation(summary = "내 방 정보 조회", description = "현재 로그인한 사용자의 방 정보를 조회합니다.")
         public ApiResponse<MyRoomResponseDto> getMyRoomInfo(@AuthenticationPrincipal User user) {
             MyRoomResponseDto response = userService.getMyRoomInfo(user);
             return ApiResponse.ok(response);
         }
 
-        @GetMapping("/view/{userId}")
+        @GetMapping("/room/{userId}")
         @Operation(summary = "다른 유저 방 정보 조회", description = "특정 유저의 방 정보 조회. 방문 시 조회수 증가")
         public ApiResponse<OtherUserRoomResponseDto> getOtherUserRoomInfo(
             @AuthenticationPrincipal User user,
@@ -117,7 +117,7 @@ public class UserController {
         }
 
     @Operation(summary = "방 좋아요 버튼", description = "방 좋아요를 추가 또는 취소합니다.")
-    @PostMapping
+    @PostMapping("/like")
     public ApiResponse<Boolean> toggleLike(
         @AuthenticationPrincipal User user,
         @RequestBody RoomLikeRequestDto request
@@ -131,7 +131,7 @@ public class UserController {
     }
 
     @Operation(summary = "방 좋아요 상태 확인", description = "특정 방의 좋아요 상태를 확인합니다.")
-    @GetMapping("/check/{roomOwnerId}")
+    @GetMapping("/like/check/{roomOwnerId}")
     public ApiResponse<Boolean> checkLike(
         @AuthenticationPrincipal User user,
         @Parameter(description = "방 주인 ID", example = "550e8400-e29b-41d4-a716-446655440001", required = true)
@@ -146,7 +146,7 @@ public class UserController {
     }
 
     @Operation(summary = "방 좋아요 수 조회", description = "특정 방의 총 좋아요 수를 조회합니다.")
-    @GetMapping("/count/{roomOwnerId}")
+    @GetMapping("/like/count/{roomOwnerId}")
     public ApiResponse<Long> getRoomLikeCount(
         @Parameter(description = "방 주인 ID", example = "550e8400-e29b-41d4-a716-446655440001", required = true)
         @PathVariable("roomOwnerId") UUID roomOwnerId
