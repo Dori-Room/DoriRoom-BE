@@ -6,6 +6,7 @@ import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
 import doritos.doriroom.user.dto.request.RoomLikeRequestDto;
 import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
+import doritos.doriroom.user.dto.response.MyRoomResponseDto;
 import doritos.doriroom.user.dto.response.OtherUserRoomResponseDto;
 import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
 import doritos.doriroom.user.dto.response.UserCreditResponseDto;
@@ -97,6 +98,13 @@ public class UserController {
                                                 @Valid @RequestBody ChangePasswordRequestDto request) {
             userService.changePassword(user, request);
             return ApiResponse.ok();
+        }
+
+        @GetMapping("/my/room")
+        @Operation(summary = "내 방 정보 조회", description = "현재 로그인한 사용자의 방 정보를 조회합니다.")
+        public ApiResponse<MyRoomResponseDto> getMyRoomInfo(@AuthenticationPrincipal User user) {
+            MyRoomResponseDto response = userService.getMyRoomInfo(user);
+            return ApiResponse.ok(response);
         }
 
         @GetMapping("/view/{userId}")
