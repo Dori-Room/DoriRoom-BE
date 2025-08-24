@@ -51,6 +51,7 @@ public class UserController {
         }
 
         @GetMapping("/me/credit")
+        @Operation(summary = "내 크레딧 조회")
         public ApiResponse<UserCreditResponseDto> getMyCredit(@AuthenticationPrincipal User user) {
             return ApiResponse.ok(userService.getUserCredit(user));
         }
