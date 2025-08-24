@@ -55,5 +55,15 @@ public class User {
         this.credit -= price;
     }
 
-    // TODO: 연관관계 매핑
+    // 좋아요 수 증가
+    public void incrementLikeCount() {
+        this.likeCount++;
+    }
+
+    // 좋아요 수 감소
+    public void decrementLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
 }
