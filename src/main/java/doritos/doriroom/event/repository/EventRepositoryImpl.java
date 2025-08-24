@@ -8,6 +8,7 @@ import doritos.doriroom.event.domain.QEvent;
 import doritos.doriroom.event.domain.QEventFavorite;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -61,15 +62,16 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
         QEventFavorite eventFavorite = QEventFavorite.eventFavorite;
 
         LocalDate today = LocalDate.now();
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
 
         return queryFactory
-            .selectFrom(event)
-            .leftJoin(diary).on(diary.eventId.eq(event.eventId))
-            .leftJoin(eventFavorite).on(eventFavorite.event.eventId.eq(event.eventId))
-            .where(
-                event.startDate.loe(today.plusDays(7))  // 시작일 <= 오늘+7일
-                    .and(event.endDate.goe(today.minusDays(7)))  // 종료일 >= 오늘-7일
-            )
+            .select(event)
+            .from(event)
+            .leftJoin(diary).on(diary.eventId.eq(event.eventId)
+                .and(diary.createdAt.goe(thirtyDaysAgo)))
+            .leftJoin(eventFavorite).on(eventFavorite.event.eventId.eq(event.eventId)
+                .and(eventFavorite.createdAt.goe(thirtyDaysAgo)))
+            .where(event.startDate.goe(today))
             .groupBy(event.eventId)
             .orderBy(
                 diary.count().multiply(3)
