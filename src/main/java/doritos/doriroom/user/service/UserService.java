@@ -1,16 +1,21 @@
 package doritos.doriroom.user.service;
 
 import doritos.doriroom.auth.exception.InvalidPasswordException;
+import doritos.doriroom.item.dto.response.EquippedItemResponse;
+import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
 import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
+import doritos.doriroom.user.dto.response.OtherUserRoomResponseDto;
 import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
 import doritos.doriroom.user.dto.response.UserCreditResponseDto;
 import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
 import doritos.doriroom.user.exception.DuplicateException;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,6 +29,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder encoder;
     private final S3Uploader s3Uploader;
+    private final ItemService itemService;
 
     public void checkUsernameDuplicate(String username){
         if (userRepository.existsByUsername(username)) {
@@ -109,5 +115,29 @@ public class UserService {
         }
 
         foundUser.setPassword(encoder.encode(request.newPassword())); // 새 비밀번호를 암호화하여 저장
+    }
+
+    //다른 유저의 방 정보
+    @Transactional(readOnly = true)
+    public OtherUserRoomResponseDto getOhterUserRoomInfo(UUID userId, UUID targetUserId){
+        if (userId.equals(targetUserId)) {
+            throw new IllegalArgumentException("자신의 방 정보는 이 API로 조회할 수 없습니다.");
+        }
+
+        User targetUser = userRepository.findByUserId(targetUserId)
+            .orElseThrow(UserNotFoundException::new);
+
+        List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(targetUserId);
+
+        incrementViewCount(targetUserId);
+        return OtherUserRoomResponseDto.from(targetUser, equippedItems);
+    }
+
+    //조회수
+    @Transactional
+    public void incrementViewCount(UUID userId){
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFoundException::new);
+        user.setViewCount(user.getViewCount()+1);
+        userRepository.save(user);
     }
 }

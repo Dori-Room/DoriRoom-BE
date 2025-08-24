@@ -5,6 +5,7 @@ import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
 import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
+import doritos.doriroom.user.dto.response.OtherUserRoomResponseDto;
 import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
 import doritos.doriroom.user.dto.response.UserCreditResponseDto;
 import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -90,5 +92,14 @@ public class UserController {
                                                 @Valid @RequestBody ChangePasswordRequestDto request) {
             userService.changePassword(user, request);
             return ApiResponse.ok();
+        }
+
+        @GetMapping("/view/{userId}")
+        @Operation(summary = "다른 유저 방 정보 조회", description = "특정 유저의 방 정보 조회. 방문 시 조회수 증가")
+        public ApiResponse<OtherUserRoomResponseDto> getOtherUserRoomInfo(
+            @AuthenticationPrincipal User user,
+            @RequestParam @Valid UUID userId
+        ){
+            return ApiResponse.ok(userService.getOhterUserRoomInfo(user.getUserId(), userId));
         }
 }
