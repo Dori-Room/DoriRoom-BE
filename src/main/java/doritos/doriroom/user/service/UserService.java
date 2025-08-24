@@ -7,6 +7,7 @@ import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
 import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
+import doritos.doriroom.user.dto.response.MyRoomResponseDto;
 import doritos.doriroom.user.dto.response.OtherUserRoomResponseDto;
 import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
 import doritos.doriroom.user.dto.response.UserCreditResponseDto;
@@ -116,6 +117,18 @@ public class UserService {
         }
 
         foundUser.setPassword(encoder.encode(request.newPassword())); // 새 비밀번호를 암호화하여 저장
+    }
+
+    //내 방 정보
+    @Transactional(readOnly = true)
+    public MyRoomResponseDto getMyRoomInfo(User user) {
+        User foundUser = userRepository.findByUserId(user.getUserId())
+            .orElseThrow(UserNotFoundException::new);
+
+        // 내가 착용 중인 아이템 조회
+        List<EquippedItemResponse> equippedItems = itemService.getEquippedItems(user);
+
+        return MyRoomResponseDto.from(foundUser, equippedItems);
     }
 
     //다른 유저의 방 정보
