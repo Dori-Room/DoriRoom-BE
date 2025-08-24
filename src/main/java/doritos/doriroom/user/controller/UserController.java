@@ -4,13 +4,17 @@ package doritos.doriroom.user.controller;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
+import doritos.doriroom.user.dto.request.RoomLikeRequestDto;
 import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
 import doritos.doriroom.user.dto.response.OtherUserRoomResponseDto;
 import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
 import doritos.doriroom.user.dto.response.UserCreditResponseDto;
 import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
+import doritos.doriroom.user.exception.UserNotFoundException;
+import doritos.doriroom.user.service.RoomLikeService;
 import doritos.doriroom.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -26,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final RoomLikeService roomLikeService;
 
         @GetMapping("/check-username")
         @Operation(summary = "아이디 중복 확인")
@@ -102,4 +107,43 @@ public class UserController {
         ){
             return ApiResponse.ok(userService.getOtherUserRoomInfo(user.getUserId(), userId));
         }
+
+    @Operation(summary = "방 좋아요 버튼", description = "방 좋아요를 추가 또는 취소합니다.")
+    @PostMapping
+    public ApiResponse<Boolean> toggleLike(
+        @AuthenticationPrincipal User user,
+        @RequestBody RoomLikeRequestDto request
+    ) {
+        if (user == null) {
+            throw new UserNotFoundException();
+        }
+
+        boolean isLiked = roomLikeService.setLikeStatus(user, request.roomOwnerId(), request.isLiked());
+        return ApiResponse.ok(isLiked);
+    }
+
+    @Operation(summary = "방 좋아요 상태 확인", description = "특정 방의 좋아요 상태를 확인합니다.")
+    @GetMapping("/check/{roomOwnerId}")
+    public ApiResponse<Boolean> checkLike(
+        @AuthenticationPrincipal User user,
+        @Parameter(description = "방 주인 ID", example = "550e8400-e29b-41d4-a716-446655440001", required = true)
+        @PathVariable("roomOwnerId") UUID roomOwnerId
+    ) {
+        if (user == null) {
+            throw new UserNotFoundException();
+        }
+
+        boolean isLiked = roomLikeService.isLiked(user, roomOwnerId);
+        return ApiResponse.ok(isLiked);
+    }
+
+    @Operation(summary = "방 좋아요 수 조회", description = "특정 방의 총 좋아요 수를 조회합니다.")
+    @GetMapping("/count/{roomOwnerId}")
+    public ApiResponse<Long> getRoomLikeCount(
+        @Parameter(description = "방 주인 ID", example = "550e8400-e29b-41d4-a716-446655440001", required = true)
+        @PathVariable("roomOwnerId") UUID roomOwnerId
+    ) {
+        long likeCount = roomLikeService.getRoomLikeCount(roomOwnerId);
+        return ApiResponse.ok(likeCount);
+    }
 }
