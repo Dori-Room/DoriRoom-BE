@@ -9,6 +9,7 @@ import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
 import doritos.doriroom.user.dto.response.MyRoomResponseDto;
 import doritos.doriroom.user.dto.response.OtherUserRoomResponseDto;
 import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
+import doritos.doriroom.user.dto.response.RoomLikeResponseDto;
 import doritos.doriroom.user.dto.response.UserCreditResponseDto;
 import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
 import doritos.doriroom.user.exception.UserNotFoundException;
@@ -118,7 +119,7 @@ public class UserController {
 
     @Operation(summary = "방 좋아요 버튼", description = "방 좋아요를 추가 또는 취소합니다.")
     @PostMapping("/like")
-    public ApiResponse<Boolean> toggleLike(
+    public ApiResponse<RoomLikeResponseDto> toggleLike(
         @AuthenticationPrincipal User user,
         @RequestBody RoomLikeRequestDto request
     ) {
@@ -126,8 +127,8 @@ public class UserController {
             throw new UserNotFoundException();
         }
 
-        boolean isLiked = roomLikeService.setLikeStatus(user, request.roomOwnerId(), request.isLiked());
-        return ApiResponse.ok(isLiked);
+        RoomLikeResponseDto response = roomLikeService.setLikeStatus(user, request.roomOwnerId(), request.isLiked());
+        return ApiResponse.ok(response);
     }
 
     @Operation(summary = "방 좋아요 상태 확인", description = "특정 방의 좋아요 상태를 확인합니다.")
@@ -143,15 +144,5 @@ public class UserController {
 
         boolean isLiked = roomLikeService.isLiked(user, roomOwnerId);
         return ApiResponse.ok(isLiked);
-    }
-
-    @Operation(summary = "방 좋아요 수 조회", description = "특정 방의 총 좋아요 수를 조회합니다.")
-    @GetMapping("/like/count/{roomOwnerId}")
-    public ApiResponse<Long> getRoomLikeCount(
-        @Parameter(description = "방 주인 ID", example = "550e8400-e29b-41d4-a716-446655440001", required = true)
-        @PathVariable("roomOwnerId") UUID roomOwnerId
-    ) {
-        long likeCount = roomLikeService.getRoomLikeCount(roomOwnerId);
-        return ApiResponse.ok(likeCount);
     }
 }
