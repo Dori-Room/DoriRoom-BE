@@ -12,6 +12,7 @@ import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
 import doritos.doriroom.user.dto.response.UserCreditResponseDto;
 import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
 import doritos.doriroom.user.exception.DuplicateException;
+import doritos.doriroom.user.exception.SelfRoomInfoNotAllowedException;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 import java.util.List;
@@ -121,7 +122,7 @@ public class UserService {
     @Transactional
     public OtherUserRoomResponseDto getOtherUserRoomInfo(UUID userId, UUID targetUserId){
         if (userId.equals(targetUserId)) {
-            throw new IllegalArgumentException("자신의 방 정보는 이 API로 조회할 수 없습니다.");
+            throw new SelfRoomInfoNotAllowedException();
         }
 
         User targetUser = userRepository.findByUserId(targetUserId)
