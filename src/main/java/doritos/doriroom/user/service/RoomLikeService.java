@@ -2,6 +2,8 @@ package doritos.doriroom.user.service;
 
 import doritos.doriroom.user.domain.RoomLike;
 import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.exception.RoomLikeException;
+import doritos.doriroom.user.exception.SelfRoomLikeNotAllowedException;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.RoomLikeRepository;
 import doritos.doriroom.user.repository.UserRepository;
@@ -30,7 +32,7 @@ public class RoomLikeService {
 
             // 자신의 방을 좋아요하려는 경우 예외 처리
             if (liker.getUserId().equals(roomOwnerId)) {
-                throw new IllegalArgumentException("자신의 방은 좋아요할 수 없습니다.");
+                throw new SelfRoomLikeNotAllowedException();
             }
 
             Optional<RoomLike> existingLike = roomLikeRepository.findByLikerIdAndRoomOwnerId(
@@ -64,7 +66,7 @@ public class RoomLikeService {
         } catch (UserNotFoundException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException("방 좋아요 처리 중 오류가 발생했습니다.");
+            throw new RoomLikeException();
         }
     }
 
