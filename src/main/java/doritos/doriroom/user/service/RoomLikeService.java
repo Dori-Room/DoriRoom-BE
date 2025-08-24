@@ -2,6 +2,7 @@ package doritos.doriroom.user.service;
 
 import doritos.doriroom.user.domain.RoomLike;
 import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.dto.response.RoomLikeResponseDto;
 import doritos.doriroom.user.exception.RoomLikeException;
 import doritos.doriroom.user.exception.SelfRoomLikeNotAllowedException;
 import doritos.doriroom.user.exception.UserNotFoundException;
@@ -24,7 +25,7 @@ public class RoomLikeService {
     private final UserRepository userRepository;
 
     @Transactional
-    public boolean setLikeStatus(User liker, UUID roomOwnerId, boolean isLiked) {
+    public RoomLikeResponseDto setLikeStatus(User liker, UUID roomOwnerId, boolean isLiked) {
         try {
             // 방 주인 존재 여부 확인
             User roomOwner = userRepository.findByUserId(roomOwnerId)
@@ -41,7 +42,11 @@ public class RoomLikeService {
 
             if (isLiked) {
                 if (existingLike.isPresent()) {
-                    return true; // 이미 좋아요한 상태
+                    int currentLikeCount = roomOwner.getLikeCount();
+                    return RoomLikeResponseDto.builder()
+                        .isLiked(true)
+                        .likeCount(currentLikeCount)
+                        .build();
                 } else {
                     // 좋아요 추가
                     RoomLike roomLike = RoomLike.from(liker, roomOwner);
@@ -49,7 +54,11 @@ public class RoomLikeService {
                     roomOwner.incrementLikeCount();
                     userRepository.save(roomOwner);
 
-                    return true;
+                    int newLikeCount = roomOwner.getLikeCount();
+                    return RoomLikeResponseDto.builder()
+                        .isLiked(true)
+                        .likeCount(newLikeCount)
+                        .build();
                 }
             } else {
                 if (existingLike.isPresent()) {
@@ -58,9 +67,17 @@ public class RoomLikeService {
                     roomOwner.decrementLikeCount();
                     userRepository.save(roomOwner);
 
-                    return false;
+                    int newLikeCount = roomOwner.getLikeCount();
+                    return RoomLikeResponseDto.builder()
+                        .isLiked(false)
+                        .likeCount(newLikeCount)
+                        .build();
                 } else {
-                    return false; // 이미 좋아요하지 않은 상태
+                    int currentLikeCount = roomOwner.getLikeCount();
+                    return RoomLikeResponseDto.builder()
+                        .isLiked(false)
+                        .likeCount(currentLikeCount)
+                        .build();
                 }
             }
         } catch (UserNotFoundException e) {
