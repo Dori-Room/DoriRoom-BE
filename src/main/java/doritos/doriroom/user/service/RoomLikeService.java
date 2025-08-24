@@ -92,11 +92,4 @@ public class RoomLikeService {
             liker.getUserId(), roomOwnerId
         ).isPresent();
     }
-
-    // 방 좋아요 수 조회
-    public int getRoomLikeCount(UUID roomOwnerId) {
-        User roomOwner = userRepository.findByUserId(roomOwnerId)
-            .orElseThrow(UserNotFoundException::new);
-        return roomOwner.getLikeCount();
-    }
 }
