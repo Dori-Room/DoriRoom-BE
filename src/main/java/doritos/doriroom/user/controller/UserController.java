@@ -100,6 +100,6 @@ public class UserController {
             @AuthenticationPrincipal User user,
             @RequestParam @Valid UUID userId
         ){
-            return ApiResponse.ok(userService.getOhterUserRoomInfo(user.getUserId(), userId));
+            return ApiResponse.ok(userService.getOtherUserRoomInfo(user.getUserId(), userId));
         }
 }

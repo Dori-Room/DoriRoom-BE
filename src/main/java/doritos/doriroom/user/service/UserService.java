@@ -17,6 +17,7 @@ import doritos.doriroom.user.repository.UserRepository;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -118,8 +119,8 @@ public class UserService {
     }
 
     //다른 유저의 방 정보
-    @Transactional(readOnly = true)
-    public OtherUserRoomResponseDto getOhterUserRoomInfo(UUID userId, UUID targetUserId){
+    @Transactional
+    public OtherUserRoomResponseDto getOtherUserRoomInfo(UUID userId, UUID targetUserId){
         if (userId.equals(targetUserId)) {
             throw new IllegalArgumentException("자신의 방 정보는 이 API로 조회할 수 없습니다.");
         }
