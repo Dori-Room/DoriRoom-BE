@@ -40,36 +40,16 @@ public class TourApiService {
     public List<TourApiItemDto> fetchTodayEvents() {
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-        // eventStartDate만 넣고 호출
-        Map<String, String> startDateParams = new HashMap<>();
-        startDateParams.put("eventStartDate", today);
-        List<TourApiItemDto> fromStartDate = fetchAllPages(startDateParams);
-
         // modifiedtime만 사용하는 호출
         Map<String, String> modifiedParams = new HashMap<>();
         modifiedParams.put("eventStartDate", "20160101");
-        modifiedParams.put("modifiedtime", "20250717");
+        modifiedParams.put("modifiedtime", today);
         List<TourApiItemDto> fromModifiedTime = fetchAllPages(modifiedParams);
 
-        // 3. contentId 기준으로 중복 제거
-        Map<String, TourApiItemDto> merged = new LinkedHashMap<>();
+        log.info("오늘 기준으로 가져온 이벤트: {}건 ( modifiedTime 기반: {})",
+            fromModifiedTime.size(), fromModifiedTime.size());
 
-        for (TourApiItemDto dto : fromStartDate) {
-            if (dto.getContentid() != null && !dto.getContentid().isBlank()) {
-                merged.put(dto.getContentid(), dto);
-            }
-        }
-
-        for (TourApiItemDto dto : fromModifiedTime) {
-            if (dto.getContentid() != null && !dto.getContentid().isBlank()) {
-                merged.put(dto.getContentid(), dto); // 동일 contentId면 덮어씀
-            }
-        }
-
-        log.info("오늘 기준으로 가져온 이벤트: {}건 (startDate 기반: {}, modifiedTime 기반: {})",
-            merged.size(), fromStartDate.size(), fromModifiedTime.size());
-
-        return new ArrayList<>(merged.values());
+        return fromModifiedTime;
     }
 
     //특정 축제의 상세정보(detailIntro2) 가져오기 (주관사, 주최사, 가격)
