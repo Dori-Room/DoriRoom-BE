@@ -4,6 +4,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import doritos.doriroom.diary.domain.QDiary;
 import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.domain.EventDetailStatus;
 import doritos.doriroom.event.domain.QEvent;
 import doritos.doriroom.event.domain.QEventFavorite;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
@@ -27,6 +28,7 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
         List<Event> results = queryFactory
             .selectFrom(event)
             .where(
+                isSuccessStatus(event),
                 eqAreaCode(filter.areaCode(), event),
                 eqSigunguCodes(filter.sigunguCodes(), event),
                 eqCategoryCodes(filter.categoryCodes(), event),
@@ -43,6 +45,7 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
             .select(event.count())
             .from(event)
             .where(
+                isSuccessStatus(event),
                 eqAreaCode(filter.areaCode(), event),
                 eqSigunguCodes(filter.sigunguCodes(), event),
                 eqCategoryCodes(filter.categoryCodes(), event),
@@ -71,7 +74,10 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
                 .and(diary.createdAt.goe(thirtyDaysAgo)))
             .leftJoin(eventFavorite).on(eventFavorite.event.eventId.eq(event.eventId)
                 .and(eventFavorite.createdAt.goe(thirtyDaysAgo)))
-            .where(event.startDate.goe(today))
+            .where(
+                isSuccessStatus(event),
+                event.startDate.goe(today)
+            )
             .groupBy(event.eventId)
             .orderBy(
                 diary.count().multiply(3)
@@ -110,5 +116,9 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
     private BooleanExpression eqKeyword(String keyword, QEvent event) {
         return keyword != null && !keyword.trim().isEmpty()
             ? event.title.containsIgnoreCase(keyword) : null;
+    }
+
+    private BooleanExpression isSuccessStatus(QEvent event) {
+        return event.eventDetailStatus.eq(EventDetailStatus.SUCCESS);
     }
 }

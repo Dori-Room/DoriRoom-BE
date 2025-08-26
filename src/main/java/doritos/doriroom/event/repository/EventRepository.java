@@ -19,21 +19,26 @@ public interface EventRepository extends JpaRepository<Event, UUID>, EventReposi
     List<Event> findEventsByContentIds(@Param("contentIds") List<Integer> contentIds);
 
     @Query("""
-    SELECT e FROM Event e
-    WHERE e.startDate >= CURRENT_DATE
-    ORDER BY e.startDate ASC
+        SELECT e FROM Event e
+        WHERE e.startDate >= CURRENT_DATE
+        AND e.eventDetailStatus = 'SUCCESS'
+        ORDER BY e.startDate ASC
     """)
     List<Event> findUpcomingEvents(Pageable pageable);
 
-    @Query("SELECT e FROM Event e " +
-        "WHERE e.startDate <= :today AND e.endDate >= :today " +
-        "ORDER BY e.endDate ASC")
+    @Query("""
+        SELECT e FROM Event e
+        WHERE e.startDate <= :today AND e.endDate >= :today
+        AND e.eventDetailStatus = 'SUCCESS'
+        ORDER BY e.endDate ASC
+    """)
     List<Event> findEndingSoonEvents(@Param("today") LocalDate today, Pageable pageable);
 
     @Query("""
         SELECT e FROM Event e
         WHERE e.areaCode IN :areaCodes
         AND e.endDate >= CURRENT_DATE
+        AND e.eventDetailStatus = 'SUCCESS'
         ORDER BY e.startDate ASC
     """)
     Page<Event> findByAreaCodesIn(@Param("areaCodes") List<Integer> areaCodes, Pageable pageable);
