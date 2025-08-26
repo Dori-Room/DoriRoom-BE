@@ -1,4 +1,4 @@
-package doritos.doriroom.follow.dto.response;
+package doritos.doriroom.user.dto.response;
 
 import java.util.UUID;
 
