@@ -1,6 +1,7 @@
 package doritos.doriroom.event.service;
 
 import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.domain.EventDetailStatus;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventDetailResponseDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
@@ -90,37 +91,50 @@ public class EventService {
 
     @Transactional
     public void updateEventDetails() {
-        List<Event> events = eventRepository.findEventsNeedingDetailUpdate();
-        int dailyLimit = 900;
+        List<Event> events = eventRepository.findByEventDetailStatusOrderByStartDateDesc(EventDetailStatus.PENDING);
+        int dailyLimit = 10;
         int processedCount = 0;
 
         log.info("축제 상세정보 업데이트 시작");
 
         for (Event event : events) {
+            EventDetailStatus currentStatus = EventDetailStatus.PENDING;
             if (processedCount >= dailyLimit) {
                 log.info("오늘의 업데이트 한도({}개)에 도달했습니다. 남은 이벤트: {}개", dailyLimit, events.size() - processedCount);
                 break;
             }
 
             try {
-                // detailIntro2 업데이트
+                // detailIntro2, detailInfo2 업데이트
                 TourApiDetailIntroDto detailIntroDto = tourApiService.fetchEventDetailIntro(event.getContentId());
-                event.updateDetailFrom(detailIntroDto);
-                processedCount++;
-
-                // detailInfo2 업데이트
                 List<TourApiDetailInfoDto> detailInfoList = tourApiService.fetchEventDetailInfo(event.getContentId());
-                event.updateDetailInfoFrom(detailInfoList);
-                processedCount++;
+                processedCount += 2;
 
-                eventRepository.save(event);
-
-                // API 호출 간격 조절
-                Thread.sleep(500);
-
+                //API에서 삭제된 경우
+                if (detailIntroDto == null && (detailInfoList == null || detailInfoList.isEmpty())) {
+                    currentStatus = EventDetailStatus.DELETED_FROM_API;
+                    log.warn("API에서 삭제된 이벤트 발견. contentId: {}", event.getContentId());
+                } else {
+                    // 데이터가 있으면 엔티티 업데이트 후 성공 처리
+                    event.updateDetailFrom(detailIntroDto);
+                    event.updateDetailInfoFrom(detailInfoList);
+                    currentStatus = EventDetailStatus.SUCCESS;
+                }
             } catch (Exception e) {
                 log.error("축제 상세정보 업데이트 실패. contentId: {}, error: {}", event.getContentId(), e.getMessage());
                 processedCount += 2;
+            }
+
+            //결정된 상태를 엔티티에 반영하고 저장
+            event.changeEventDetailStatus(currentStatus);
+            eventRepository.save(event);
+
+            try {
+                // API 호출 간격 조절
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("Thread sleep 중단됨", e);
             }
         }
         log.info("전체 축제 상세정보 업데이트 완료");
@@ -152,7 +166,7 @@ public class EventService {
             .orElseThrow(EventNotFoundException::new);
 
         //DB에 상세정보가 없으면 tourAPI 호출
-        if(!event.isDetailUpdated()){
+        if(event.getEventDetailStatus() == EventDetailStatus.PENDING){
             try{
                 TourApiDetailIntroDto detailIntroDto = tourApiService.fetchEventDetailIntro(event.getContentId());
                 event.updateDetailFrom(detailIntroDto);
