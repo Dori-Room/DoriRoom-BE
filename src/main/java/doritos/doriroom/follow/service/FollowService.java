@@ -3,6 +3,7 @@ package doritos.doriroom.follow.service;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.FollowFilterType;
 import doritos.doriroom.follow.dto.request.FollowRequestDto;
+import doritos.doriroom.follow.dto.request.SetBestFriendRequestDto;
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
 import doritos.doriroom.follow.dto.response.*;
 import doritos.doriroom.follow.exception.CannotFollowSelfException;
@@ -71,7 +72,7 @@ public class FollowService {
 
     // 단짝 친구 설정 및 해제(토글(
     @Transactional
-    public FollowResponseDto toggleBestFriend(User user, UUID targetUserId){
+    public FollowResponseDto toggleBestFriend(User user, UUID targetUserId, SetBestFriendRequestDto request) {
         User targetUser = userRepository.findById(targetUserId)
                 .orElseThrow(UserNotFoundException::new);
 
@@ -79,7 +80,7 @@ public class FollowService {
         Follow follow = followRepository.findByFollowerAndFollowed(user, targetUser)
                 .orElseThrow(FollowNotFoundException::new);
 
-        follow.setBestFriend(!follow.isBestFriend()); // isBestFriend 값을 반전하여 반영
+        follow.setBestFriend(request.isBestFriend()); // 요청 받은 값으로 설정
         return FollowResponseDto.from(follow);
     }
 
