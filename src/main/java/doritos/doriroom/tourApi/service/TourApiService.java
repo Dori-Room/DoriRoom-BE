@@ -35,15 +35,15 @@ public class TourApiService {
         return fetchAllPages(queryParams);
     }
 
-     //오늘 업데이트된 축제 데이터 가져오기
+     //어제 업데이트된 축제 데이터 가져오기
     @Transactional
     public List<TourApiItemDto> fetchTodayEvents() {
-        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String yesterday = LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
         // modifiedtime만 사용하는 호출
         Map<String, String> modifiedParams = new HashMap<>();
         modifiedParams.put("eventStartDate", "20160101");
-        modifiedParams.put("modifiedtime", today);
+        modifiedParams.put("modifiedtime", yesterday);
         List<TourApiItemDto> fromModifiedTime = fetchAllPages(modifiedParams);
 
         log.info("오늘 기준으로 가져온 이벤트: {}건 ( modifiedTime 기반: {})",
