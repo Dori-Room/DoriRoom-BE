@@ -35,11 +35,12 @@ public class FollowController {
         return ApiResponse.ok();
     }
 
-    @Operation(summary = "단짝 친구 설정 및 해제", description = "팔로우한 유저를 단짝 친구로 설정하거나 해제.")
+    @Operation(summary = "단짝 친구 설정 및 해제", description = "팔로우한 유저를 단짝 친구로 설정하거나 해제. 변경하려는 상태를 요청에 포함하여 반영.")
     @PutMapping("/{targetUserId}/best-friend")
     public ApiResponse<FollowResponseDto> toggleBestFriend(@AuthenticationPrincipal User user,
-                                                           @PathVariable UUID targetUserId) {
-        return ApiResponse.ok(followService.toggleBestFriend(user, targetUserId));
+                                                           @PathVariable UUID targetUserId,
+                                                           @RequestBody SetBestFriendRequestDto request) {
+        return ApiResponse.ok(followService.toggleBestFriend(user, targetUserId, request));
     }
 
     @Operation(summary = "팔로우 상태 확인", description = "특정 사용자와의 팔로우 관계 상태를 조회. 방에 방문 시 혹은 그 외에서 팔로우 버튼 선택 시 사용")
