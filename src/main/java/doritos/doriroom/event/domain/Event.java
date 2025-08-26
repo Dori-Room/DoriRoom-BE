@@ -103,8 +103,8 @@ public class Event {
     private String polygon;
 
     @Column
-    @Builder.Default
-    private boolean detailUpdated = false;
+    @Enumerated(EnumType.STRING)
+    private EventDetailStatus eventDetailStatus;
 
     public static Event fromEntity(TourApiItemDto dto){
         if (dto.getContentid() == null || dto.getContentid().isBlank()) {
@@ -135,6 +135,8 @@ public class Event {
             .lclsSystm2(dto.getLclsSystm2())
             .lclsSystm3(dto.getLclsSystm3())
             .favoriteCount(0)
+            .diaryCount(0)
+            .eventDetailStatus(EventDetailStatus.PENDING)
             .build();
     }
 
@@ -164,7 +166,6 @@ public class Event {
             this.sponsor1 = dto.getSponsor1();
             this.sponsor2 = dto.getSponsor2();
             this.useTimeFestival = dto.getUsetimefestival();
-            this.detailUpdated = true;
         }
     }
 
@@ -177,9 +178,14 @@ public class Event {
                     this.eventContent = detailInfo.getInfotext();
                 }
             }
-            this.detailUpdated = true;
         }
     }
+
+    // 상태를 변경하는 메서드를 외부에 명확하게 제공
+    public void changeEventDetailStatus(EventDetailStatus status) {
+        this.eventDetailStatus = status;
+    }
+
 
     public void increaseFavoriteCount() {
         this.favoriteCount++;
