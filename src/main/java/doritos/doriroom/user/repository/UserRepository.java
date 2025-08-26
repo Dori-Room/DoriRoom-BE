@@ -19,6 +19,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     
     Optional<User> findByUsername(String username); // 로그인 시 유저 조회
     Optional<User> findByUserId(UUID userId);
+    List<User> findByNicknameContainingIgnoreCase(String nickname); // 키워드로 유저 조회 (대소문자 무시)
 
     @Query("SELECT u FROM User u WHERE u.userId IN :userIds")
     List<User> findByUserIdIn(@Param("userIds") List<UUID> userIds);
