@@ -1,7 +1,12 @@
 package doritos.doriroom.user.service;
 
 import doritos.doriroom.auth.exception.InvalidPasswordException;
+import doritos.doriroom.follow.domain.Follow;
+import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
+import doritos.doriroom.follow.dto.response.UserSearchResultDto;
+import doritos.doriroom.follow.repository.FollowRepository;
 import doritos.doriroom.item.dto.response.EquippedItemResponse;
+import doritos.doriroom.item.repository.ItemRepository;
 import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.User;
@@ -17,7 +22,11 @@ import doritos.doriroom.user.exception.SelfRoomInfoNotAllowedException;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,6 +41,7 @@ public class UserService {
     private final PasswordEncoder encoder;
     private final S3Uploader s3Uploader;
     private final ItemService itemService;
+    private final FollowRepository followRepository;
 
     public void checkUsernameDuplicate(String username){
         if (userRepository.existsByUsername(username)) {
@@ -153,5 +163,47 @@ public class UserService {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFoundException::new);
         user.setViewCount(user.getViewCount()+1);
         userRepository.save(user);
+    }
+
+    // 유저 검색
+    public List<UserSearchResultDto> searchUsers(User user, UserSearchRequestDto request) {
+        // 닉네임으로 유저 검색 (자기 자신 제외)
+        List<User> foundUsers = userRepository
+                .findByNicknameContainingIgnoreCaseAndUserIdNot(request.keyword(), user.getUserId());
+
+        if (foundUsers.isEmpty()) return List.of();
+
+        Set<UUID> foundUserIds = foundUsers.stream()
+                .map(User::getUserId)
+                .collect(Collectors.toSet());
+
+        // 내가 팔로우하는 관계
+        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(user, foundUserIds)
+                .stream()
+                .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
+
+        // 나를 팔로우하는 관계
+        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(user, foundUserIds);
+
+
+        return foundUsers.stream()
+                .map(targetUser -> {
+                    UUID targetUserId = targetUser.getUserId();
+                    Follow following = followingMap.get(targetUserId);
+
+                    boolean isFollowing = following != null;
+                    boolean isBestFriend = following != null && following.isBestFriend();
+                    boolean isFollowedBy = followedByMeUserIds.contains(targetUserId);
+
+                    return new UserSearchResultDto(
+                            targetUserId,
+                            targetUser.getNickname(),
+                            targetUser.getProfileImageUrl(),
+                            isFollowing,
+                            isFollowedBy,
+                            isBestFriend
+                    );
+                })
+                .toList();
     }
 }

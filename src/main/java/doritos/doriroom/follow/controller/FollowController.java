@@ -63,11 +63,4 @@ public class FollowController {
         return ApiResponse.ok(followService.getFollowerList(user, filterType));
     }
 
-    @Operation(summary = "사용자 검색", description = "닉네임으로 유저를 검색 (팔로우 상태를 함께 조회)")
-    @PostMapping("/search")
-    public ApiResponse<List<UserSearchResultDto>> searchUsers(@AuthenticationPrincipal User user,
-                                                              @RequestBody UserSearchRequestDto request) {
-        return ApiResponse.ok(followService.searchUsers(user, request));
-    }
-
 }

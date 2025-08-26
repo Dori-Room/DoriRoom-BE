@@ -176,49 +176,5 @@ public class FollowService {
         return new FollowListResponseDto(followerUsers, followerUsers.size());
     }
 
-    // 유저 검색
-    public List<UserSearchResultDto> searchUsers(User user, UserSearchRequestDto request) {
-        // 닉네임으로 유저 검색 (자기 자신 제외)
-        List<User> foundUsers = userRepository
-                .findByNicknameContainingIgnoreCaseAndUserIdNot(request.keyword(), user.getUserId());
-
-        if (foundUsers.isEmpty()) return List.of();
-
-        Set<UUID> foundUserIds = foundUsers.stream()
-                .map(User::getUserId)
-                .collect(Collectors.toSet());
-
-        // 내가 팔로우하는 관계
-        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(user, foundUserIds)
-                .stream()
-                .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
-
-        // 나를 팔로우하는 관계
-        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(user, foundUserIds);
-
-
-        return foundUsers.stream()
-                .map(targetUser -> {
-                    UUID targetUserId = targetUser.getUserId();
-                    Follow following = followingMap.get(targetUserId);
-
-                    boolean isFollowing = following != null;
-                    boolean isBestFriend = following != null && following.isBestFriend();
-                    boolean isFollowedBy = followedByMeUserIds.contains(targetUserId);
-
-                    return new UserSearchResultDto(
-                            targetUserId,
-                            targetUser.getNickname(),
-                            targetUser.getProfileImageUrl(),
-                            isFollowing,
-                            isFollowedBy,
-                            isBestFriend
-                    );
-                })
-                .toList();
-
-//        return new FollowListResponseDto(followerUsers, followerUsers.size());
-    }
-
 }
 
