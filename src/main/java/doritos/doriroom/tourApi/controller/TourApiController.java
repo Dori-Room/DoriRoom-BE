@@ -109,6 +109,13 @@ public class TourApiController {
         return ApiResponse.ok("DB에 축제 관련 데이터 저장 완료");
     }
 
+    @Operation(summary = "어제 수정된 축제 정보 받아와서 DB에 반영 (관리자용)")
+    @PostMapping("/update")
+    public ApiResponse<String> update() {
+        eventService.updateTodayEvents();
+        return ApiResponse.ok("DB에 수정된 축제 정보 반영");
+    }
+
     @Operation(
         summary = "전체 축제 상세 정보 초기화 (관리자용)",
         description = """
