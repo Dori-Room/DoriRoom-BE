@@ -1,4 +1,73 @@
 package doritos.doriroom.follow.controller;
 
+import doritos.doriroom.follow.dto.FollowFilterType;
+import doritos.doriroom.follow.dto.request.*;
+import doritos.doriroom.follow.dto.response.*;
+import doritos.doriroom.follow.service.FollowService;
+import doritos.doriroom.global.dto.ApiResponse;
+import doritos.doriroom.user.domain.User;
+import io.swagger.v3.oas.annotations.Operation;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.UUID;
+
+
+@RestController
+@RequestMapping("/api/follows")
+@RequiredArgsConstructor
 public class FollowController {
+    private final FollowService followService;
+
+    @Operation(summary = "팔로우하기", description = "특정 유저를 팔로우")
+    @PostMapping
+    public ApiResponse<FollowResponseDto> followUser(@AuthenticationPrincipal User user,
+                                                     @RequestBody FollowRequestDto request){
+        return ApiResponse.ok(followService.followUser(user, request));
+    }
+
+    @Operation(summary = "언팔로우하기", description = "특정 유저를 언팔로우")
+    @DeleteMapping("/{targetUserId}")
+    public ApiResponse<Void> unfollowUser(@AuthenticationPrincipal User user,
+                                          @PathVariable UUID targetUserId){
+        followService.unfollowUser(user, targetUserId);
+        return ApiResponse.ok();
+    }
+
+    @Operation(summary = "단짝 친구 설정 및 해제", description = "팔로우한 유저를 단짝 친구로 설정하거나 해제.")
+    @PutMapping("/{targetUserId}/best-friend")
+    public ApiResponse<FollowResponseDto> toggleBestFriend(@AuthenticationPrincipal User user,
+                                                           @PathVariable UUID targetUserId) {
+        return ApiResponse.ok(followService.toggleBestFriend(user, targetUserId));
+    }
+
+    @Operation(summary = "팔로우 상태 확인", description = "특정 사용자와의 팔로우 관계 상태를 조회. 방에 방문 시 혹은 그 외에서 팔로우 버튼 선택 시 사용")
+    @GetMapping("/status/{targetUserId}")
+    public ApiResponse<FollowStatusResponseDto> getFollowStatus(@AuthenticationPrincipal User user,
+                                                                @PathVariable UUID targetUserId) {
+        return ApiResponse.ok(followService.getFollowStatus(user, targetUserId));
+    }
+
+    @Operation(summary = "팔로잉 목록 조회", description = "내가 팔로우하는 유저 목록을 조회. 최신, 오래된순, 단짝친구만(최신순) 으로 필터링. 기본값 최신순")
+    @GetMapping("/following")
+    public ApiResponse<FollowListResponseDto> getFollowingList(@AuthenticationPrincipal User user,
+                                                               @RequestParam(defaultValue = "RECENT") FollowFilterType filterType) {
+        return ApiResponse.ok(followService.getFollowingList(user, filterType));
+    }
+
+    @Operation(summary = "팔로워 목록 조회", description = "나를 팔로우하는 유저 목록을 조회. 최신순, 오래된순으로 정렬")
+    @GetMapping("/followers")
+    public ApiResponse<FollowListResponseDto> getFollowerList(@AuthenticationPrincipal User user,
+                                                              @RequestParam(defaultValue = "RECENT") FollowFilterType filterType) {
+        return ApiResponse.ok(followService.getFollowerList(user, filterType));
+    }
+
+    @Operation(summary = "사용자 검색", description = "닉네임으로 유저를 검색 (팔로우 상태를 함께 조회)")
+    @PostMapping("/search")
+    public ApiResponse<List<UserSearchResultDto>> searchUsers(@AuthenticationPrincipal User user,
+                                                              @RequestBody UserSearchRequestDto request) {
+        return ApiResponse.ok(followService.searchUsers(user, request));
+    }
+
 }
