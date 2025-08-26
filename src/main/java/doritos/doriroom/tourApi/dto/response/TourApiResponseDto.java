@@ -1,5 +1,8 @@
 package doritos.doriroom.tourApi.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.util.Collections;
 import java.util.List;
 import lombok.Data;
 
@@ -21,6 +24,8 @@ public class TourApiResponseDto {
 
     @Data
     public static class TourApiBody{
+        @JsonProperty("items")
+        @JsonDeserialize(using = ItemsDeserializer.class)
         private Items items;
         private long numOfRows;
         private int pageNo;
