@@ -8,6 +8,10 @@ import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -52,16 +56,17 @@ public class FollowController {
 
     @Operation(summary = "팔로잉 목록 조회", description = "내가 팔로우하는 유저 목록을 조회. 최신, 오래된순, 단짝친구만(최신순) 으로 필터링. 기본값 최신순")
     @GetMapping("/following")
-    public ApiResponse<FollowListResponseDto> getFollowingList(@AuthenticationPrincipal User user,
-                                                               @RequestParam(defaultValue = "RECENT") FollowFilterType filterType) {
-        return ApiResponse.ok(followService.getFollowingList(user, filterType));
+    public ApiResponse<Page<FollowUserInfoDto>> getFollowingList(@AuthenticationPrincipal User user,
+                                                                 @RequestParam(defaultValue = "RECENT") FollowFilterType filterType,
+                                                                 @PageableDefault(size = 100, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ApiResponse.ok(followService.getFollowingList(user, filterType, pageable));
     }
 
     @Operation(summary = "팔로워 목록 조회", description = "나를 팔로우하는 유저 목록을 조회. 최신순, 오래된순으로 정렬")
     @GetMapping("/followers")
-    public ApiResponse<FollowListResponseDto> getFollowerList(@AuthenticationPrincipal User user,
-                                                              @RequestParam(defaultValue = "RECENT") FollowFilterType filterType) {
-        return ApiResponse.ok(followService.getFollowerList(user, filterType));
+    public ApiResponse<Page<FollowUserInfoDto>> getFollowerList(@AuthenticationPrincipal User user,
+                                                                @PageableDefault(size = 100, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ApiResponse.ok(followService.getFollowerList(user, pageable));
     }
 
 }

@@ -14,6 +14,8 @@ import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 import lombok.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,76 +107,61 @@ public class FollowService {
     }
 
     // 내가 팔로우 하는 유저 목록 조회 (팔로잉 목록)
-    public FollowListResponseDto getFollowingList(User user, FollowFilterType filterType) {
-        List<Follow> follows = switch (filterType) { // 필터링 적용, 기본값 최신순
-            case RECENT -> followRepository.findByFollowerWithFollowedOrderByCreatedAtDesc(user);
-            case OLDEST -> followRepository.findByFollowerWithFollowedOrderByCreatedAtAsc(user);
-            case BEST_FRIEND -> followRepository.findBestFriendsByFollowerOrderByCreatedAtDesc(user);
-        };
+    public Page<FollowUserInfoDto> getFollowingList(User user, FollowFilterType filterType, Pageable pageable) {
+        Page<Follow> followPage;
+        // 단짝친구 조회 또는 기본 조회
+        if (filterType == FollowFilterType.BEST_FRIEND){
+            followPage = followRepository.findByFollowerAndIsBestFriendTrue(user, pageable);
+        } else {
+            followPage = followRepository.findByFollower(user, pageable);
+        }
 
-        // 맞팔로우 상태 유저 배치 조회
-        Set<UUID> followedUserIds = follows.stream()
+        // 내가 팔로우하는 상태와 단짝 상태 배치 조회
+        Set<UUID> followedUserIds = followPage.getContent().stream()
                 .map(follow -> follow.getFollowed().getUserId())
                 .collect(Collectors.toSet());
-        Set<UUID> mutualFollowIds = followRepository.findMutualFollowUserIds(user.getUserId(), followedUserIds);
+        // 맞팔로우 상태 유저 배치 조회
+        Set<UUID> mutualFollowIds = followedUserIds.isEmpty() ? Set.of() :    // 맞팔로우 없는 경우 빈 set 반환
+                followRepository.findMutualFollowUserIds(user.getUserId(), followedUserIds);
 
-
-        // 내 팔로우 유저 정보 리스트 생성
-        List<FollowUserInfoDto> followingUsers = follows.stream()
-                .map(follow -> new FollowUserInfoDto(
-                        follow.getFollowed().getUserId(),
-                        follow.getFollowed().getNickname(),
-                        follow.getFollowed().getProfileImageUrl(),
-                        true,
-                        mutualFollowIds.contains(follow.getFollowed().getUserId()), // isFollowedBy
-                        follow.isBestFriend(),
-                        follow.getCreatedAt()
-                ))
-                .toList();
-
-        return new FollowListResponseDto(followingUsers, followingUsers.size());
+        // 내 팔로우 유저 정보 페이지 반환
+        return followPage.map(follow -> new FollowUserInfoDto(
+                follow.getFollowed().getUserId(),
+                follow.getFollowed().getNickname(),
+                follow.getFollowed().getProfileImageUrl(),
+                true,
+                mutualFollowIds.contains(follow.getFollowed().getUserId()),
+                follow.isBestFriend(),
+                follow.getCreatedAt()
+        ));
     }
 
     // 나를 팔로우 하는 유저 목록 조회 (팔로워 목록)
-    public FollowListResponseDto getFollowerList(User user, FollowFilterType filterType) {
-//        if (filterType == FollowFilterType.BEST_FRIEND)
-//            throw new ?Exception("팔로워 목록에는 단짝 친구 필터링을 사용할 수 없습니다.");
-
-        List<Follow> follows = switch (filterType) {
-            case OLDEST -> followRepository.findByFollowedWithFollowerOrderByCreatedAtAsc(user);
-            case RECENT, BEST_FRIEND -> followRepository.findByFollowedWithFollowerOrderByCreatedAtDesc(user);
-        };
+    public Page<FollowUserInfoDto> getFollowerList(User user, Pageable pageable) {
+        Page<Follow> followPage = followRepository.findByFollowed(user, pageable);
 
         // 내가 팔로우하는 상태와 단짝 상태 배치 조회
-        Set<UUID> followerUserIds = follows.stream()
+        Set<UUID> followerUserIds = followPage.getContent().stream()
                 .map(follow -> follow.getFollower().getUserId())
                 .collect(Collectors.toSet());
-        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(user, followerUserIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        follow -> follow.getFollowed().getUserId(),
-                        follow -> follow
-                ));
+        Map<UUID, Follow> followingMap = followerUserIds.isEmpty() ? Map.of() :
+                followRepository.findByFollowerAndFollowed_UserIdIn(user, followerUserIds)
+                        .stream()
+                        .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
 
-        // 팔로워 목록
-        List<FollowUserInfoDto> followerUsers = follows.stream()
-                .map(follow -> {
-                    UUID followerId = follow.getFollower().getUserId();
-                    Follow following = followingMap.get(followerId);
-
-                    return new FollowUserInfoDto(
-                            follow.getFollower().getUserId(),
-                            follow.getFollower().getNickname(),
-                            follow.getFollower().getProfileImageUrl(),
-                            following != null, // isFollowing
-                            true, // isFollowedBy
-                            following != null && following.isBestFriend(),
-                            follow.getCreatedAt()
-                    );
-                })
-                .toList();
-
-        return new FollowListResponseDto(followerUsers, followerUsers.size());
+        // 팔로워 패이지 반환
+        return followPage.map(follow -> {
+            Follow following = followingMap.get(follow.getFollower().getUserId());
+            return new FollowUserInfoDto(
+                    follow.getFollower().getUserId(),
+                    follow.getFollower().getNickname(),
+                    follow.getFollower().getProfileImageUrl(),
+                    following != null,
+                    true,
+                    following != null && following.isBestFriend(),
+                    follow.getCreatedAt()
+            );
+        });
     }
 
 }
