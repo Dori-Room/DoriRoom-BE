@@ -1,9 +1,11 @@
 package doritos.doriroom.tourApi.service;
 
 import doritos.doriroom.tourApi.dto.response.*;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,7 +55,8 @@ public class TourApiService {
     }
 
     //특정 축제의 상세정보(detailIntro2) 가져오기 (주관사, 주최사, 가격)
-    public TourApiDetailIntroDto fetchEventDetailIntro(int contentId) {
+    @Async
+    public CompletableFuture<TourApiDetailIntroDto> fetchEventDetailIntro(int contentId) {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put("contentId", String.valueOf(contentId));
         queryParams.put("contentTypeId", "15");
@@ -67,12 +70,13 @@ public class TourApiService {
             log.warn("축제 상세정보가 없습니다. contentId: {}", contentId);
             return null;
         }
-
-        return response.getResponse().getBody().getItems().getItem().get(0);
+        TourApiDetailIntroDto result = response.getResponse().getBody().getItems().getItem().get(0);
+        return CompletableFuture.completedFuture(result);
     }
 
      //특정 축제의 상세정보(detailInfo2) 가져오기 (행사소개, 행사내용)
-    public List<TourApiDetailInfoDto> fetchEventDetailInfo(int contentId) {
+    @Async
+    public CompletableFuture<List<TourApiDetailInfoDto>> fetchEventDetailInfo(int contentId) {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put("contentId", String.valueOf(contentId));
         queryParams.put("contentTypeId", "15");
@@ -84,13 +88,13 @@ public class TourApiService {
             response.getResponse().getBody().getItems() == null ||
             response.getResponse().getBody().getItems().getItem().isEmpty()) {
             log.warn("축제 상세정보(detailInfo2)가 없습니다. contentId: {}", contentId);
-            return new ArrayList<>();
+            return CompletableFuture.completedFuture(new ArrayList<>());
         }
 
         List<TourApiDetailInfoDto> items = response.getResponse().getBody().getItems().getItem();
         log.info("축제 상세정보 조회 완료. contentId: {}, 조회된 항목 수: {}", contentId, items.size());
         
-        return items;
+        return CompletableFuture.completedFuture(items);
     }
 
     // 페이징 전체 반복 로직
