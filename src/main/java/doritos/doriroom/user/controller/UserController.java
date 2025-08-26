@@ -2,7 +2,7 @@ package doritos.doriroom.user.controller;
 
 
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
-import doritos.doriroom.follow.dto.response.UserSearchResultDto;
+import doritos.doriroom.user.dto.response.UserSearchResultDto;
 import doritos.doriroom.follow.service.FollowService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
