@@ -1,6 +1,9 @@
 package doritos.doriroom.user.controller;
 
 
+import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
+import doritos.doriroom.follow.dto.response.UserSearchResultDto;
+import doritos.doriroom.follow.service.FollowService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
@@ -20,6 +23,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
+
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
     private final UserService userService;
     private final RoomLikeService roomLikeService;
+    private final FollowService followService;
 
         @GetMapping("/check-username")
         @Operation(summary = "아이디 중복 확인")
@@ -144,5 +150,12 @@ public class UserController {
 
         boolean isLiked = roomLikeService.isLiked(user, roomOwnerId);
         return ApiResponse.ok(isLiked);
+    }
+
+    @Operation(summary = "사용자 검색", description = "닉네임으로 유저를 검색 (팔로우 상태를 함께 조회)")
+    @PostMapping("/search")
+    public ApiResponse<List<UserSearchResultDto>> searchUsers(@AuthenticationPrincipal User user,
+                                                              @RequestBody UserSearchRequestDto request) {
+        return ApiResponse.ok(userService.searchUsers(user, request));
     }
 }
