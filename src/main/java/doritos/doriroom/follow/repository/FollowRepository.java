@@ -2,6 +2,10 @@ package doritos.doriroom.follow.repository;
 
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.user.domain.User;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,24 +20,20 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
     Optional<Follow> findByFollowerAndFollowed(User follower, User followed); // 팔로우 관계 조회
 
     // 내가 팔로우하는 사람들 조회
-    @Query("SELECT f FROM Follow f JOIN FETCH f.followed WHERE f.follower = :follower ORDER BY f.createdAt DESC")
-    List<Follow> findByFollowerWithFollowedOrderByCreatedAtDesc(@Param("follower") User follower); // 최신순
+    @EntityGraph(attributePaths = {"followed"}) // 한 번에 조회하도록 설정
+//    @Query(value = "SELECT f FROM Follow f JOIN FETCH f.followed WHERE f.follower = :follower", countQuery = "SELECT count(f) FROM Follow f WHERE f.follower = :follower")
+    Page<Follow> findByFollower(User follower, Pageable pageable);
 
-    @Query("SELECT f FROM Follow f JOIN FETCH f.followed WHERE f.follower = :follower ORDER BY f.createdAt ASC")
-    List<Follow> findByFollowerWithFollowedOrderByCreatedAtAsc(@Param("follower") User follower); // 오래된순
+    // 나를 팔로우하는 사람들 조회 (팔로워 목록)
+    @EntityGraph(attributePaths = {"follower"})
+//    @Query(value = "SELECT f FROM Follow f JOIN FETCH f.follower WHERE f.followed = :followed", countQuery = "SELECT count(f) FROM Follow f WHERE f.followed = :followed")
+    Page<Follow> findByFollowed(User followed, Pageable pageable);
 
+    // 단짝 친구들만 조회
+    @EntityGraph(attributePaths = {"followed"})
+//    @Query(value = "SELECT f FROM Follow f JOIN FETCH f.followed WHERE f.follower = :follower AND f.isBestFriend = true", countQuery = "SELECT count(f) FROM Follow f WHERE f.follower = :follower AND f.isBestFriend = true")
+    Page<Follow> findByFollowerAndIsBestFriendTrue(User follower, Pageable pageable);
 
-    // 나를 팔로우하는 사람들 조회
-    @Query("SELECT f FROM Follow f JOIN FETCH f.follower WHERE f.followed = :followed ORDER BY f.createdAt DESC")
-    List<Follow> findByFollowedWithFollowerOrderByCreatedAtDesc(@Param("followed") User followed); // 최신순
-
-    @Query("SELECT f FROM Follow f JOIN FETCH f.follower WHERE f.followed = :followed ORDER BY f.createdAt ASC")
-    List<Follow> findByFollowedWithFollowerOrderByCreatedAtAsc(@Param("followed") User followed); // 오래된순
-
-
-    // 단짝 친구들만 조회 (최신순)
-    @Query("SELECT f FROM Follow f JOIN FETCH f.followed WHERE f.follower = :follower AND f.isBestFriend = true ORDER BY f.createdAt DESC")
-    List<Follow> findBestFriendsByFollowerOrderByCreatedAtDesc(@Param("follower") User follower);
 
     // 특정 FollowerId(검색된 유저들) 중에서 나를 팔로우 하는 유저 목록
     @Query("SELECT f.follower.userId FROM Follow f WHERE f.followed = :followed AND f.follower.userId IN :followerIds")
@@ -44,10 +44,5 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
     Set<UUID> findMutualFollowUserIds(@Param("userId") UUID userId, @Param("followedUserIds") Set<UUID> followedUserIds);
 
     List<Follow> findByFollowerAndFollowed_UserIdIn(User user, Set<UUID> targetUserIds); // 팔로우 정보 추출
-
-
-//    // 도전과제용 혹은 유저 방에 명시
-//    long countByFollower(User follower); // 내가 팔로우하는 사람 수
-//    long countByFollowed(User followed); // 나를 팔로워하는 사람 수
 
 }
