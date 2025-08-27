@@ -4,6 +4,8 @@ import doritos.doriroom.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(
         name = "user_atlases",
@@ -19,8 +21,7 @@ import lombok.*;
 @Builder
 public class UserAtlas { // 유저의 지역별 도감
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private UUID userAtlasId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -34,5 +35,5 @@ public class UserAtlas { // 유저의 지역별 도감
     private int level = 0;
 
     @Builder.Default @Column(nullable = false)
-    private Long currentExp = 0L; // 현재 누적 경험치
+    private Long currentExp = 0L; // 현재 누적 경험치 (레벨 업 시 초기화 + 남은 레벨)
 }
