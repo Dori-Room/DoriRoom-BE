@@ -106,6 +106,7 @@ public class FollowService {
                 .build();
     }
 
+  
     // 내가 팔로우 하는 유저 목록 조회 (팔로워 목록)
     public Page<FollowUserInfoDto> getFollowerList(User user, FollowFilterType filterType, Pageable pageable) {
         Page<Follow> followPage;
@@ -135,6 +136,7 @@ public class FollowService {
                 follow.getCreatedAt()
         ));
     }
+
 
     // 나를 팔로우 하는 유저 목록 조회 (팔로잉 목록)
     public Page<FollowUserInfoDto> getFollowingList(User user, Pageable pageable) {

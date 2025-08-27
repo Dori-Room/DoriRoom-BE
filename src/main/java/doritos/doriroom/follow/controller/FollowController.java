@@ -54,6 +54,7 @@ public class FollowController {
         return ApiResponse.ok(followService.getFollowStatus(user, targetUserId));
     }
 
+
     @Operation(summary = "팔로워 목록 조회", description = "내가 팔로우하는 유저 목록을 조회. 최신, 오래된순, 단짝친구만(최신순) 으로 필터링. 기본값 최신순")
     @GetMapping("/followers")
     public ApiResponse<Page<FollowUserInfoDto>> getFollowingList(@AuthenticationPrincipal User user,
