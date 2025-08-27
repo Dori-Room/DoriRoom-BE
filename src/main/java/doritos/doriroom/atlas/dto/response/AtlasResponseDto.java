@@ -6,10 +6,13 @@ import doritos.doriroom.atlas.domain.UserAtlas;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import lombok.Builder;
 
+import java.util.UUID;
+
 @Builder
 public record AtlasResponseDto(
         Long atlasId,
-        AreaGroup areaGroup,
+        UUID userAtlasId,
+        AreaGroup areaGroup, // 지역
 
         // 레벨 관련 - 사용자의 레벨 진행 상태 표시
         int currentLevel,
@@ -26,7 +29,8 @@ public record AtlasResponseDto(
         long currentExp = (userAtlas != null) ? userAtlas.getCurrentExp() : 0L;
 
         return AtlasResponseDto.builder()
-                .atlasId(atlas.getId())
+                .atlasId(atlas.getId()) // 지역 도감 id
+                .userAtlasId(userAtlas.getUserAtlasId()) // 유저의 해당 지역 도감 id
                 .areaGroup(atlas.getAreaGroup())
                 .currentLevel(currentLevel)
                 .currentExp(currentExp)
