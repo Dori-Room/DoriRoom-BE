@@ -17,7 +17,7 @@ public record AtlasResponseDto(
         // 레벨 관련 - 사용자의 레벨 진행 상태 표시
         int currentLevel,
         Long currentExp,
-        Long nextLevelExp, // 다음 레벨로의 달성 기준
+        Long nextLevelExp, // 다음 레벨로의 달성 기준 (calculateRequiredExp()의 반환 값)
 
         // 다음에 받을 수 있는 보상 아이템 정보
         AtlasRewardItemDto  nextRewardItem
