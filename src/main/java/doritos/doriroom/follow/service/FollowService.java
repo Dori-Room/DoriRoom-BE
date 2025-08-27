@@ -106,8 +106,9 @@ public class FollowService {
                 .build();
     }
 
-    // 내가 팔로우 하는 유저 목록 조회 (팔로잉 목록)
-    public Page<FollowUserInfoDto> getFollowingList(User user, FollowFilterType filterType, Pageable pageable) {
+  
+    // 내가 팔로우 하는 유저 목록 조회 (팔로워 목록)
+    public Page<FollowUserInfoDto> getFollowerList(User user, FollowFilterType filterType, Pageable pageable) {
         Page<Follow> followPage;
         // 단짝친구 조회 또는 기본 조회
         if (filterType == FollowFilterType.BEST_FRIEND){
@@ -136,8 +137,9 @@ public class FollowService {
         ));
     }
 
-    // 나를 팔로우 하는 유저 목록 조회 (팔로워 목록)
-    public Page<FollowUserInfoDto> getFollowerList(User user, Pageable pageable) {
+
+    // 나를 팔로우 하는 유저 목록 조회 (팔로잉 목록)
+    public Page<FollowUserInfoDto> getFollowingList(User user, Pageable pageable) {
         Page<Follow> followPage = followRepository.findByFollowed(user, pageable);
 
         // 내가 팔로우하는 상태와 단짝 상태 배치 조회
@@ -149,7 +151,7 @@ public class FollowService {
                         .stream()
                         .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
 
-        // 팔로워 패이지 반환
+        // 팔로워 페이지 반환
         return followPage.map(follow -> {
             Follow following = followingMap.get(follow.getFollower().getUserId());
             return new FollowUserInfoDto(
