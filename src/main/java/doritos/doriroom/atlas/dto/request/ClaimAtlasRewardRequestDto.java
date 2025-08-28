@@ -1,4 +1,7 @@
 package doritos.doriroom.atlas.dto.request;
 
-public record ClaimAtlasReward() {
-}
+import jakarta.validation.constraints.NotNull;
+
+public record ClaimAtlasRewardRequestDto(
+        @NotNull Long atlasRewardId
+){ }

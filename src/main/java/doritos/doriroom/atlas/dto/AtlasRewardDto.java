@@ -26,13 +26,13 @@ public record AtlasRewardDto(
     public static AtlasRewardDto of(AtlasReward atlasReward, boolean isClaimed) {
         if (atlasReward == null) return null;
 
-        return new AtlasRewardDto(
-                atlasReward.getId(),
-                atlasReward.getTargetLevel(),
-                atlasReward.getRewardItem().getName(),
-                atlasReward.getRewardItem().getImageUrl(),
-                atlasReward.getRewardItem().getItemType(),
-                isClaimed
-        );
+        return AtlasRewardDto.builder()
+                .atlasRewardId(atlasReward.getId())
+                .targetLevel(atlasReward.getTargetLevel())
+                .itemName(atlasReward.getRewardItem().getName())
+                .itemImageUrl(atlasReward.getRewardItem().getImageUrl())
+                .itemType(atlasReward.getRewardItem().getItemType())
+                .isClaimed(isClaimed)
+                .build();
     }
 }
