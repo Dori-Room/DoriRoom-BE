@@ -34,8 +34,8 @@ public class DiaryService {
     private final EventRepository eventRepository;
     private final S3Uploader s3Uploader;
 
-    private static final int DIARY_WRITE_BASE_CREDIT = 3;
-    private static final int PHOTO_ATTACHMENT_BONUS_CREDIT = 2;
+    private static final Long DIARY_WRITE_BASE_CREDIT = 3L;
+    private static final Long PHOTO_ATTACHMENT_BONUS_CREDIT = 2L;
 
     @Transactional
     public DiaryResponseDto createDiary(User user, DiaryCreateRequestDto request, List<MultipartFile> images){
@@ -66,7 +66,7 @@ public class DiaryService {
         diaryRepository.save(diary);
 
         // 포인트 지급
-        int totalCredit = calculateDiaryCredit(imageUrls);
+        Long totalCredit = calculateDiaryCredit(imageUrls);
         user.addCredit(totalCredit);
         userRepository.save(user);
 
@@ -98,7 +98,7 @@ public class DiaryService {
         diary.updateDiary(request);
         Diary updatedDiary = diaryRepository.save(diary);
 
-        return DiaryResponseDto.from(updatedDiary, 0, user, event);
+        return DiaryResponseDto.from(updatedDiary, 0L, user, event);
     }
 
     @Transactional
@@ -201,7 +201,7 @@ public class DiaryService {
         List<DiaryResponseDto> diaryList = diaries.stream()
             .map(diary -> {
                 Event event = eventMap.get(diary.getEventId());
-                return DiaryResponseDto.from(diary, 0, user, event);
+                return DiaryResponseDto.from(diary, 0L, user, event);
             })
             .toList();
 
@@ -229,7 +229,7 @@ public class DiaryService {
         List<DiaryResponseDto> diaries = diaryPage.getContent().stream()
             .map(diary -> {
                 User user = userMap.get(diary.getUserId());
-                return DiaryResponseDto.from(diary, 0, user, event);
+                return DiaryResponseDto.from(diary, 0L, user, event);
             })
             .toList();
 
@@ -256,8 +256,8 @@ public class DiaryService {
     }
 
     //일기 작성 시 포인트 지급
-    private int calculateDiaryCredit(List<String> imageUrls) {
-        int credit = DIARY_WRITE_BASE_CREDIT;
+    private Long calculateDiaryCredit(List<String> imageUrls) {
+        Long credit = DIARY_WRITE_BASE_CREDIT;
 
         if (imageUrls != null && !imageUrls.isEmpty()) {
             credit += PHOTO_ATTACHMENT_BONUS_CREDIT;
@@ -285,7 +285,7 @@ public class DiaryService {
         List<DiaryResponseDto> diaryResponseList = diaries.getContent().stream()
             .map(diary -> {
                 Event event = eventMap.get(diary.getEventId());
-                return DiaryResponseDto.from(diary, 0, user, event);
+                return DiaryResponseDto.from(diary, 0L, user, event);
             })
             .toList();
 

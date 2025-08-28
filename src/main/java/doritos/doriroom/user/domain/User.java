@@ -45,7 +45,7 @@ public class User {
     private int viewCount = 0;
 
     // 포인트 관련 메서드 추가
-    public void addCredit(int credit) {
+    public void addCredit(Long credit) {
         this.credit += credit;
     }
 
