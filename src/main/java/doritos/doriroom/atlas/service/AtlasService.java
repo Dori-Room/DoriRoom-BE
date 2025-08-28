@@ -14,6 +14,7 @@ import doritos.doriroom.atlas.repository.AtlasRepository;
 import doritos.doriroom.atlas.repository.AtlasRewardRepository;
 import doritos.doriroom.atlas.repository.UserAtlasRepository;
 import doritos.doriroom.atlas.repository.UserAtlasRewardRepository;
+import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class AtlasService {
     private final AtlasRewardRepository atlasRewardRepository;
     private final UserAtlasRewardRepository userAtlasRewardRepository;
     private final LevelPolicy levelPolicy;
+    private final ItemService itemService;
 
     // 전체 또는 지역별 도감 조회
     @Transactional(readOnly = true)
@@ -146,7 +148,7 @@ public class AtlasService {
         UserAtlasReward userAtlasReward = UserAtlasReward.claimedReward(user, atlasReward);
         userAtlasRewardRepository.save(userAtlasReward);
 
-        // TODO: 아이템을 유저 보유 아이템에 추가
+        itemService.addToInventory(user, atlasReward.getRewardItem());
     }
 
 
