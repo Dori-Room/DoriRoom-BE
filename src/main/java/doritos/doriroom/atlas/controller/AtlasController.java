@@ -7,6 +7,7 @@ import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,7 +31,9 @@ public class AtlasController {
 
     @PostMapping("/{atlasRewardId}/claim")
     @Operation(summary = "지역도감 보상 수령", description = "레벨 조건을 만족한 도감 보상을 수령")
-    public ApiResponse<Void> claimReward(@AuthenticationPrincipal User user, @PathVariable Long atlasRewardId){
+    public ApiResponse<Void> claimReward(@AuthenticationPrincipal User user,
+                                         @Parameter(description = "지역도감 보상 ID", example = "2")
+                                         @PathVariable Long atlasRewardId){
         atlasService.claimAtlasReward(user, atlasRewardId);
         return ApiResponse.ok();
     }
