@@ -125,13 +125,13 @@ public class AtlasService {
 
     // 지역 도감 보상 아이템 수령 처리
     @Transactional
-    public void claimAtlasReward(User user, ClaimAtlasRewardRequestDto request) {
+    public void claimAtlasReward(User user, Long atlasRewardId) {
         // 수령할 보상 아이템의 정보 조회
-        AtlasReward atlasReward = atlasRewardRepository.findById(request.atlasRewardId())
-                .orElseThrow(() -> new AtlasNotFoundException("해당 도감 보상 아이템을 찾을 수 없습니다. ID: " + request.atlasRewardId()));
+        AtlasReward atlasReward = atlasRewardRepository.findById(atlasRewardId)
+                .orElseThrow(() -> new AtlasNotFoundException("해당 도감 보상 아이템을 찾을 수 없습니다. ID: " + atlasRewardId));
 
         // 이미 받은 아이템인지 확인
-        if (userAtlasRewardRepository.existsByUserAndAtlasReward_Id(user, request.atlasRewardId())) {
+        if (userAtlasRewardRepository.existsByUserAndAtlasReward_Id(user, atlasRewardId)) {
             throw new AtlasRewardAlreadyClaimedException();
         }
 

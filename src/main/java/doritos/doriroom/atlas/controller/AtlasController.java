@@ -29,10 +29,10 @@ public class AtlasController {
         return ApiResponse.ok(atlasService.getAtlases(user, areaGroup));
     }
 
-    @PostMapping("/rewards/claim")
+    @PostMapping("/{atlasRewardId}/claim")
     @Operation(summary = "지역도감 보상 수령", description = "레벨 조건을 만족한 도감 보상을 수령")
-    public ApiResponse<Void> claimReward(@AuthenticationPrincipal User user, @Valid ClaimAtlasRewardRequestDto request){
-        atlasService.claimAtlasReward(user, request);
+    public ApiResponse<Void> claimReward(@AuthenticationPrincipal User user, @PathVariable Long atlasRewardId){
+        atlasService.claimAtlasReward(user, atlasRewardId);
         return ApiResponse.ok();
     }
 

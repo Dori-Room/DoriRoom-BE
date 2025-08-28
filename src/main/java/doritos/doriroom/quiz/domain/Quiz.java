@@ -28,6 +28,7 @@ public class Quiz {
     @NotEmpty
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sequence asc") // 문제 순서로 정렬
+    @Builder.Default
     private List<Question> questions = new ArrayList<>();
 
 }
