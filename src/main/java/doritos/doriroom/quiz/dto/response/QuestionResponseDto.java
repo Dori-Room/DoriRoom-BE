@@ -11,7 +11,8 @@ public record QuestionResponseDto( // 퀴즈의 문제 정보
         String option2,
         String option3,
         String option4,
-        int correctAnswer
+        int correctAnswer,
+        String commentary
 ) {
     public static QuestionResponseDto from(Question question) {
         return QuestionResponseDto.builder()
@@ -22,6 +23,7 @@ public record QuestionResponseDto( // 퀴즈의 문제 정보
                 .option3(question.getOption3())
                 .option4(question.getOption4())
                 .correctAnswer(question.getCorrectAnswer())
+                .commentary(question.getCommentary())
                 .build();
     }
 }
