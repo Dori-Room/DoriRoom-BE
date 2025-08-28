@@ -1,18 +1,17 @@
 package doritos.doriroom.atlas.controller;
 
 
+import doritos.doriroom.atlas.dto.request.ClaimAtlasRewardRequestDto;
 import doritos.doriroom.atlas.dto.response.AtlasResponseDto;
 import doritos.doriroom.atlas.service.AtlasService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -28,6 +27,13 @@ public class AtlasController {
     public ApiResponse<List<AtlasResponseDto>> getAtlases(@AuthenticationPrincipal User user,
                                                           @RequestParam(value = "areaGroup", required = false) AreaGroup areaGroup) {
         return ApiResponse.ok(atlasService.getAtlases(user, areaGroup));
+    }
+
+    @PostMapping("/rewards/claim")
+    @Operation(summary = "지역도감 보상 수령", description = "레벨 조건을 만족한 도감 보상을 수령")
+    public ApiResponse<Void> claimReward(@AuthenticationPrincipal User user, @Valid ClaimAtlasRewardRequestDto request){
+        atlasService.claimAtlasReward(user, request);
+        return ApiResponse.ok();
     }
 
 

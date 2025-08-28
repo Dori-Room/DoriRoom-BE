@@ -12,8 +12,9 @@ import lombok.Builder;
 public record AtlasRewardItemDto(
         // 지역 도감 특정 기준 달성 시 받을 수 있는 보상 아이템 정보
 
+
         int targetLevel, // 해당 보상을 받을 수 있는 목표 레벨
-        Long itemId,
+        Long itemId, // 아이템 고유 id
         String itemName,
         String itemImageUrl,
         ItemType itemType,
