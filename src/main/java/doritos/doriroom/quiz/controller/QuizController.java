@@ -1,7 +1,9 @@
 package doritos.doriroom.quiz.controller;
 
 import doritos.doriroom.global.dto.ApiResponse;
+import doritos.doriroom.quiz.dto.requset.QuestionSubmitRequestDto;
 import doritos.doriroom.quiz.dto.requset.QuizCompleteRequestDto;
+import doritos.doriroom.quiz.dto.response.QuestionSubmitResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizCompleteResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizResponseDto;
 import doritos.doriroom.quiz.service.QuizService;
@@ -25,11 +27,11 @@ public class QuizController {
         return ApiResponse.ok(quizService.getQuiz(user, challengeId));
     }
 
-    @PostMapping("/complete")
-    @Operation(summary ="보상 받기 를 클릭 -> 퀴즈 완료를 전달하여 과제 완료 처리 및 보상 아이템 수납", description = "requset dto에 완료한 도전과제 ID를 포함하여 요청")
-    public ApiResponse<QuizCompleteResponseDto> completeQuiz(@AuthenticationPrincipal User user,
-                                                             @RequestBody QuizCompleteRequestDto request) {
-        return ApiResponse.ok(quizService.completeQuiz(user, request));
+    @PostMapping("/submit")
+    @Operation(summary ="퀴즈의 문제 하나에 대한 정답을 제출", description = "정답/오답 여부 확인, 실제 정답 확인 및 해설 제공")
+    public ApiResponse<QuestionSubmitResponseDto> submitQuestionAnswer(@AuthenticationPrincipal User user,
+                                                                       @RequestBody QuestionSubmitRequestDto request) {
+        return ApiResponse.ok(quizService.submitQuestionAnswer(user, request));
     }
 
 }

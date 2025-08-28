@@ -8,12 +8,16 @@ import doritos.doriroom.challenge.dto.ChallengeRewardDto;
 import doritos.doriroom.challenge.excetion.ChallengeNotFoundException;
 import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.repository.UserChallengeRepository;
+import doritos.doriroom.quiz.domain.Question;
 import doritos.doriroom.quiz.domain.Quiz;
+import doritos.doriroom.quiz.dto.requset.QuestionSubmitRequestDto;
 import doritos.doriroom.quiz.dto.requset.QuizCompleteRequestDto;
+import doritos.doriroom.quiz.dto.response.QuestionSubmitResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizCompleteResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizResponseDto;
 import doritos.doriroom.quiz.exception.QuizNotFoundException;
 import doritos.doriroom.quiz.exception.QuizStatusException;
+import doritos.doriroom.quiz.repository.QuestionRepository;
 import doritos.doriroom.quiz.repository.QuizRepository;
 import doritos.doriroom.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +33,7 @@ public class QuizService {
     private final QuizRepository quizRepository;
     private final ChallengeRepository challengeRepository;
     private final UserChallengeRepository userChallengeRepository;
+    private final QuestionRepository questionRepository;
 
 
     @Transactional
@@ -59,32 +64,14 @@ public class QuizService {
         return QuizResponseDto.from(quiz);
     }
 
-    @Transactional
-    public QuizCompleteResponseDto completeQuiz(User user, QuizCompleteRequestDto request) { // 해당 도전과제를 완료 처리
+    // 유저가 제출한 문제의 답 확인 및 해설 반환
+    public QuestionSubmitResponseDto submitQuestionAnswer(User user, QuestionSubmitRequestDto request){
+        Question question = questionRepository.findById(request.questionId())
+                .orElseThrow(() -> new QuizNotFoundException("해당 문제를 찾을 수 없습니다."));
 
-        Challenge challenge = challengeRepository.findById(request.challengeId())
-                .orElseThrow(() -> new ChallengeNotFoundException("ID " + request.challengeId() + "에 해당하는 도전과제가 없습니다."));
+        boolean isCorrect = question.getCorrectAnswer() == request.submittedAnswer(); // 채점 boolean
 
-        // 유저의 도전과제에 대한 상태 조회 없으면 예외 (퀴즈 조회 시 IN_PROGRESS로 설정되므로)
-        UserChallenge userChallenge = userChallengeRepository.findByUserAndChallenge(user, challenge)
-                .orElseThrow(() -> new QuizStatusException("아직 시작하지 않은 퀴즈입니다."));
-
-        // 도전 중인지 확인 아닌 경우에 예외로 처리
-        if (userChallenge.getStatus() != ChallengeStatus.IN_PROGRESS) {
-            throw new QuizStatusException("이미 완료했거나 보상 대기 중인 과제입니다.");
-        }
-
-        //  보상 대기 상태로 변경
-        userChallenge.setStatus(ChallengeStatus.WAIT_REWARD);
-//        userChallengeRepository.save(userChallenge);
-
-
-        // 도전과제의 보상 정보를 dto로 변환
-        List<ChallengeRewardDto> rewards = challenge.getRewards().stream()
-                .map(ChallengeRewardDto::from) // 각 ChallengeReward를 ChallengeRewardDto로 변환
-                .collect(Collectors.toList());
-
-        return new QuizCompleteResponseDto(true, rewards);
+        return QuestionSubmitResponseDto.of(question, isCorrect);
     }
 }
 

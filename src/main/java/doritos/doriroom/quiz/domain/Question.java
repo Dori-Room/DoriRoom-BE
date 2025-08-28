@@ -33,7 +33,7 @@ public class Question {
     private String option4;
 
     @Column(nullable = false)
-    private int correctAnswer; // 정답 번호 (1, 2, 3, 4 중)
+    private byte correctAnswer; // 정답 번호 (1, 2, 3, 4 중)
 
     @Column(nullable = false, length = 1000)
     private String commentary; // 문제 해설 내용

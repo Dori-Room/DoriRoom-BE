@@ -31,5 +31,6 @@ public class ChallengeController {
         return ApiResponse.ok(challengeService.getChallengesByGroup(user, challengeGroup, areaGroup));
     }
 
+    // TODO: 모든 과제에 대한 보상 받기 api
 }
 
