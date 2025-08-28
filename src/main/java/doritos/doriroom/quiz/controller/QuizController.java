@@ -2,7 +2,6 @@ package doritos.doriroom.quiz.controller;
 
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.quiz.dto.requset.QuestionSubmitRequestDto;
-import doritos.doriroom.quiz.dto.requset.QuizCompleteRequestDto;
 import doritos.doriroom.quiz.dto.response.QuestionSubmitResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizCompleteResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizResponseDto;
@@ -32,6 +31,13 @@ public class QuizController {
     public ApiResponse<QuestionSubmitResponseDto> submitQuestionAnswer(@AuthenticationPrincipal User user,
                                                                        @RequestBody QuestionSubmitRequestDto request) {
         return ApiResponse.ok(quizService.submitQuestionAnswer(user, request));
+    }
+
+    @PostMapping("/{challengeId}/complete")
+    @Operation(summary ="퀴즈 완료 처리 요청 (과제의 상태를 보상 대기 상태 WAIT_REWARD로 변경", description = "")
+    public ApiResponse<QuizCompleteResponseDto> completeQuiz(@AuthenticationPrincipal User user,
+                                                             @PathVariable Long challengeId) {
+        return ApiResponse.ok(quizService.completeQuiz(user, challengeId));
     }
 
 }

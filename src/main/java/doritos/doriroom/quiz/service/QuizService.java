@@ -3,13 +3,16 @@ package doritos.doriroom.quiz.service;
 import doritos.doriroom.challenge.domain.challenge.Challenge;
 import doritos.doriroom.challenge.domain.userchallenge.ChallengeStatus;
 import doritos.doriroom.challenge.domain.userchallenge.UserChallenge;
+import doritos.doriroom.challenge.dto.ChallengeRewardDto;
 import doritos.doriroom.challenge.excetion.ChallengeNotFoundException;
+import doritos.doriroom.challenge.excetion.ChallengeStatusException;
 import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.repository.UserChallengeRepository;
 import doritos.doriroom.quiz.domain.Question;
 import doritos.doriroom.quiz.domain.Quiz;
 import doritos.doriroom.quiz.dto.requset.QuestionSubmitRequestDto;
 import doritos.doriroom.quiz.dto.response.QuestionSubmitResponseDto;
+import doritos.doriroom.quiz.dto.response.QuizCompleteResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizResponseDto;
 import doritos.doriroom.quiz.exception.QuizNotFoundException;
 import doritos.doriroom.quiz.repository.QuestionRepository;
@@ -47,6 +50,12 @@ public class QuizService {
                                 .build()
                 ));
 
+        // 이미 진행 중인 상태가 아니라면 예외 처리
+        if (userChallenge.getStatus() != ChallengeStatus.NOT_STARTED &&
+                userChallenge.getStatus() != ChallengeStatus.IN_PROGRESS) {
+            throw new ChallengeStatusException("이미 완료했거나 보상 대기 중인 퀴즈입니다.");
+        }
+
         // 상태가 NOT_STARTED이면 IN_PROGRESS로 변경
         if (userChallenge.getStatus() == ChallengeStatus.NOT_STARTED) {
             userChallenge.setStatus(ChallengeStatus.IN_PROGRESS);
@@ -67,6 +76,32 @@ public class QuizService {
         boolean isCorrect = question.getCorrectAnswer() == request.submittedAnswer(); // 채점 boolean
 
         return QuestionSubmitResponseDto.of(question, isCorrect);
+    }
+
+    @Transactional
+    public QuizCompleteResponseDto completeQuiz(User user, Long challengeId) { // 해당 도전과제를 보상 대기 처리
+        Challenge challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(() -> new ChallengeNotFoundException("ID " + challengeId + "에 해당하는 도전과제가 없습니다."));
+
+        // 유저의 도전과제에 대한 상태 조회 없으면 예외
+        UserChallenge userChallenge = userChallengeRepository.findByUserAndChallenge(user, challenge)
+                .orElseThrow(() -> new ChallengeStatusException("아직 시작하지 않은 도전과제입니다."));
+
+        // 도전 중인지 확인 아닌 경우에 예외로 처리
+        if (userChallenge.getStatus() != ChallengeStatus.IN_PROGRESS) {
+            throw new ChallengeStatusException("이미 완료했거나 보상 대기 중인 과제입니다.");
+        }
+
+        //  보상 대기 상태로 변경
+        userChallenge.setStatus(ChallengeStatus.WAIT_REWARD);
+
+
+        // 도전과제의 보상 정보를 dto로 변환
+        List<ChallengeRewardDto> rewards = challenge.getRewards().stream()
+                .map(ChallengeRewardDto::from) // 각 ChallengeReward를 ChallengeRewardDto로 변환
+                .collect(Collectors.toList());
+
+        return new QuizCompleteResponseDto(true, rewards);
     }
 }
 
