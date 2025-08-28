@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,6 +31,15 @@ public class ChallengeService {
     private final UserChallengeRepository userChallengeRepository;
     private final ItemService itemService;
     private final AtlasService atlasService;
+
+    // endDate가 지난 도전과제 상태를 EXPIRED로 변경, 스케줄러에서 호출
+    @Transactional
+    public int expireChallenges(LocalDate untilDate) {
+        return userChallengeRepository.expireChallenges(
+                untilDate, ChallengeStatus.EXPIRED,
+                List.of(ChallengeStatus.NOT_STARTED, ChallengeStatus.IN_PROGRESS)
+        );
+    }
 
     @Transactional(readOnly = true)
     public List<ChallengeResponseDto> getChallengesByGroup(User user, ChallengeGroup challengeGroup, AreaGroup areaGroup){
