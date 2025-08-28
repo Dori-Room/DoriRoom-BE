@@ -1,7 +1,6 @@
 package doritos.doriroom.atlas.controller;
 
 
-import doritos.doriroom.atlas.dto.request.ClaimAtlasRewardRequestDto;
 import doritos.doriroom.atlas.dto.response.AtlasResponseDto;
 import doritos.doriroom.atlas.service.AtlasService;
 import doritos.doriroom.global.dto.ApiResponse;

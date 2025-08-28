@@ -4,7 +4,6 @@ import doritos.doriroom.atlas.domain.Atlas;
 import doritos.doriroom.atlas.domain.AtlasReward;
 import doritos.doriroom.atlas.domain.UserAtlas;
 import doritos.doriroom.atlas.domain.UserAtlasReward;
-import doritos.doriroom.atlas.dto.request.ClaimAtlasRewardRequestDto;
 import doritos.doriroom.atlas.dto.response.AtlasResponseDto;
 import doritos.doriroom.atlas.excetion.AtlasNotFoundException;
 import doritos.doriroom.atlas.excetion.AtlasRewardAlreadyClaimedException;

@@ -1,22 +1,17 @@
 package doritos.doriroom.quiz.service;
 
 import doritos.doriroom.challenge.domain.challenge.Challenge;
-import doritos.doriroom.challenge.domain.challenge.ChallengeReward;
 import doritos.doriroom.challenge.domain.userchallenge.ChallengeStatus;
 import doritos.doriroom.challenge.domain.userchallenge.UserChallenge;
-import doritos.doriroom.challenge.dto.ChallengeRewardDto;
 import doritos.doriroom.challenge.excetion.ChallengeNotFoundException;
 import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.repository.UserChallengeRepository;
 import doritos.doriroom.quiz.domain.Question;
 import doritos.doriroom.quiz.domain.Quiz;
 import doritos.doriroom.quiz.dto.requset.QuestionSubmitRequestDto;
-import doritos.doriroom.quiz.dto.requset.QuizCompleteRequestDto;
 import doritos.doriroom.quiz.dto.response.QuestionSubmitResponseDto;
-import doritos.doriroom.quiz.dto.response.QuizCompleteResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizResponseDto;
 import doritos.doriroom.quiz.exception.QuizNotFoundException;
-import doritos.doriroom.quiz.exception.QuizStatusException;
 import doritos.doriroom.quiz.repository.QuestionRepository;
 import doritos.doriroom.quiz.repository.QuizRepository;
 import doritos.doriroom.user.domain.User;
