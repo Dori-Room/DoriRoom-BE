@@ -12,4 +12,10 @@ public interface AtlasRewardRepository extends JpaRepository<AtlasReward, Long> 
 
     // 유저의 현재 레벨 기준으로 받을 수 있는 바로 다음의 보상 아이템 조회
     Optional<AtlasReward> findFirstByAtlasAndTargetLevelGreaterThanOrderByTargetLevelAsc(Atlas atlas, int currentLevel);
+
+    // 특정 지역의 모든 보상 아이템을 레벨 순으로 조회
+    List<AtlasReward> findByAtlasOrderByTargetLevel(Atlas atlas);
+
+    // 특정 지역의 특정 레벨 이하 보상 아이템들 조회
+    List<AtlasReward> findByAtlasAndTargetLevelLessThanEqualOrderByTargetLevel(Atlas atlas, int level);
 }
