@@ -11,7 +11,7 @@ public record QuizResponseDto(// 퀴즈 세트의 정보
 
         Long challengeId, // 매핑된 도전과제
         String title, // 퀴즈 이름
-        List<QuestionResponseDto> questions // 문제들
+        List<QuestionResponseDto> questions // 문제들 + 정답
 ){
     public static QuizResponseDto from(Quiz quiz) {
         return QuizResponseDto.builder()
