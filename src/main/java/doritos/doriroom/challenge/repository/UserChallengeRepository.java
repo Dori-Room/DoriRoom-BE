@@ -13,18 +13,19 @@ import java.util.Optional;
 
 public interface UserChallengeRepository extends JpaRepository<UserChallenge, Long> {
     Optional<UserChallenge> findByUserAndChallenge(User user, Challenge challenge); // 유저의 도전과제 상태 조회 시
-    List<UserChallenge> findByUserAndChallengeIn(User user, List<Challenge> challenges); // 유저의 도전과제들 전체 상태 조회 시
+
+    // 유저의 도전과제들 전체 상태 조회 시
+    @Query("SELECT uc FROM UserChallenge uc JOIN FETCH uc.challenge c WHERE uc.user = :user AND c IN :challenges")
+    List<UserChallenge> findByUserAndChallengeInWithFetch(@Param("user") User user, @Param("challenges") List<Challenge> challenges);
 
 
     List<UserChallenge> findByUserAndStatus(User user, ChallengeStatus status); // 특정 유저의 도전과제 상태별 조회
     List<UserChallenge> findByUser(User user);     // 특정 유저의 모든 도전과제 조회
 
 
-//    // 특정 도전과제에 참여 중인 사용자 수 조회
-//    @Query("SELECT COUNT(uc) FROM UserChallenge uc WHERE uc.challenge = :challenge AND uc.status != 'COMPLETED'")
-//    long countParticipatingUsers(@Param("challenge") Challenge challenge);
-//
-//    // 특정 도전과제를 완료한 사용자 수 조회
-//    @Query("SELECT COUNT(uc) FROM UserChallenge uc WHERE uc.challenge = :challenge AND uc.status = 'COMPLETED'")
-//    long countCompletedUsers(@Param("challenge") Challenge challenge);
+//    // 보상 정보까지 조회
+//    @Query("SELECT uc FROM UserChallenge uc JOIN FETCH uc.challenge c LEFT JOIN FETCH c.rewards WHERE uc.user = :user AND c IN :challenges")
+//    List<UserChallenge> findByUserAndChallengeInWithAllRelations(@Param("user") User user, @Param("challenges") List<Challenge> challenges);
+
 }
+

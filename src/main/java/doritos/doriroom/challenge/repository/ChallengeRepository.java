@@ -13,8 +13,15 @@ import java.util.Optional;
 
 public interface ChallengeRepository extends JpaRepository<Challenge, Long> {
     Optional<Challenge> findById(Long challengeId); // 단일과제 조회
-    List<Challenge> findByChallengeGroup(ChallengeGroup challengeGroup); // 지역-일반과제로 조회 (일반과제 리스트 조회 시 사용)
-    List<Challenge> findByChallengeGroupAndAreaGroup(ChallengeGroup challengeGroup, AreaGroup areaGroup); // 특정 지역별 리스트 조회
+
+    // 지역-일반과제로 조회 (일반과제 리스트 조회 시 사용) (reward 포함)
+    @Query("SELECT c FROM Challenge c LEFT JOIN FETCH c.rewards WHERE c.challengeGroup = :challengeGroup")
+    List<Challenge> findByChallengeGroupWithRewards(@Param("challengeGroup") ChallengeGroup challengeGroup);
+
+    // 특정 지역별 리스트 조회 (reward 포함)
+    @Query("SELECT c FROM Challenge c LEFT JOIN FETCH c.rewards WHERE c.challengeGroup = :challengeGroup AND c.areaGroup = :areaGroup")
+    List<Challenge> findByChallengeGroupAndAreaGroupWithRewards(@Param("challengeGroup") ChallengeGroup challengeGroup, @Param("areaGroup") AreaGroup areaGroup);
+
 
     // 현재 진행 중인 도전과제 조회 (날짜 범위 내)
     @Query("SELECT c FROM Challenge c WHERE c.startDate <= :currentDate AND c.endDate >= :currentDate")

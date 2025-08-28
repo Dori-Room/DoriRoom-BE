@@ -6,31 +6,40 @@ import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/challenges")
 @RequiredArgsConstructor
+@Validated
 public class ChallengeController {
     private final ChallengeService challengeService;
 
     @GetMapping("/group") // 과제그룹별 조회 - 일반 / 지역, 지역의 경우 특정 지역을 파라미터로 지정
+    @Operation(summary = "지역별/일반 도전과제 리스트 조회", description = "")
     public ApiResponse<List<ChallengeResponseDto>> getChallengesByGroup(@AuthenticationPrincipal User user,
-                                                          @Parameter(description = "과제 그룹 (COMMON: 일반과제, AREA: 지역과제)", example = "COMMON", required = true)
-                                                          @RequestParam("group") ChallengeGroup challengeGroup,
-                                                          @Parameter(description = "지역 그룹 (SEOUL, GYEONGGI, ...). challengeGroup이 AREA일 때 필요", example = "JEJU", required = false)
-                                                          @RequestParam(value = "area", required = false) AreaGroup areaGroup){
+                                                                        @Parameter(description = "과제 그룹 (COMMON: 일반과제, AREA: 지역과제)", example = "COMMON", required = true)
+                                                                        @RequestParam("group") @NotNull ChallengeGroup challengeGroup,
+                                                                        @Parameter(description = "지역 그룹 (SEOUL, GYEONGGI, ...). challengeGroup이 AREA일 때 필요", example = "JEJU", required = false)
+                                                                        @RequestParam(value = "area", required = false) AreaGroup areaGroup){
         return ApiResponse.ok(challengeService.getChallengesByGroup(user, challengeGroup, areaGroup));
     }
 
-    // TODO: 모든 과제에 대한 보상 받기 api
+    @PostMapping("/{challengeId}/claim") // 해당 도전과제의 보상 받기 처리
+    @Operation(summary = "특정 도전과제의 보상 받기 처리", description = "challengeId로 관련 리워드를 사용자에게 지급 및 도전과제 상태를 완료로 처리")
+    public ApiResponse<Void> claimChallengeReward(@AuthenticationPrincipal User user,
+                                                  @Parameter(description = "특정 도전과제의 ID", example = "2")
+                                                  @PathVariable Long challengeId){
+        challengeService.claimChallengeReward(user, challengeId);
+        return ApiResponse.ok();
+    }
 }
 
