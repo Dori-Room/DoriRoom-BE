@@ -32,7 +32,7 @@ public class Item {
     private AreaGroup areaGroup; // itemGroup == ItemGroup.COMMON 이면 null
 
     @Column(nullable = false)
-    private Long price;
+    private Long price; // 지역과제 보상 아이템의 경우 0으로 설정
 
     @Enumerated(EnumType.STRING)
     private CollectionTheme theme;

@@ -31,7 +31,7 @@ public record AtlasResponseDto(
 
 ) {
     public static AtlasResponseDto of(Atlas atlas, UserAtlas userAtlas, AtlasReward nextRewardItem,
-                                      Long nextLevelExp, List<UserAtlasReward> userClaimedRewards, List<AtlasReward> availableRewards) {
+                                      Long nextLevelExp, List<AtlasReward> availableRewards, List<UserAtlasReward> userClaimedRewards) {
         // 유저의 지역도감에 대한 레벨 현황, 아직 시작하지 않은 경우 기본 값으로 초기화
         int currentLevel = (userAtlas != null) ? userAtlas.getLevel() : 0;
         long currentExp = (userAtlas != null) ? userAtlas.getCurrentExp() : 0L;
