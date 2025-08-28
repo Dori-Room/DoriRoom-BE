@@ -41,5 +41,26 @@ public class ChallengeController {
         challengeService.claimChallengeReward(user, challengeId);
         return ApiResponse.ok();
     }
+
+    /* 축제 방문 과제 API */
+
+    @PostMapping("/{challengeId}/start")
+    @Operation(summary = "수동 시작 도전과제 상태 변경 (->도전 중)", description = "NOT_STARTED -> IN_PROGRESS")
+    public ApiResponse<Void> startChallenge(@AuthenticationPrincipal User user,
+                                            @Parameter(description = "특정 축제 관련 도전과제의 ID", example = "2")
+                                            @PathVariable Long challengeId) {
+        challengeService.startChallenge(user, challengeId);
+        return ApiResponse.ok();
+    }
+
+    @PostMapping("/{challengeId}/complete")
+    @Operation(summary = "축제 도전과제 완료 인증 후 도전과제 상태 변경 요청 (도전 중-> 보상 대기)", description = "IN_PROGRESS -> WAIT_REWARD")
+    public ApiResponse<Void> completeChallenge(@AuthenticationPrincipal User user,
+                                               @Parameter(description = "특정 축제 관련 도전과제의 ID", example = "2")
+                                               @PathVariable Long challengeId) {
+        challengeService.completeChallenge(user, challengeId);
+        return ApiResponse.ok();
+    }
+
 }
 

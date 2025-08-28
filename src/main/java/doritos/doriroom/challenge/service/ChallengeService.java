@@ -4,6 +4,7 @@ import doritos.doriroom.atlas.service.AtlasService;
 import doritos.doriroom.challenge.domain.challenge.Challenge;
 import doritos.doriroom.challenge.domain.challenge.ChallengeGroup;
 import doritos.doriroom.challenge.domain.challenge.ChallengeReward;
+import doritos.doriroom.challenge.domain.challenge.ChallengeType;
 import doritos.doriroom.challenge.domain.userchallenge.ChallengeStatus;
 import doritos.doriroom.challenge.domain.userchallenge.UserChallenge;
 import doritos.doriroom.challenge.dto.response.ChallengeResponseDto;
@@ -93,6 +94,43 @@ public class ChallengeService {
         userChallenge.setStatus(ChallengeStatus.COMPLETED); // 완료 상태로 변경
     }
 
+    @Transactional
+    public void startChallenge(User user, Long challengeId) {
+        Challenge challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(ChallengeNotFoundException::new);
+
+        validateChallengeType(challenge); // 해당 도전과제가 수동 상태 변경이 요구되는 과제인지 확인
+
+        // UserChallenge 조회, 없으면 생성
+        UserChallenge userChallenge = userChallengeRepository.findByUserAndChallenge(user, challenge)
+                .orElseGet(() -> userChallengeRepository.save(
+                        UserChallenge.builder()
+                                .user(user)
+                                .challenge(challenge)
+                                .status(ChallengeStatus.NOT_STARTED)
+                                .build()
+                ));
+
+        // 미시작 상태가 아닌 경우 예외 처리
+        if (userChallenge.getStatus() != ChallengeStatus.NOT_STARTED) {
+            throw new ChallengeStatusException("이미 시작했거나 완료한 과제입니다.");
+        }
+        userChallenge.setStatus(ChallengeStatus.IN_PROGRESS); // 미시작 과제 -> 도전 중으로 변경
+    }
+
+    @Transactional
+    public void completeChallenge(User user, Long challengeId) {
+        UserChallenge userChallenge = userChallengeRepository.findByUserAndChallengeId(user, challengeId)
+                .orElseThrow(() -> new ChallengeNotFoundException("해당 도전과제에 대한 진행 정보가 없습니다."));
+
+        // 도전 중 상태인 경우만 보상 대기 상태로 변경 가능
+        if (userChallenge.getStatus() != ChallengeStatus.IN_PROGRESS) {
+            throw new ChallengeStatusException("도전 중인 과제만 완료 처리할 수 있습니다.");
+        }
+        userChallenge.setStatus(ChallengeStatus.WAIT_REWARD); // 도전 중 -> 보상 대기 상태로 변경
+    }
+
+
     /* 내부 메서드 */
     private List<Challenge> challengeFilterByGroup(ChallengeGroup challengeGroup, AreaGroup areaGroup){
         if(challengeGroup == null)  // challengeGroup은 필수 파라미터
@@ -104,5 +142,18 @@ public class ChallengeService {
             return challengeRepository.findByChallengeGroupAndAreaGroupWithRewards(challengeGroup, areaGroup);
         }
         return challengeRepository.findByChallengeGroupWithRewards(challengeGroup); // 일반 과제 리스트 반환
+    }
+
+    private void validateChallengeType(Challenge challenge) {
+        // 수동 시작이 가능한 과제 타입 목록 (도전 버튼 클릭으로 수행하는 과제)
+        List<ChallengeType> manualStartTypes = List.of(
+                ChallengeType.VISIT_EVENT,
+                ChallengeType.REGIONAL_QUIZ
+        );
+
+        // 그 이외 자동 집계 도전과제인 경우에는 예외 처리
+        if (!manualStartTypes.contains(challenge.getChallengeType())) {
+            throw new ChallengeStatusException("수동으로 시작할 수 없는 타입의 과제입니다.");
+        }
     }
 }

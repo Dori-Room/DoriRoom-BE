@@ -15,6 +15,7 @@ import java.util.Optional;
 
 public interface UserChallengeRepository extends JpaRepository<UserChallenge, Long> {
     Optional<UserChallenge> findByUserAndChallenge(User user, Challenge challenge); // 유저의 도전과제 상태 조회 시
+    Optional<UserChallenge> findByUserAndChallengeId(User user, Long challengeId);
 
     // 유저의 도전과제들 전체 상태 조회 시
     @Query("SELECT uc FROM UserChallenge uc JOIN FETCH uc.challenge c WHERE uc.user = :user AND c IN :challenges")
