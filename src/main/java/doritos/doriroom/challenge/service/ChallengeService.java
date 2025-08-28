@@ -4,7 +4,7 @@ import doritos.doriroom.challenge.domain.challenge.Challenge;
 import doritos.doriroom.challenge.domain.challenge.ChallengeGroup;
 import doritos.doriroom.challenge.domain.userchallenge.UserChallenge;
 import doritos.doriroom.challenge.dto.response.ChallengeResponseDto;
-import doritos.doriroom.challenge.excetion.ChallengeArgumentException;
+import doritos.doriroom.challenge.exception.ChallengeArgumentException;
 import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.repository.UserChallengeRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;

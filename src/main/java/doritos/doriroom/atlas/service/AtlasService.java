@@ -5,9 +5,9 @@ import doritos.doriroom.atlas.domain.AtlasReward;
 import doritos.doriroom.atlas.domain.UserAtlas;
 import doritos.doriroom.atlas.domain.UserAtlasReward;
 import doritos.doriroom.atlas.dto.response.AtlasResponseDto;
-import doritos.doriroom.atlas.excetion.AtlasNotFoundException;
-import doritos.doriroom.atlas.excetion.AtlasRewardAlreadyClaimedException;
-import doritos.doriroom.atlas.excetion.InsufficientAtlasLevelException;
+import doritos.doriroom.atlas.exception.AtlasNotFoundException;
+import doritos.doriroom.atlas.exception.AtlasRewardAlreadyClaimedException;
+import doritos.doriroom.atlas.exception.InsufficientAtlasLevelException;
 import doritos.doriroom.atlas.policy.LevelPolicy;
 import doritos.doriroom.atlas.repository.AtlasRepository;
 import doritos.doriroom.atlas.repository.AtlasRewardRepository;
@@ -46,15 +46,16 @@ public class AtlasService {
                     .orElseThrow(() -> new AtlasNotFoundException()));
         } else {
             // areaGroup 파라미터가 없으면, 모든 지역 조회
-            atlases = atlasRepository.findAll();    }
+            atlases = atlasRepository.findAll();
+        }
 
 
         // 유저의 모든 지역별 도감
-        Map<Long, UserAtlas> userAtlasMap = userAtlasRepository.findByUser(user).stream()
+        Map<Long, UserAtlas> userAtlasMap = userAtlasRepository.findByUserWithAtlas(user).stream()
                 .collect(Collectors.toMap(ua -> ua.getAtlas().getId(), ua -> ua));
 
         // 유저가 받은 모든 보상 아이템 조회
-        Map<Long, List<UserAtlasReward>> userRewardsByAtlas = userAtlasRewardRepository.findByUser(user).stream()
+        Map<Long, List<UserAtlasReward>> userRewardsByAtlas = userAtlasRewardRepository.findByUserWithDetails(user).stream()
                 .collect(Collectors.groupingBy(uar -> uar.getAtlasReward().getAtlas().getId()));
 
         // 원본 도감의 atlasId 추출
@@ -64,7 +65,7 @@ public class AtlasService {
 
         // 모든 Atlas별 보상 아이템들 조회
         Map<Long, List<AtlasReward>> availableRewardsByAtlas = atlasRewardRepository
-                .findByAtlasIdInOrderByTargetLevel(atlasIds).stream()
+                .findByAtlasIdInOrderByTargetLevelWithAtlas(atlasIds).stream()
                 .collect(Collectors.groupingBy(ar -> ar.getAtlas().getId()));
 
         return atlases.stream()
