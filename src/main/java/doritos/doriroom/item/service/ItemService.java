@@ -32,6 +32,7 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final UserItemRepository userItemRepository;
     private final UserRepository userRepository;
+  
 
     /* ---- 사용자 아이템 추가 관련 (구매하는 경우 제외) ---- */
 
@@ -55,6 +56,7 @@ public class ItemService {
         userItemRepository.save(userItem);
     }
 
+  
     /* ---- 아이템 조회 관련 ---- */
 
     // 전체 아이템 조회 (유저 보유 여부 포함)
@@ -244,7 +246,6 @@ public class ItemService {
         return userItemRepository.findByUserAndIsEquippedTrue(user)
             .stream().map(EquippedItemResponse::from).toList();
     }
-
 
 
     /* 내부 메서드 */
