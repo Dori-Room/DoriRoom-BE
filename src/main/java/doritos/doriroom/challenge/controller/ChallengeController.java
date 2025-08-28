@@ -45,9 +45,9 @@ public class ChallengeController {
     /* 축제 방문 과제 API */
 
     @PostMapping("/{challengeId}/start")
-    @Operation(summary = "수동 시작 도전과제 상태 변경 (->도전 중)", description = "NOT_STARTED -> IN_PROGRESS")
+    @Operation(summary = "수동 시작 도전과제(축제 관련 또는 지역퀴즈) 상태 변경 (->도전 중)", description = "NOT_STARTED -> IN_PROGRESS")
     public ApiResponse<Void> startChallenge(@AuthenticationPrincipal User user,
-                                            @Parameter(description = "특정 축제 관련 도전과제의 ID", example = "2")
+                                            @Parameter(description = "특정 축제 관련 혹은 지역퀴즈 도전과제의 ID", example = "2")
                                             @PathVariable Long challengeId) {
         challengeService.startChallenge(user, challengeId);
         return ApiResponse.ok();
