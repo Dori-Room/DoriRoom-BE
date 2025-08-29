@@ -3,7 +3,6 @@ package doritos.doriroom.challenge.service;
 import doritos.doriroom.atlas.service.AtlasService;
 import doritos.doriroom.challenge.domain.challenge.Challenge;
 import doritos.doriroom.challenge.domain.challenge.ChallengeGroup;
-import doritos.doriroom.challenge.domain.challenge.ChallengeReward;
 import doritos.doriroom.challenge.domain.challenge.ChallengeType;
 import doritos.doriroom.challenge.domain.userchallenge.ChallengeStatus;
 import doritos.doriroom.challenge.domain.userchallenge.UserChallenge;
@@ -119,7 +118,7 @@ public class ChallengeService {
     }
 
     @Transactional
-    public void completeChallenge(User user, Long challengeId) {
+    public void completeChallenge(User user, Long challengeId) { // 수동으로 보상 대기 상태로 전환 시 사용(축제 관련 도전과제가 해당)
         UserChallenge userChallenge = userChallengeRepository.findByUserAndChallengeId(user, challengeId)
                 .orElseThrow(() -> new ChallengeNotFoundException("해당 도전과제에 대한 진행 정보가 없습니다."));
 
@@ -130,6 +129,48 @@ public class ChallengeService {
         userChallenge.setStatus(ChallengeStatus.WAIT_REWARD); // 도전 중 -> 보상 대기 상태로 변경
     }
 
+    @Transactional
+    public void updateChallengeProgress(User user, ChallengeType challengeType, int count){ // 반자동으로 진척도 집계하여 상태를 (진행 중 -> 보상 대기) 전환 처리
+        List<Challenge> challenges = challengeRepository.findByChallengeType(challengeType); // 같은 타입의 도전과제들
+
+        // 유저의 모든 도전과제 진행 상태 조회 (도전과제 함께 조회)
+        Map<Long, UserChallenge> userChallenges = userChallengeRepository.findByUserAndChallengeInWithFetch(user, challenges).stream()
+                .collect(Collectors.toMap(uc -> uc.getChallenge().getId(), uc->uc));
+
+        for (Challenge challenge : challenges) {
+            UserChallenge userChallenge = userChallenges.get(challenge.getId()); // 유저의 특정 과제에 대한 상태 조회
+
+            // UserChallenge가 없으면 새로 생성
+            if (userChallenge == null) {
+                userChallenge = UserChallenge.builder()
+                        .user(user)
+                        .challenge(challenge)
+                        .status(ChallengeStatus.NOT_STARTED)
+                        .currentProgress(0)
+                        .build();
+                userChallengeRepository.save(userChallenge);
+            }
+
+            // 완료된 과제는 제외
+            if (userChallenge.getStatus() == ChallengeStatus.COMPLETED) {
+                continue;
+            }
+
+            // 현재 과제 진척도 값 (새로운 과제 진척도를 반영한 값)
+            int currentProgress = userChallenge.getCurrentProgress() + count;
+            userChallenge.setCurrentProgress(Math.max(0, currentProgress)); // 0 미만으로 내려가지 않도록 방지
+
+            // 과제 진척도에 따른 과제 상태 변환
+            if (currentProgress >= challenge.getTargetCount()){
+                userChallenge.setStatus(ChallengeStatus.WAIT_REWARD); // 현재 진척도가 TargetCount보다 크면 보상 대기
+            } else if (currentProgress > 0){ // TargetCount보다 작으면 IN_PROGRESS로 변경 (보상 받지 않았는데 이후 진척도가 줄면 재달성 요구함)
+                userChallenge.setStatus(ChallengeStatus.IN_PROGRESS);
+            } else { // 진척도가 0이면 미시작 상태로 지정함
+                userChallenge.setStatus(ChallengeStatus.NOT_STARTED);
+            }
+
+        }
+    }
 
     /* 내부 메서드 */
     private List<Challenge> challengeFilterByGroup(ChallengeGroup challengeGroup, AreaGroup areaGroup){
