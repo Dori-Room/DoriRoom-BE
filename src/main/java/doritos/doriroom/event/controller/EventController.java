@@ -89,19 +89,6 @@ public class EventController {
         return ApiResponse.ok(eventService.getEventDetail(eventId));
     }
 
-    @Operation(summary = "도별 축제 조회", description = "8도 축제 정보 조회")
-    @GetMapping("/area/{areaGroupCode}")
-    public ApiResponse<Page<EventResponseDto>> getEventsByAreaGroup(
-        @Parameter(description = "지역 그룹 코드(1: 서울, 2:경기도)", example = "1", required = true)
-        @PathVariable int areaGroupCode,
-        @ParameterObject Pageable pageable
-    ){
-        AreaGroup areaGroup = AreaGroup.fromCode(areaGroupCode);
-
-        Page<EventResponseDto> events = eventService.getEventsByAreaGroup(areaGroup, pageable);
-        return ApiResponse.ok(events);
-    }
-
     @Operation(summary = "축제별 일기 조회", description = "축제별 일기 리스트 조회")
     @GetMapping("/{eventId}/diaries")
     public ApiResponse<EventDiaryResponseDto> getEventDiaries(
