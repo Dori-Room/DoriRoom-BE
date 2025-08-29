@@ -33,7 +33,7 @@ public class AreaService {
             Area.builder().code(6).name("부산").build(),
             Area.builder().code(7).name("울산").build(),
             Area.builder().code(8).name("세종").build(),
-            Area.builder().code(9).name("경기").build(),
+            Area.builder().code(31).name("경기").build(),
             Area.builder().code(32).name("강원").build(),
             Area.builder().code(33).name("충북").build(),
             Area.builder().code(34).name("충남").build(),
