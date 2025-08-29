@@ -13,6 +13,7 @@ import doritos.doriroom.tourApi.domain.AreaGroup;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -66,9 +67,9 @@ public class EventController {
     }
 
     @Operation(summary = "축제 조회", description = "필터링 조건에 따라 축제 조회")
-    @GetMapping("/filtered")
+    @PostMapping("/filtered")
     public ApiResponse<Page<EventResponseDto>> getFilteredEvents(
-        @ParameterObject EventItemFilterRequestDto request,
+        @Valid @RequestBody EventItemFilterRequestDto request,
         @ParameterObject Pageable pageable
     ){
         //인기검색어 카운트+1
