@@ -9,7 +9,6 @@ import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.service.EventService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.search.service.SearchService;
-import doritos.doriroom.tourApi.domain.AreaGroup;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
