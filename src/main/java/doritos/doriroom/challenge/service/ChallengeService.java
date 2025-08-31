@@ -129,6 +129,10 @@ public class ChallengeService {
         userChallenge.setStatus(ChallengeStatus.WAIT_REWARD); // 도전 중 -> 보상 대기 상태로 변경
     }
 
+    /* 과제 진행도 관련 */
+
+    // 행동 횟수에 관련된 과제인 경우 -> updateChallengeProgress : 과제의 진행도를 +-1 씩 반영하여 달성
+    // 예) 일기 N개 작성 (ChallengeType: WRITE_DIARY)
     @Transactional
     public void updateChallengeProgress(User user, ChallengeType challengeType, int count){ // 반자동으로 진척도 집계하여 상태를 (진행 중 -> 보상 대기) 전환 처리
         List<Challenge> challenges = challengeRepository.findByChallengeType(challengeType); // 같은 타입의 도전과제들
@@ -169,6 +173,42 @@ public class ChallengeService {
                 userChallenge.setStatus(ChallengeStatus.NOT_STARTED);
             }
 
+        }
+    }
+
+    // 상태의 총량 관련된 과제인 경우 -> updateCountProgress : 현재 총량을 확인하여 달성
+    // 예) 이웃 N명 달성 과제 (ChallengeType: REACH_NEIGHBOR_COUNT)
+    @Transactional
+    public void updateChallengeProgressCount(User user, ChallengeType challengeType, int totalCount) {
+        List<Challenge> challenges = challengeRepository.findByChallengeType(challengeType);
+
+        Map<Long, UserChallenge> userChallenges = userChallengeRepository.findByUserAndChallengeInWithFetch(user, challenges).stream()
+                .collect(Collectors.toMap(uc -> uc.getChallenge().getId(), uc->uc));
+
+        for (Challenge challenge : challenges) {
+            UserChallenge userChallenge = userChallenges.get(challenge.getId());
+
+            if (userChallenge == null) {
+                userChallenge = UserChallenge.builder()
+                        .user(user)
+                        .challenge(challenge)
+                        .status(ChallengeStatus.NOT_STARTED)
+                        .currentProgress(0)
+                        .build();
+                userChallengeRepository.save(userChallenge);
+            }
+
+            if (userChallenge.getStatus() == ChallengeStatus.COMPLETED) {
+                continue;
+            }
+
+            // totalCount를 받아 진행도에 반영
+            userChallenge.setCurrentProgress(totalCount);
+            userChallenge.setStatus(ChallengeStatus.IN_PROGRESS);
+
+            if (userChallenge.getCurrentProgress() >= challenge.getTargetCount()) {
+                userChallenge.setStatus(ChallengeStatus.WAIT_REWARD);
+            }
         }
     }
 

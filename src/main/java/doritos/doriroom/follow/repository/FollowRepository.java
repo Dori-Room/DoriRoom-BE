@@ -19,6 +19,8 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
     boolean existsByFollowerAndFollowed(User follower, User followed); // 팔로우 관계 확인 (팔로우 버튼 상태 설정)
     Optional<Follow> findByFollowerAndFollowed(User follower, User followed); // 팔로우 관계 조회
 
+    int countByFollower(User follower); // 내가 팔로우 하는 유저의 총합
+
     // 내가 팔로우하는 사람들 조회
     @EntityGraph(attributePaths = {"followed"}) // 한 번에 조회하도록 설정
 //    @Query(value = "SELECT f FROM Follow f JOIN FETCH f.followed WHERE f.follower = :follower", countQuery = "SELECT count(f) FROM Follow f WHERE f.follower = :follower")
