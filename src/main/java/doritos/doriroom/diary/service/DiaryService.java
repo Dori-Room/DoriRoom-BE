@@ -1,5 +1,7 @@
 package doritos.doriroom.diary.service;
 
+import doritos.doriroom.challenge.domain.challenge.ChallengeType;
+import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.diary.domain.Diary;
 import doritos.doriroom.diary.dto.request.*;
 import doritos.doriroom.diary.dto.response.*;
@@ -17,6 +19,8 @@ import doritos.doriroom.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import doritos.doriroom.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -33,6 +37,7 @@ public class DiaryService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final S3Uploader s3Uploader;
+    private final ChallengeService challengeService;
 
     private static final Long DIARY_WRITE_BASE_CREDIT = 3L;
     private static final Long PHOTO_ATTACHMENT_BONUS_CREDIT = 2L;
@@ -70,6 +75,9 @@ public class DiaryService {
         user.addCredit(totalCredit);
         userRepository.save(user);
 
+        // 일반 과제 진행에 반영 (진행도 +1)
+        challengeService.updateChallengeProgress(user, ChallengeType.WRITE_DIARY, 1);
+
         return DiaryResponseDto.from(diary, totalCredit, user, event);
     }
 
@@ -104,6 +112,7 @@ public class DiaryService {
     @Transactional
     public void deleteDiary(UUID userId, UUID diaryId) {
         Diary diary = diaryRepository.findById(diaryId).orElseThrow(DiaryNotFoundException::new);
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         if(!diary.getUserId().equals(userId)) {
             throw new DiaryAuthorizationException();
@@ -122,6 +131,9 @@ public class DiaryService {
 
 
         diaryRepository.delete(diary);
+
+        // 일반 과제 진행에 반영 (진행도 -1)
+        challengeService.updateChallengeProgress(user, ChallengeType.WRITE_DIARY, -1);
     }
 
     public DiaryDetailResponseDto getDiaryDetail(UUID diaryId) {
