@@ -1,9 +1,13 @@
 package doritos.doriroom.atlas.controller;
 
 
+
 import doritos.doriroom.atlas.dto.response.AtlasResponseDto;
 import doritos.doriroom.atlas.service.AtlasService;
+import doritos.doriroom.challenge.domain.challenge.ChallengeType;
+import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.global.dto.ApiResponse;
+import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AtlasController {
     private final AtlasService atlasService;
+    private final ChallengeService challengeService;
 
 
     @GetMapping
@@ -34,7 +39,9 @@ public class AtlasController {
     public ApiResponse<Void> claimReward(@AuthenticationPrincipal User user,
                                          @Parameter(description = "지역도감 보상 ID", example = "2")
                                          @PathVariable Long atlasRewardId){
+
         atlasService.claimAtlasReward(user, atlasRewardId);
+        challengeService.updateChallengeProgress(user, ChallengeType.COLLECT_ITEM, 1); // 아이템 N개 수집 과제 시 반영
         return ApiResponse.ok();
     }
 

@@ -1,5 +1,7 @@
 package doritos.doriroom.item.controller;
 
+import doritos.doriroom.challenge.domain.challenge.ChallengeType;
+import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.item.domain.ItemGroup;
 import doritos.doriroom.item.domain.ItemType;
@@ -24,6 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ItemController {
     private final ItemService itemService;
+    private final ChallengeService challengeService;
 
     /* 전체 아이템 조회 */
     @GetMapping
@@ -112,7 +115,10 @@ public class ItemController {
     @PostMapping("/purchase")
     @Operation(summary = "아이템 구매")
     public ApiResponse<PurchaseItemResponse> purchase(@AuthenticationPrincipal User user, @RequestBody @Valid PurchaseItemRequest request) {
-        return ApiResponse.ok(itemService.purchase(user, request));
+
+        PurchaseItemResponse response = itemService.purchase(user, request);
+        challengeService.updateChallengeProgress(user, ChallengeType.COLLECT_ITEM, 1); // 아이템 N개 수집 과제 시 반영
+        return ApiResponse.ok(response);
     }
 
     /* 아이템 착용 관련 */
