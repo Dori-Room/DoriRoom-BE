@@ -1,7 +1,9 @@
 package doritos.doriroom.global;
 
 import doritos.doriroom.atlas.domain.Atlas;
+import doritos.doriroom.atlas.domain.AtlasReward;
 import doritos.doriroom.atlas.repository.AtlasRepository;
+import doritos.doriroom.atlas.repository.AtlasRewardRepository;
 import doritos.doriroom.challenge.domain.challenge.*;
 import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.item.domain.CollectionTheme;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -32,6 +35,7 @@ public class DataInitializer implements ApplicationRunner {
     private final ItemRepository itemRepository;
     private final QuizRepository quizRepository;
     private final ChallengeRepository challengeRepository;
+    private final AtlasRewardRepository atlasRewardRepository;
 
     @Override
     @Transactional
@@ -53,6 +57,11 @@ public class DataInitializer implements ApplicationRunner {
         }
         long challengeCount = challengeRepository.count();
         System.out.println("현재 도전과제 개수: " + challengeCount);
+
+        // 도감 보상 데이터 생성 (Item과 Atlas가 먼저 생성된 후에 실행되어야 함)
+        if (atlasRewardRepository.count() == 0) {
+            createInitialAtlasRewards();
+        }
     }
 
     // 원본 지역 도감 데이터
@@ -98,8 +107,19 @@ public class DataInitializer implements ApplicationRunner {
         Item apparel2 = Item.builder().name("새해맞이 복주머니").imageUrl("apparel_newyear_pouch.png").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).price(400L).theme(CollectionTheme.NEW_YEAR).isPurchasable(true).build();
         Item apparel3 = Item.builder().name("서울 선비 갓").imageUrl("apparel_seoul_gat.png").itemType(ItemType.APPAREL).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.SEOUL).price(0L).isPurchasable(false).build();
 
+        // --- 지역(AREA) 그룹 아이템 (도감 보상용)
+        Item seoulItem = Item.builder().name("서울 남산타워 모형").imageUrl("item_seoul_namsan.png").itemType(ItemType.OBJECT).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.SEOUL).price(0L).isPurchasable(false).build();
+        Item gyeonggiItem = Item.builder().name("경기도 행궁 담벼락").imageUrl("item_gyeonggi_haenggung.png").itemType(ItemType.WALL).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.GYEONGGI).price(0L).isPurchasable(false).build();
+        Item gangwonItem = Item.builder().name("강원도 오징어 인형").imageUrl("item_gangwon_squid.png").itemType(ItemType.APPAREL).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.GANGWON).price(0L).isPurchasable(false).build();
+        Item chungcheongItem = Item.builder().name("충청도 소나무 분재").imageUrl("item_chungcheong_pine.png").itemType(ItemType.OBJECT).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.CHUNGNAM).price(0L).isPurchasable(false).build();
+        Item jeollaItem = Item.builder().name("전라도 풍년 볏짚 바닥").imageUrl("item_jeolla_straw.png").itemType(ItemType.FLOOR).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.JEOLLA).price(0L).isPurchasable(false).build();
+        Item gyeongsangItem = Item.builder().name("경상도 돌고래 창문").imageUrl("item_gyeongsang_dolphin.png").itemType(ItemType.WINDOW).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.GYEONGSANG).price(0L).isPurchasable(false).build();
+        Item jejuItem = Item.builder().name("제주 유채꽃 선반").imageUrl("item_jeju_flower.png").itemType(ItemType.SHELF).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.JEJU).price(0L).isPurchasable(false).build();
+
+
         itemRepository.saveAll(List.of(wall1, wall2, wall3, floor1, floor2, floor3, object1, object2, object3, shelf1, shelf2, shelf3, window1, window2, window3, apparel1, apparel2, apparel3));
-        System.out.println("아이템 초기 데이터 18개가 생성되었습니다.");
+        itemRepository.saveAll(List.of(seoulItem, gyeonggiItem, gangwonItem, chungcheongItem, jeollaItem, gyeongsangItem, jejuItem));
+        System.out.println("아이템 초기 데이터 25개가 생성되었습니다.");
     }
 
     // 일반과제 초기 데이터
@@ -302,6 +322,41 @@ public class DataInitializer implements ApplicationRunner {
         System.out.println("총 " + allQuizzes.size() + "개의 퀴즈 세트 초기 데이터가 생성되었습니다.");
     }
 
+    //TODO: 지역 축제 관련 과제 추가
+
+    // 지역 도감 보상 아이템 추가
+    private void createInitialAtlasRewards() {
+        // 각 지역과 보상으로 지급할 아이템 ID
+        Map<AreaGroup, Long> rewardItemMap = Map.of(
+                AreaGroup.SEOUL, 19L,
+                AreaGroup.GYEONGGI, 20L,
+                AreaGroup.GANGWON, 21L,
+                AreaGroup.CHUNGNAM, 22L,
+                AreaGroup.JEOLLA, 23L,
+                AreaGroup.GYEONGSANG, 24L,
+                AreaGroup.JEJU, 25L
+        );
+
+        List<AtlasReward> rewards = new ArrayList<>();
+
+        rewardItemMap.forEach((areaGroup, itemId) -> {
+
+            Atlas atlas = atlasRepository.findByAreaGroup(areaGroup).orElse(null);
+            Item rewardItem = itemRepository.findById(itemId).orElse(null);
+
+
+            if (atlas != null && rewardItem != null) {
+                rewards.add(AtlasReward.builder()
+                        .atlas(atlas)
+                        .targetLevel(1) // 목표 레벨
+                        .rewardItem(rewardItem)
+                        .build());
+            }
+        });
+
+        atlasRewardRepository.saveAll(rewards);
+        System.out.println(rewards.size() + "개의 도감 보상 초기 데이터가 생성되었습니다.");
+    }
 
 
 
