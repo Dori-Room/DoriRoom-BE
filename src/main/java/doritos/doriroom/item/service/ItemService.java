@@ -1,5 +1,7 @@
 package doritos.doriroom.item.service;
 
+import doritos.doriroom.challenge.domain.challenge.ChallengeType;
+import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.item.domain.Item;
 import doritos.doriroom.item.domain.ItemGroup;
 import doritos.doriroom.item.domain.ItemType;
@@ -32,6 +34,7 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final UserItemRepository userItemRepository;
     private final UserRepository userRepository;
+    private final ChallengeService challengeService;
 
     /* ---- 사용자 아이템 추가 관련 (구매하는 경우 제외) ---- */
 
@@ -53,6 +56,9 @@ public class ItemService {
                 .build();
 
         userItemRepository.save(userItem);
+
+        // 아이템 N개 수집 과제 시 반영
+        challengeService.updateChallengeProgress(user, ChallengeType.COLLECT_ITEM, 1);
     }
 
     /* ---- 아이템 조회 관련 ---- */
