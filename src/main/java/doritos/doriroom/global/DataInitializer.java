@@ -48,11 +48,11 @@ public class DataInitializer implements ApplicationRunner {
         System.out.println("현재 아이템 개수: " + itemCount);
 
         if (challengeRepository.count() == 0) {
+            createInitialCommonChallenges();
             createInitialQuizzesAndChallenges();
         }
         long challengeCount = challengeRepository.count();
         System.out.println("현재 도전과제 개수: " + challengeCount);
-
     }
 
     // 원본 지역 도감 데이터
@@ -100,6 +100,36 @@ public class DataInitializer implements ApplicationRunner {
 
         itemRepository.saveAll(List.of(wall1, wall2, wall3, floor1, floor2, floor3, object1, object2, object3, shelf1, shelf2, shelf3, window1, window2, window3, apparel1, apparel2, apparel3));
         System.out.println("아이템 초기 데이터 18개가 생성되었습니다.");
+    }
+
+    // 일반과제 초기 데이터
+    private void createInitialCommonChallenges() {
+        // 1. 일기 작성
+        Challenge writeDiary = createCommonChallenge("일기 5개 작성하기", "여행의 순간을 담은 일기를 5번 작성해보세요.",
+                ChallengeType.WRITE_DIARY, 5);
+
+        // 2. 이웃 집 방문
+        Challenge visitNeighbor = createCommonChallenge("이웃 10회 방문하기", "다른 사용자의 방을 10번 방문해보세요.",
+                ChallengeType.VISIT_NEIGHBOR, 10);
+
+        // 3. 방 조회수 N번 달성
+        Challenge reachVisitCount = createCommonChallenge("내 방 방문객 20명 달성하기", "내 방의 총 방문객 수를 20명 달성해보세요.",
+                ChallengeType.REACH_VISIT_COUNT, 20);
+
+        // 4. 이웃 N명 달성
+        Challenge reachNeighborCount = createCommonChallenge("이웃 10명 달성하기", "총 10명의 이웃(팔로잉)을 만들어보세요.",
+                ChallengeType.REACH_NEIGHBOR_COUNT, 10);
+
+        // 5. 방 좋아요 수 N개 달성
+        Challenge reachRoomLikeCount = createCommonChallenge("방 좋아요 15개 받기", "내 방의 좋아요 수를 15개 달성해보세요.",
+                ChallengeType.REACH_ROOM_COUNT, 15);
+
+        // 6. 아이템 수집
+        Challenge collectItem = createCommonChallenge("아이템 3개 수집하기", "종류에 상관없이 아이템을 3개 수집해보세요.",
+                ChallengeType.COLLECT_ITEM, 3);
+
+        challengeRepository.saveAll(List.of(writeDiary, visitNeighbor, reachVisitCount, reachNeighborCount, reachRoomLikeCount, collectItem));
+        System.out.println("일반 과제 초기 데이터가 6개 생성되었습니다.");
     }
 
     // 도전과제 초기 데이터 (지역 퀴즈)
@@ -280,6 +310,21 @@ public class DataInitializer implements ApplicationRunner {
 
     // --- Helper Methods ---
 
+    // 일반 과제 생성 헬퍼
+    private Challenge createCommonChallenge(String title, String content, ChallengeType type, int targetCount) {
+        Challenge challenge = Challenge.builder()
+                .title(title)
+                .content(content)
+                .challengeGroup(ChallengeGroup.COMMON)
+                .challengeType(type)
+                .targetCount(targetCount)
+                .build();
+        // 보상: 크레딧 4
+        challenge.getRewards().add(ChallengeReward.builder().challenge(challenge).rewardType(RewardType.CREDIT).amount(4L).build());
+        return challenge;
+    }
+
+    // 지역 과제(퀴즈) 생성 헬퍼
     private Challenge createQuizChallenge(String title, AreaGroup areaGroup) {
         Challenge challenge = Challenge.builder()
                 .title(title)
