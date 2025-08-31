@@ -1,5 +1,7 @@
 package doritos.doriroom.user.service;
 
+import doritos.doriroom.challenge.domain.challenge.ChallengeType;
+import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.user.domain.RoomLike;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.response.RoomLikeResponseDto;
@@ -23,6 +25,7 @@ import java.util.UUID;
 public class RoomLikeService {
     private final RoomLikeRepository roomLikeRepository;
     private final UserRepository userRepository;
+    private final ChallengeService challengeService;
 
     @Transactional
     public RoomLikeResponseDto setLikeStatus(User liker, UUID roomOwnerId, boolean isLiked) {
@@ -54,6 +57,9 @@ public class RoomLikeService {
                     roomOwner.incrementLikeCount();
                     userRepository.save(roomOwner);
 
+                    // 방 좋아요 N개 달성 과제에 반영
+                    challengeService.updateChallengeProgressCount(roomOwner, ChallengeType.REACH_ROOM_COUNT, roomOwner.getLikeCount());
+
                     int newLikeCount = roomOwner.getLikeCount();
                     return RoomLikeResponseDto.builder()
                         .isLiked(true)
@@ -66,6 +72,9 @@ public class RoomLikeService {
                     roomLikeRepository.delete(existingLike.get());
                     roomOwner.decrementLikeCount();
                     userRepository.save(roomOwner);
+
+                    // 방 좋아요 N개 달성 과제에 반영
+                    challengeService.updateChallengeProgressCount(roomOwner, ChallengeType.REACH_ROOM_COUNT, roomOwner.getLikeCount());
 
                     int newLikeCount = roomOwner.getLikeCount();
                     return RoomLikeResponseDto.builder()
