@@ -16,16 +16,16 @@ import doritos.doriroom.quiz.domain.Quiz;
 import doritos.doriroom.quiz.repository.QuestionRepository;
 import doritos.doriroom.quiz.repository.QuizRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;
+import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -36,6 +36,8 @@ public class DataInitializer implements ApplicationRunner {
     private final QuizRepository quizRepository;
     private final ChallengeRepository challengeRepository;
     private final AtlasRewardRepository atlasRewardRepository;
+    private final PasswordEncoder encoder;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -62,6 +64,11 @@ public class DataInitializer implements ApplicationRunner {
         if (atlasRewardRepository.count() == 0) {
             createInitialAtlasRewards();
         }
+
+        if (userRepository.count() == 0) {
+            createInitialUsers();
+        }
+
     }
 
     // 원본 지역 도감 데이터
@@ -358,6 +365,26 @@ public class DataInitializer implements ApplicationRunner {
         System.out.println(rewards.size() + "개의 도감 보상 초기 데이터가 생성되었습니다.");
     }
 
+    // 임의의 유저 추가
+    private void createInitialUsers() {
+        List<User> users = new ArrayList<>();
+        String encodedPassword = encoder.encode("Passw0rd!"); // 모든 유저의 기본 비밀번호
+
+        for (int i = 1; i <= 20; i++) {
+            User user = User.builder()
+                    .userId(UUID.randomUUID()) // UUID 직접 생성
+                    .username("user" + String.format("%02d", i)) // user01, user02 ...
+                    .password(encodedPassword)
+                    .email("user" + String.format("%02d", i) + "@dori.com") // user01@dori.com ...
+                    .nickname("도리" + i) // 도리1, 도리2 ...
+                    // credit, roomVisibility, likeCount, viewCount 등은 @Builder.Default로 자동 설정됩니다.
+                    .build();
+            users.add(user);
+        }
+
+        userRepository.saveAll(users);
+        System.out.println("유저 " + users.size() + "명이 생성되었습니다.");
+    }
 
 
 
