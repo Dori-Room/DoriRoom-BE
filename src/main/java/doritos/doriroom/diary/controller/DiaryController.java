@@ -154,4 +154,14 @@ public class DiaryController {
         List<DiaryResponseDto> response = diaryService.getPopularDiariesOfMonth();
         return ApiResponse.ok(response);
     }
+
+    @Operation(summary = "친구들 일기 모아보기", description = "팔로우한 친구들의 일기를 시간순으로 조회합니다. 베스트프렌드는 FOLLOWERS 일기도 볼 수 있습니다.")
+    @GetMapping("/friends")
+    public ApiResponse<Page<DiaryResponseDto>> getFriendsDiaries(
+        @AuthenticationPrincipal User user,
+        @ParameterObject Pageable pageable) {
+
+        Page<DiaryResponseDto> response = diaryService.getFriendsDiaries(user.getUserId(), pageable);
+        return ApiResponse.ok(response);
+    }
 }

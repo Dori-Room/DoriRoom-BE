@@ -369,4 +369,58 @@ public class DiaryService {
             .toList();
     }
 
+    public Page<DiaryResponseDto> getFriendsDiaries(UUID currentUserId, Pageable pageable) {
+        LocalDateTime twoWeeksAgo = LocalDateTime.now().minusWeeks(2);
+
+        // 내가 팔로우하는 모든 친구 ID와 나를 단짝으로 설정한 친구 ID 목록을 조회
+        List<UUID> followingUserIds = followService.getFollowingIds(currentUserId);
+        List<UUID> mutualBestFriendIds = followService.getMutualBestFriendIds(currentUserId);
+
+        // 친구가 한 명도 없으면 빈 페이지 반환
+        if (followingUserIds.isEmpty() && mutualBestFriendIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 단일 쿼리로 모든 조건에 맞는 일기를 DB에서 직접 페이징하여 조회
+        Page<Diary> friendsDiariesPage = diaryRepository.findFriendsDiaries(
+            followingUserIds,
+            mutualBestFriendIds,
+            twoWeeksAgo,
+            pageable
+        );
+
+        // 사용자, 이벤트 정보 배치 조회 및 DTO 변환
+        List<Diary> pagedDiaries = friendsDiariesPage.getContent();
+
+        List<UUID> userIds = pagedDiaries.stream()
+            .map(Diary::getUserId)
+            .distinct()
+            .toList();
+
+        List<UUID> eventIds = pagedDiaries.stream()
+            .map(Diary::getEventId)
+            .distinct()
+            .toList();
+
+        // ID 목록이 비어있으면 불필요한 DB 조회를 막음
+        Map<UUID, User> userMap = userIds.isEmpty() ? Collections.emptyMap() :
+            userRepository.findByUserIdIn(userIds).stream()
+                .collect(Collectors.toMap(User::getUserId, user -> user));
+
+        Map<UUID, Event> eventMap = eventIds.isEmpty() ? Collections.emptyMap() :
+            eventRepository.findByEventIdIn(eventIds).stream()
+                .collect(Collectors.toMap(Event::getEventId, event -> event));
+
+        // DTO 변환
+        List<DiaryResponseDto> diaryResponses = pagedDiaries.stream()
+            .map(diary -> {
+                User diaryUser = userMap.get(diary.getUserId());
+                Event event = eventMap.get(diary.getEventId());
+                return DiaryResponseDto.from(diary, 0L, diaryUser, event); // 0L 부분은 필요시 로직 추가
+            })
+            .toList();
+
+        return new PageImpl<>(diaryResponses, pageable, friendsDiariesPage.getTotalElements());
+    }
+
 }

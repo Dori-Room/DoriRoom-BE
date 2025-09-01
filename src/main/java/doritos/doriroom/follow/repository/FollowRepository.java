@@ -47,4 +47,22 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
 
     List<Follow> findByFollowerAndFollowed_UserIdIn(User user, Set<UUID> targetUserIds); // 팔로우 정보 추출
 
+    /**
+     * 특정 사용자가 팔로우하는 모든 사용자의 ID를 조회
+     * Follow 엔티티 전체가 아닌 userId(UUID)만 조회
+     */
+    @Query("SELECT f.followed.userId FROM Follow f WHERE f.follower = :user")
+    List<UUID> findFollowingIdsByFollower(@Param("user") User user);
+
+    /**
+     * 특정 사용자를 '단짝'으로 설정한 맞팔로우 상태의 사용자 ID 목록을 조회
+     */
+    @Query("""
+        SELECT f1.followed.userId FROM Follow f1
+        WHERE f1.follower.userId = :currentUserId AND EXISTS (
+            SELECT 1 FROM Follow f2
+            WHERE f2.follower = f1.followed AND f2.followed = f1.follower AND f2.isBestFriend = true
+        )
+        """)
+    List<UUID> findMutualBestFriendIds(@Param("currentUserId") UUID currentUserId);
 }
