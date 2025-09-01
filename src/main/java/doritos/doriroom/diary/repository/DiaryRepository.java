@@ -1,6 +1,7 @@
 package doritos.doriroom.diary.repository;
 
 import doritos.doriroom.diary.domain.Diary;
+import doritos.doriroom.user.domain.RoomVisibility;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -40,4 +41,16 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
 
     Page<Diary> findByUserIdOrderByVisitedAtDesc(UUID userId, Pageable pageable);
 
+    @Query("""
+        SELECT d FROM Diary d
+        WHERE d.userId = :userId
+        AND d.diaryVisibility IN (:visibilities)
+        AND d.visitedAt BETWEEN :startDate AND :endDate
+        ORDER BY d.visitedAt
+        """)
+    List<Diary> findPublicAndFollowersByUserIdAndVisitedAtBetweenOrderByVisitedAt(
+        @Param("userId") UUID userId,
+        @Param("visibilities") List<RoomVisibility> visibilities,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate);
 }
