@@ -1,12 +1,17 @@
 package doritos.doriroom.event.repository;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import doritos.doriroom.diary.domain.QDiary;
 import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.domain.EventDetailStatus;
 import doritos.doriroom.event.domain.QEvent;
 import doritos.doriroom.event.domain.QEventFavorite;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
+import doritos.doriroom.event.dto.request.LocationFilterDto;
+import doritos.doriroom.tourApi.domain.AreaGroup;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,32 +29,25 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
     public Page<Event> findFiltered(EventItemFilterRequestDto filter, Pageable pageable) {
         QEvent event = QEvent.event;
 
-        List<Event> results = queryFactory
+        JPAQuery<Event> query = queryFactory
             .selectFrom(event)
             .where(
-                eqAreaCode(filter.areaCode(), event),
-                eqSigunguCodes(filter.sigunguCodes(), event),
+                isSuccessStatus(event),
+                eqLocations(filter.locations(), event),
                 eqCategoryCodes(filter.categoryCodes(), event),
-                eqStartDate(filter.startDate(), event),
-                eqEndDate(filter.endDate(), event),
+                eqDateRange(filter.startDate(), filter.endDate(), event),
                 eqKeyword(filter.keyword(), event)
-            )
+            );
+
+        List<Event> results = query
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
-            .orderBy(event.startDate.asc())
             .fetch();
 
         Long total = queryFactory
             .select(event.count())
             .from(event)
-            .where(
-                eqAreaCode(filter.areaCode(), event),
-                eqSigunguCodes(filter.sigunguCodes(), event),
-                eqCategoryCodes(filter.categoryCodes(), event),
-                eqStartDate(filter.startDate(), event),
-                eqEndDate(filter.endDate(), event),
-                eqKeyword(filter.keyword(), event)
-            )
+            .where(query.getMetadata().getWhere())
             .fetchOne();
 
         return new PageImpl<>(results, pageable, total != null ? total : 0L);
@@ -71,7 +69,10 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
                 .and(diary.createdAt.goe(thirtyDaysAgo)))
             .leftJoin(eventFavorite).on(eventFavorite.event.eventId.eq(event.eventId)
                 .and(eventFavorite.createdAt.goe(thirtyDaysAgo)))
-            .where(event.startDate.goe(today))
+            .where(
+                isSuccessStatus(event),
+                event.startDate.goe(today)
+            )
             .groupBy(event.eventId)
             .orderBy(
                 diary.count().multiply(3)
@@ -82,14 +83,42 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
             .fetch();
     }
 
-    private BooleanExpression eqAreaCode(Integer areaCode, QEvent event) {
-        return areaCode != null ? event.areaCode.eq(areaCode) : null;
+    private BooleanBuilder eqLocations(List<LocationFilterDto> locations, QEvent event) {
+        if (locations == null || locations.isEmpty()) {
+            return null;
+        }
+
+        BooleanBuilder builder = new BooleanBuilder();
+        locations.forEach(location -> {
+            BooleanBuilder condition = createLocationCondition(location, event);
+            if (condition != null) {
+                builder.or(condition);
+            }
+        });
+
+        return builder.hasValue() ? builder : null;
     }
 
-    private BooleanExpression eqSigunguCodes(List<Integer> sigunguCodes, QEvent event) {
-        return sigunguCodes != null && !sigunguCodes.isEmpty()
-            ? event.sigungucode.in(sigunguCodes) : null;
+    private BooleanBuilder createLocationCondition(LocationFilterDto location, QEvent event) {
+        BooleanBuilder builder = new BooleanBuilder();
+
+        if (location.areaGroupCode() != null) {
+            AreaGroup areaGroup = AreaGroup.fromCode(location.areaGroupCode());
+            builder.and(event.areaCode.in(areaGroup.getAreaCodes()));
+        }
+
+        if (location.areaCode() != null) {
+            builder.and(event.areaCode.eq(location.areaCode()));
+        }
+
+        if (location.sigunguCode() != null) {
+            builder.and(event.sigungucode.eq(location.sigunguCode()));
+        }
+
+        // 생성된 조건이 있을 경우에만 반환
+        return builder.hasValue() ? builder : null;
     }
+
 
     private BooleanExpression eqCategoryCodes(List<String> categoryCodes, QEvent event) {
         if(categoryCodes == null || categoryCodes.isEmpty()) return null;
@@ -99,16 +128,23 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
         return cond1.or(cond2);
     }
 
-    private BooleanExpression eqStartDate(LocalDate startDate, QEvent event) {
-        return startDate != null ? event.endDate.goe(startDate) : null;
-    }
-
-    private BooleanExpression eqEndDate(LocalDate endDate, QEvent event) {
-        return endDate != null ? event.startDate.loe(endDate) : null;
+    private BooleanBuilder eqDateRange(LocalDate startDate, LocalDate endDate, QEvent event) {
+        BooleanBuilder builder = new BooleanBuilder();
+        if (startDate != null) {
+            builder.and(event.endDate.goe(startDate)); // 축제 종료일 >= 검색 시작일
+        }
+        if (endDate != null) {
+            builder.and(event.startDate.loe(endDate)); // 축제 시작일 <= 검색 종료일
+        }
+        return builder.hasValue() ? builder : null;
     }
 
     private BooleanExpression eqKeyword(String keyword, QEvent event) {
         return keyword != null && !keyword.trim().isEmpty()
             ? event.title.containsIgnoreCase(keyword) : null;
+    }
+
+    private BooleanExpression isSuccessStatus(QEvent event) {
+        return event.eventDetailStatus.eq(EventDetailStatus.SUCCESS);
     }
 }

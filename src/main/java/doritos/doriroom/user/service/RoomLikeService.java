@@ -27,6 +27,7 @@ public class RoomLikeService {
     private final UserRepository userRepository;
     private final ChallengeService challengeService;
 
+
     @Transactional
     public RoomLikeResponseDto setLikeStatus(User liker, UUID roomOwnerId, boolean isLiked) {
         try {
@@ -57,9 +58,10 @@ public class RoomLikeService {
                     roomOwner.incrementLikeCount();
                     userRepository.save(roomOwner);
 
+
                     // 방 좋아요 N개 달성 과제에 반영
                     challengeService.updateChallengeProgressCount(roomOwner, ChallengeType.REACH_ROOM_COUNT, roomOwner.getLikeCount());
-
+                  
                     int newLikeCount = roomOwner.getLikeCount();
                     return RoomLikeResponseDto.builder()
                         .isLiked(true)

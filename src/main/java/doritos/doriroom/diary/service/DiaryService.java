@@ -213,6 +213,7 @@ public class DiaryService {
         List<DiaryResponseDto> diaryList = diaries.stream()
             .map(diary -> {
                 Event event = eventMap.get(diary.getEventId());
+
                 return DiaryResponseDto.from(diary, 0L, user, event);
             })
             .toList();
@@ -241,6 +242,7 @@ public class DiaryService {
         List<DiaryResponseDto> diaries = diaryPage.getContent().stream()
             .map(diary -> {
                 User user = userMap.get(diary.getUserId());
+
                 return DiaryResponseDto.from(diary, 0L, user, event);
             })
             .toList();
@@ -271,6 +273,7 @@ public class DiaryService {
     private Long calculateDiaryCredit(List<String> imageUrls) {
         Long credit = DIARY_WRITE_BASE_CREDIT;
 
+
         if (imageUrls != null && !imageUrls.isEmpty()) {
             credit += PHOTO_ATTACHMENT_BONUS_CREDIT;
         }
@@ -297,6 +300,7 @@ public class DiaryService {
         List<DiaryResponseDto> diaryResponseList = diaries.getContent().stream()
             .map(diary -> {
                 Event event = eventMap.get(diary.getEventId());
+
                 return DiaryResponseDto.from(diary, 0L, user, event);
             })
             .toList();

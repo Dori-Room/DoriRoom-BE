@@ -2,7 +2,6 @@ package doritos.doriroom.user.service;
 
 import doritos.doriroom.auth.exception.InvalidPasswordException;
 import doritos.doriroom.challenge.domain.challenge.ChallengeType;
-import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
 import doritos.doriroom.user.dto.response.UserSearchResultDto;
@@ -44,6 +43,7 @@ public class UserService {
     private final ItemService itemService;
     private final FollowRepository followRepository;
     private final ChallengeService challengeService;
+
 
     public void checkUsernameDuplicate(String username){
         if (userRepository.existsByUsername(username)) {

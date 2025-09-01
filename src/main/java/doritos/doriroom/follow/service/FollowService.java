@@ -3,6 +3,7 @@ package doritos.doriroom.follow.service;
 import doritos.doriroom.challenge.domain.challenge.ChallengeType;
 import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.service.ChallengeService;
+
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.FollowFilterType;
 import doritos.doriroom.follow.dto.request.FollowRequestDto;
@@ -35,6 +36,7 @@ public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final ChallengeService challengeService;
+
 
     // targetUser 팔로우
     @Transactional

@@ -62,6 +62,7 @@ public class ItemService {
     }
 
     /* ---- 아이템 조회 관련 ---- */
+  
 
     // 전체 아이템 조회 (유저 보유 여부 포함)
     @Transactional(readOnly = true)
@@ -250,6 +251,7 @@ public class ItemService {
         return userItemRepository.findByUserAndIsEquippedTrue(user)
             .stream().map(EquippedItemResponse::from).toList();
     }
+
 
 
 

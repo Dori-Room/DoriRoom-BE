@@ -1,6 +1,7 @@
 package doritos.doriroom.event.repository;
 
 import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.domain.EventDetailStatus;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -18,31 +19,31 @@ public interface EventRepository extends JpaRepository<Event, UUID>, EventReposi
     List<Event> findEventsByContentIds(@Param("contentIds") List<Integer> contentIds);
 
     @Query("""
-    SELECT e FROM Event e
-    WHERE e.startDate >= CURRENT_DATE
-    ORDER BY e.startDate ASC
+        SELECT e FROM Event e
+        WHERE e.startDate >= CURRENT_DATE
+        AND e.eventDetailStatus = 'SUCCESS'
+        ORDER BY e.startDate ASC
     """)
     List<Event> findUpcomingEvents(Pageable pageable);
 
-    @Query("SELECT e FROM Event e " +
-        "WHERE e.startDate <= :today AND e.endDate >= :today " +
-        "ORDER BY e.endDate ASC")
+    @Query("""
+        SELECT e FROM Event e
+        WHERE e.startDate <= :today AND e.endDate >= :today
+        AND e.eventDetailStatus = 'SUCCESS'
+        ORDER BY e.endDate ASC
+    """)
     List<Event> findEndingSoonEvents(@Param("today") LocalDate today, Pageable pageable);
 
     @Query("""
         SELECT e FROM Event e
         WHERE e.areaCode IN :areaCodes
         AND e.endDate >= CURRENT_DATE
+        AND e.eventDetailStatus = 'SUCCESS'
         ORDER BY e.startDate ASC
     """)
     Page<Event> findByAreaCodesIn(@Param("areaCodes") List<Integer> areaCodes, Pageable pageable);
 
-    @Query("""
-    SELECT e FROM Event e
-    WHERE e.detailUpdated = false
-    ORDER BY e.startDate ASC
-    """)
-    List<Event> findEventsNeedingDetailUpdate();
+    List<Event> findByEventDetailStatusOrderByStartDateDesc(EventDetailStatus detailStatus);
 
     @Query("SELECT e FROM Event e WHERE e.eventId IN :eventIds")
     List<Event> findByEventIdIn(@Param("eventIds") List<UUID> eventIds);

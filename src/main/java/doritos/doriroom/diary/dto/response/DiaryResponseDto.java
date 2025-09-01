@@ -43,6 +43,7 @@ public record DiaryResponseDto(
     @Schema(description = "축제 정보")
     EventInfoResponseDto eventInfo
 ) {
+
     public static DiaryResponseDto from(Diary diary, Long totalCredit, User user, Event event) {
         return new DiaryResponseDto(
             diary.getDiaryId(),
