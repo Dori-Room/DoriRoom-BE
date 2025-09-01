@@ -39,7 +39,7 @@ public class AuthController {
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입")
-    public ApiResponse<Void> signup(@RequestBody @Valid SignupRequestDto request,
+    public ApiResponse<Void> signup(@RequestPart("request") @Valid SignupRequestDto request,
                                     @RequestPart(value = "image", required = false) MultipartFile image){
         authService.signup(request, image);
         return ApiResponse.ok();

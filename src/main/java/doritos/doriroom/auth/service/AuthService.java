@@ -93,8 +93,6 @@ public class AuthService {
         if (verified == null) {
             throw new EmailNotVerifiedException();
         }
-        redisTemplate.delete(verifiedKey); // 유저 등록 후 인증 상태 삭제
-
 
         // 중복 아이디, 닉네임 예외 처리
         if (userRepository.existsByUsername(request.username())) {
@@ -123,6 +121,7 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+        redisTemplate.delete(verifiedKey); // 유저 등록 후 인증 상태 삭제
     }
 
     public LoginResponseDto login(LoginRequestDto request) {
