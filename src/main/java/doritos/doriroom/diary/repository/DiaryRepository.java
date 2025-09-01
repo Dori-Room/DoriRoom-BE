@@ -73,6 +73,7 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         (d.userId IN :followingIds AND d.diaryVisibility = 'PUBLIC') OR
         (d.userId IN :mutualBestFriendIds AND d.diaryVisibility = 'FOLLOWERS')
     )
+    ORDER BY d.createdAt DESC, d.diaryId DESC
     """)
     Page<Diary> findFriendsDiaries(
         @Param("followingIds") List<UUID> followingIds,
