@@ -4,5 +4,9 @@ public enum CollectionTheme {
     //예시
     SUMMER,
     WINTER,
-    NEW_YEAR
+    CLASSROOM,
+    PICNIC,
+    DESSERT,
+    BIRTHDAY,
+
 }
