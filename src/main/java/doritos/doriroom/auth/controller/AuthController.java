@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Auth", description = "인증 관련 API")
 @RestController
@@ -38,8 +39,9 @@ public class AuthController {
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입")
-    public ApiResponse<Void> signup(@RequestBody @Valid SignupRequestDto request){
-        authService.signup(request);
+    public ApiResponse<Void> signup(@RequestBody @Valid SignupRequestDto request,
+                                    @RequestPart(value = "image", required = false) MultipartFile image){
+        authService.signup(request, image);
         return ApiResponse.ok();
     }
 
