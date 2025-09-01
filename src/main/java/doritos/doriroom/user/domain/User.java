@@ -45,13 +45,19 @@ public class User {
     private int viewCount = 0;
 
     // 포인트 관련 메서드 추가
-    public void addCredit(Long credit) {
-        this.credit += credit;
+    public void addCredit(Long creditCount) {
+        if (creditCount < 0) {
+            throw new NotEnoughCreditException("creditCount 값은 0보더 커야 합니다.");
+        }
+        long current = (this.credit != null ? this.credit : 0L);
+        this.credit = current + creditCount;
     }
 
     // 보유 크레딧 차감
     public void deductCredit(long price){
-        if(this.credit < price){ throw new NotEnoughCreditException();};
+        if(this.credit < price){
+            throw new NotEnoughCreditException();
+        }
         this.credit -= price;
     }
 

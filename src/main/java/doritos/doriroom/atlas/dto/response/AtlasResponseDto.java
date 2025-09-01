@@ -51,7 +51,7 @@ public record AtlasResponseDto(
 
         return AtlasResponseDto.builder()
                 .atlasId(atlas.getId()) // 지역 도감 id
-                .userAtlasId(userAtlas.getUserAtlasId()) // 유저의 해당 지역 도감 id
+                .userAtlasId(userAtlasId) // 유저의 해당 지역 도감 id
                 .areaGroup(atlas.getAreaGroup())
                 .currentLevel(currentLevel)
                 .currentExp(currentExp)

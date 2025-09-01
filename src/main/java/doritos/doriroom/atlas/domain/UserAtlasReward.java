@@ -8,12 +8,18 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "user_atlas_rewards")
+@Table(
+    name = "user_atlas_rewards",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_user_atlas_reward",
+        columnNames = {"user_id", "atlas_reward_id"}
+    )
+)
 @Getter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class UserAtlasReward {
-    @Id
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)

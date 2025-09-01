@@ -4,7 +4,15 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "questions")
+@Table(
+  name = "questions",
+  uniqueConstraints = {
+    @UniqueConstraint(name = "uk_questions_quiz_seq", columnNames = {"quiz_id", "sequence"})
+  },
+  indexes = {
+     @Index(name = "idx_questions_quiz", columnList = "quiz_id")
+  }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) @AllArgsConstructor
 @Builder

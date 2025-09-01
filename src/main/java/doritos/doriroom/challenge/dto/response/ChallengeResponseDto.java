@@ -47,9 +47,11 @@ public record ChallengeResponseDto(
                 .challengeType(challenge.getChallengeType())
                 .targetCount(challenge.getTargetCount())
                 .eventId(challenge.getEvent() != null ? challenge.getEvent().getEventId() : null)
-                .rewards(challenge.getRewards().stream()
-                        .map(ChallengeRewardDto::from)
-                        .collect(Collectors.toList()))
+                .rewards(challenge.getRewards() == null
+                        ? List.of()
+                        : challenge.getRewards().stream()
+                            .map(ChallengeRewardDto::from)
+                            .toList())
                 .currentProgress(userChallenge != null ? userChallenge.getCurrentProgress() : 0)
                 .status(userChallenge != null ? userChallenge.getStatus() : ChallengeStatus.NOT_STARTED)
                 .build();

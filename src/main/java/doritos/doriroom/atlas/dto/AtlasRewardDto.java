@@ -4,6 +4,7 @@ import doritos.doriroom.atlas.domain.AtlasReward;
 import doritos.doriroom.item.domain.ItemType;
 import lombok.Builder;
 
+import java.util.Objects;
 
 
 @Builder
@@ -25,6 +26,9 @@ public record AtlasRewardDto(
 ){
     public static AtlasRewardDto of(AtlasReward atlasReward, boolean isClaimed) {
         if (atlasReward == null) return null;
+
+        var item = atlasReward.getRewardItem();
+        Objects.requireNonNull(item, "AtlasReward.rewardItem must not be null");
 
         return AtlasRewardDto.builder()
                 .atlasRewardId(atlasReward.getId())

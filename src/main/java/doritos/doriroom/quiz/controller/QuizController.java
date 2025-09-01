@@ -1,7 +1,7 @@
 package doritos.doriroom.quiz.controller;
 
 import doritos.doriroom.global.dto.ApiResponse;
-import doritos.doriroom.quiz.dto.requset.QuestionSubmitRequestDto;
+import doritos.doriroom.quiz.dto.request.QuestionSubmitRequestDto;
 import doritos.doriroom.quiz.dto.response.QuestionSubmitResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizCompleteResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizResponseDto;

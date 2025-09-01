@@ -10,7 +10,7 @@ import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.repository.UserChallengeRepository;
 import doritos.doriroom.quiz.domain.Question;
 import doritos.doriroom.quiz.domain.Quiz;
-import doritos.doriroom.quiz.dto.requset.QuestionSubmitRequestDto;
+import doritos.doriroom.quiz.dto.request.QuestionSubmitRequestDto;
 import doritos.doriroom.quiz.dto.response.QuestionSubmitResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizCompleteResponseDto;
 import doritos.doriroom.quiz.dto.response.QuizResponseDto;

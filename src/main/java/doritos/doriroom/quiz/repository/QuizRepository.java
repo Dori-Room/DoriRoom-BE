@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
     // 도전과제 id로 퀴즈를 조회, 관련 문제들 목록을 조회하도록 fetch join 사용
-    @Query("SELECT q FROM Quiz q JOIN FETCH q.questions WHERE q.challenge.id = :challengeId")
+    @Query("SELECT DISTINCT q FROM Quiz q JOIN FETCH q.questions WHERE q.challenge.id = :challengeId")
     Optional<Quiz> findWithQuestionsByChallengeId(@Param("challengeId") Long challengeId);
 
 }

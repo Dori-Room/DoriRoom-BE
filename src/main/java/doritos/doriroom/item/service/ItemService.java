@@ -39,10 +39,6 @@ public class ItemService {
 
     @Transactional
     public void addToInventory(User user, Item item){ // 유효한 아이템 객체 가정
-//        // 해당 아이템이 존재하는지 확인
-//        Item foundItem = itemRepository.findById(item.getItemId())
-//                .orElseThrow(ItemNotFoundException::new);
-
         // 이미 보유한 아이템인지 확인
         if (userItemRepository.existsByUserAndItem(user, item)) {
             throw new DuplicatedItemException("이미 보유하고 있는 아이템입니다.");

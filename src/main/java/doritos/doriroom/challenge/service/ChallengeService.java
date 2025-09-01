@@ -204,11 +204,14 @@ public class ChallengeService {
 
             // totalCount를 받아 진행도에 반영
             userChallenge.setCurrentProgress(totalCount);
-            userChallenge.setStatus(ChallengeStatus.IN_PROGRESS);
-
-            if (userChallenge.getCurrentProgress() >= challenge.getTargetCount()) {
+            if (userChallenge.getCurrentProgress() >= challenge.getTargetCount()){
                 userChallenge.setStatus(ChallengeStatus.WAIT_REWARD);
+            } else if (totalCount == 0){
+                userChallenge.setStatus(ChallengeStatus.NOT_STARTED);
+            } else if (totalCount > 0){
+                userChallenge.setStatus(ChallengeStatus.IN_PROGRESS);
             }
+
         }
     }
 
