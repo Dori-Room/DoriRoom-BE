@@ -17,6 +17,7 @@ import doritos.doriroom.follow.repository.FollowRepository;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
+import java.util.Optional;
 import lombok.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -175,6 +176,20 @@ public class FollowService {
                     follow.getCreatedAt()
             );
         });
+    }
+
+    //일기 작성자가 조회자를 베스트프렌드로 설정했는지 확인
+    public boolean isBestFriendByDiaryWriter(UUID diaryWriterId, UUID viewerId) {
+        try {
+            // diaryWriterId가 viewerId를 베스트프렌드로 설정했는지 확인
+            User diaryWriter = userRepository.findById(diaryWriterId).orElseThrow(UserNotFoundException::new);
+            User viewer = userRepository.findById(viewerId).orElseThrow(UserNotFoundException::new);
+
+            Optional<Follow> follow = followRepository.findByFollowerAndFollowed(diaryWriter, viewer);
+            return follow.isPresent() && follow.get().isBestFriend();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }

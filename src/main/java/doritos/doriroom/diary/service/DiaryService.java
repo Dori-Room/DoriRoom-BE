@@ -11,6 +11,7 @@ import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.response.EventDiaryResponseDto;
 import doritos.doriroom.event.exception.EventNotFoundException;
 import doritos.doriroom.event.repository.EventRepository;
+import doritos.doriroom.follow.service.FollowService;
 import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.RoomVisibility;
 import doritos.doriroom.user.domain.User;
@@ -20,7 +21,6 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import doritos.doriroom.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -38,6 +38,7 @@ public class DiaryService {
     private final EventRepository eventRepository;
     private final S3Uploader s3Uploader;
     private final ChallengeService challengeService;
+    private final FollowService followService;
 
     private static final Long DIARY_WRITE_BASE_CREDIT = 3L;
     private static final Long PHOTO_ATTACHMENT_BONUS_CREDIT = 2L;
@@ -159,13 +160,25 @@ public class DiaryService {
 
         List<Diary> diaries;
         if (isOwner) {
-            // 자신의 일기: 모든 공개 범위의 일기를 조회
+            // 자신의 일기
             diaries = diaryRepository.findByUserIdAndVisitedAtBetweenOrderByVisitedAt(
                 targetUserId, startDate, endDate);
         } else {
-            // 다른 사용자의 일기: PUBLIC 일기만 조회
-            diaries = diaryRepository.findPublicByUserIdAndVisitedAtBetweenOrderByVisitedAt(
-                targetUserId, startDate, endDate);
+            // 다른 사용자의 일기
+            boolean isBestFriend = followService.isBestFriendByDiaryWriter(targetUserId, currentUserId);
+
+            if(isBestFriend) {
+                // 일기 작성자가 조회자를 베스트프렌드로 설정한 경우
+                diaries = diaryRepository.findPublicAndFollowersByUserIdAndVisitedAtBetweenOrderByVisitedAt(
+                    targetUserId,
+                    List.of(RoomVisibility.PUBLIC, RoomVisibility.FOLLOWERS),
+                    startDate,
+                    endDate);
+            } else {
+                // 단짝친구 아닌 경우
+                diaries = diaryRepository.findPublicByUserIdAndVisitedAtBetweenOrderByVisitedAt(
+                    targetUserId, startDate, endDate);
+            }
         }
 
         // 해당 월의 모든 날짜에 대해 초기화
@@ -307,6 +320,4 @@ public class DiaryService {
 
         return new PageImpl<>(diaryResponseList, pageable, diaries.getTotalElements());
     }
-
-
 }
