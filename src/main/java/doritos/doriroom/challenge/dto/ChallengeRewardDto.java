@@ -11,8 +11,8 @@ public record ChallengeRewardDto (
 
         // ITEM일 경우
         Long itemId,
-        String itemName,
-        String itemImageUrl
+        String itemName
+//        String itemImageUrl
 ){
     public static ChallengeRewardDto from(ChallengeReward reward) {
         // 보상이 ITEM 타입인 경우에 설정하도록 bool값 추가
@@ -23,7 +23,7 @@ public record ChallengeRewardDto (
                 .amount(reward.getAmount())
                 .itemId(isItemReward ? reward.getRewardItem().getItemId() : null)
                 .itemName(isItemReward ? reward.getRewardItem().getName() : null)
-                .itemImageUrl(isItemReward ? reward.getRewardItem().getImageUrl() : null)
+//                .itemImageUrl(isItemReward ? reward.getRewardItem().getImageUrl() : null)
                 .build();
     }
 }

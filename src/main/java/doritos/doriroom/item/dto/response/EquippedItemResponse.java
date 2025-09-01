@@ -9,7 +9,7 @@ import lombok.Builder;
 public record EquippedItemResponse (
         Long itemId,
 //        String name,
-        String imageUrl,
+//        String imageUrl,
         ItemType itemType
 ) {
     public static EquippedItemResponse from(UserItem userItem) {
@@ -17,7 +17,7 @@ public record EquippedItemResponse (
 
         return EquippedItemResponse.builder()
                 .itemId(item.getItemId())
-                .imageUrl(item.getImageUrl())
+//                .imageUrl(item.getImageUrl())
                 .itemType(item.getItemType())
                 .build();
     }

@@ -1,7 +1,5 @@
 package doritos.doriroom.item.service;
 
-import doritos.doriroom.challenge.domain.challenge.ChallengeType;
-import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.item.domain.Item;
 import doritos.doriroom.item.domain.ItemGroup;
 import doritos.doriroom.item.domain.ItemType;
@@ -120,7 +118,7 @@ public class ItemService {
 
         // 유저가 소유한 itemId를 추출 (보유 여부 필드 값으로 사용)
         Set<Long> ownedItemIds = userItemRepository.findByUserAndItem_ItemType(user, itemType)
-                .stream().map(ui -> ui.getItem().getItemId()).collect(Collectors.toSet());;
+                .stream().map(ui -> ui.getItem().getItemId()).collect(Collectors.toSet());
 
         return items.stream()
                 .map(item -> ItemResponse.from(item, ownedItemIds.contains(item.getItemId())))
