@@ -73,7 +73,7 @@ public class DiaryController {
         // 새 이미지 업로드
         List<String> newUrls = new ArrayList<>();
         if (newImages != null && !newImages.isEmpty()) {
-            newUrls = s3Uploader.uploadFiles(newImages, "diary");
+            newUrls = s3Uploader.uploadFiles(newImages, "diary/" + user.getUserId().toString());
         }
 
         // 최종 이미지 목록 = 유지할 것 + 새로 추가한 것
