@@ -1,5 +1,7 @@
 package doritos.doriroom.item.service;
 
+import doritos.doriroom.challenge.domain.challenge.ChallengeType;
+import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.item.domain.Item;
 import doritos.doriroom.item.domain.ItemGroup;
 import doritos.doriroom.item.domain.ItemType;
@@ -7,7 +9,7 @@ import doritos.doriroom.item.domain.UserItem;
 import doritos.doriroom.item.dto.request.EquipItemRequest;
 import doritos.doriroom.item.dto.request.PurchaseItemRequest;
 import doritos.doriroom.item.dto.response.*;
-import doritos.doriroom.item.exception.DuplicatedPurchasedItemException;
+import doritos.doriroom.item.exception.DuplicatedItemException;
 import doritos.doriroom.item.exception.ItemNotPurchasableException;
 import doritos.doriroom.item.repository.ItemRepository;
 import doritos.doriroom.item.repository.UserItemRepository;
@@ -33,6 +35,27 @@ public class ItemService {
     private final UserItemRepository userItemRepository;
     private final UserRepository userRepository;
 
+    /* ---- 사용자 아이템 추가 관련 (구매하는 경우 제외) ---- */
+
+    @Transactional
+    public void addToInventory(User user, Item item){ // 유효한 아이템 객체 가정
+        // 이미 보유한 아이템인지 확인
+        if (userItemRepository.existsByUserAndItem(user, item)) {
+            throw new DuplicatedItemException("이미 보유하고 있는 아이템입니다.");
+        }
+
+        // 아이템을 인벤토리(유저 소유)에 저장
+        UserItem userItem = UserItem.builder()
+                .user(user)
+                .item(item)
+                .build();
+
+        userItemRepository.save(userItem);
+    }
+
+    /* ---- 아이템 조회 관련 ---- */
+  
+
     // 전체 아이템 조회 (유저 보유 여부 포함)
     @Transactional(readOnly = true)
     public List<ItemResponse> getAllItems(User user) {
@@ -50,7 +73,6 @@ public class ItemService {
         return userItemRepository.findByUser(user)
                 .stream().map(UserItemResponse::from).toList();
     }
-
 
     // 전체 그룹별 아이템 조회 (유저 보유 여부 포함)
     @Transactional(readOnly = true)
@@ -87,7 +109,6 @@ public class ItemService {
                             .stream().map(UserItemResponse::from).toList();
         };
     }
-
 
     // 전체 타입별 아이템 조회 (유저 보유 여부 포함) (상점 UI)
     @Transactional(readOnly = true)
@@ -126,6 +147,8 @@ public class ItemService {
     }
 
 
+    /* ---- 아이템 구매 관련 ---- */
+
     // 아이템 구매 확인 페이지 (구매 시 남은 크레딧 조회)
     @Transactional(readOnly = true)
     public PaymentViewResponse getPaymentInfo(User user, Long itemId) {
@@ -151,19 +174,10 @@ public class ItemService {
             throw new ItemNotPurchasableException();
         }
 
-        // 이미 구매한 아이템인지 확인
-        if (userItemRepository.existsByUserAndItem(user, item)) {
-            throw new DuplicatedPurchasedItemException();
-        }
-
         user.deductCredit(item.getPrice()); // 크레딧 보유 여부 확인 및 차감
 
         // 아이템 저장
-        UserItem userItem = UserItem.builder()
-                .user(user)
-                .item(item)
-                .build();
-        userItemRepository.save(userItem);
+        addToInventory(user, item);
 
         return new PurchaseItemResponse(
                 item.getItemId(),
@@ -172,6 +186,9 @@ public class ItemService {
                 user.getCredit()
         );
     }
+
+
+    /* ---- 아이템 착용 관련 ---- */
 
     // 아이템 착용 및 해제 (타입별)
     @Transactional
@@ -227,6 +244,10 @@ public class ItemService {
             .stream().map(EquippedItemResponse::from).toList();
     }
 
+
+
+
+    /* 내부 메서드 */
 
     // 요청 유효성 검사 메서드
     private void validateGetItemsByGroupRequest(User user, ItemGroup itemGroup, AreaGroup areaGroup) {

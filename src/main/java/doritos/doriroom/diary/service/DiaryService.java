@@ -1,5 +1,7 @@
 package doritos.doriroom.diary.service;
 
+import doritos.doriroom.challenge.domain.challenge.ChallengeType;
+import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.diary.domain.Diary;
 import doritos.doriroom.diary.dto.request.*;
 import doritos.doriroom.diary.dto.response.*;
@@ -17,6 +19,8 @@ import doritos.doriroom.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import doritos.doriroom.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -33,9 +37,10 @@ public class DiaryService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final S3Uploader s3Uploader;
+    private final ChallengeService challengeService;
 
-    private static final int DIARY_WRITE_BASE_CREDIT = 3;
-    private static final int PHOTO_ATTACHMENT_BONUS_CREDIT = 2;
+    private static final Long DIARY_WRITE_BASE_CREDIT = 3L;
+    private static final Long PHOTO_ATTACHMENT_BONUS_CREDIT = 2L;
 
     @Transactional
     public DiaryResponseDto createDiary(User user, DiaryCreateRequestDto request, List<MultipartFile> images){
@@ -66,9 +71,12 @@ public class DiaryService {
         diaryRepository.save(diary);
 
         // 포인트 지급
-        int totalCredit = calculateDiaryCredit(imageUrls);
+        Long totalCredit = calculateDiaryCredit(imageUrls);
         user.addCredit(totalCredit);
         userRepository.save(user);
+
+        // 일반 과제 진행에 반영 (진행도 +1)
+        challengeService.updateChallengeProgress(user, ChallengeType.WRITE_DIARY, 1);
 
         return DiaryResponseDto.from(diary, totalCredit, user, event);
     }
@@ -98,12 +106,13 @@ public class DiaryService {
         diary.updateDiary(request);
         Diary updatedDiary = diaryRepository.save(diary);
 
-        return DiaryResponseDto.from(updatedDiary, 0, user, event);
+        return DiaryResponseDto.from(updatedDiary, 0L, user, event);
     }
 
     @Transactional
     public void deleteDiary(UUID userId, UUID diaryId) {
         Diary diary = diaryRepository.findById(diaryId).orElseThrow(DiaryNotFoundException::new);
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         if(!diary.getUserId().equals(userId)) {
             throw new DiaryAuthorizationException();
@@ -122,6 +131,9 @@ public class DiaryService {
 
 
         diaryRepository.delete(diary);
+
+        // 일반 과제 진행에 반영 (진행도 -1)
+        challengeService.updateChallengeProgress(user, ChallengeType.WRITE_DIARY, -1);
     }
 
     public DiaryDetailResponseDto getDiaryDetail(UUID diaryId) {
@@ -201,7 +213,8 @@ public class DiaryService {
         List<DiaryResponseDto> diaryList = diaries.stream()
             .map(diary -> {
                 Event event = eventMap.get(diary.getEventId());
-                return DiaryResponseDto.from(diary, 0, user, event);
+
+                return DiaryResponseDto.from(diary, 0L, user, event);
             })
             .toList();
 
@@ -229,7 +242,8 @@ public class DiaryService {
         List<DiaryResponseDto> diaries = diaryPage.getContent().stream()
             .map(diary -> {
                 User user = userMap.get(diary.getUserId());
-                return DiaryResponseDto.from(diary, 0, user, event);
+
+                return DiaryResponseDto.from(diary, 0L, user, event);
             })
             .toList();
 
@@ -256,8 +270,9 @@ public class DiaryService {
     }
 
     //일기 작성 시 포인트 지급
-    private int calculateDiaryCredit(List<String> imageUrls) {
-        int credit = DIARY_WRITE_BASE_CREDIT;
+    private Long calculateDiaryCredit(List<String> imageUrls) {
+        Long credit = DIARY_WRITE_BASE_CREDIT;
+
 
         if (imageUrls != null && !imageUrls.isEmpty()) {
             credit += PHOTO_ATTACHMENT_BONUS_CREDIT;
@@ -285,7 +300,8 @@ public class DiaryService {
         List<DiaryResponseDto> diaryResponseList = diaries.getContent().stream()
             .map(diary -> {
                 Event event = eventMap.get(diary.getEventId());
-                return DiaryResponseDto.from(diary, 0, user, event);
+
+                return DiaryResponseDto.from(diary, 0L, user, event);
             })
             .toList();
 

@@ -1,5 +1,9 @@
 package doritos.doriroom.follow.service;
 
+import doritos.doriroom.challenge.domain.challenge.ChallengeType;
+import doritos.doriroom.challenge.repository.ChallengeRepository;
+import doritos.doriroom.challenge.service.ChallengeService;
+
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.FollowFilterType;
 import doritos.doriroom.follow.dto.request.FollowRequestDto;
@@ -31,6 +35,8 @@ import java.util.stream.Collectors;
 public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
+    private final ChallengeService challengeService;
+
 
     // targetUser 팔로우
     @Transactional
@@ -53,8 +59,9 @@ public class FollowService {
 
         followRepository.save(follow);
 
-        //맞팔로우 여부 확인
-//        boolean isMutual = followRepository.existsMutualFollow(user, targetUser);
+        // 일반 과제 진행에 반영 (현재 팔로워 수)
+        int currentFollowingCount = followRepository.countByFollower(user);
+        challengeService.updateChallengeProgressCount(user, ChallengeType.REACH_NEIGHBOR_COUNT, currentFollowingCount);
 
         return FollowResponseDto.from(follow);
     }
@@ -70,6 +77,10 @@ public class FollowService {
                 .orElseThrow(FollowNotFoundException::new);
 
         followRepository.delete(follow); // 팔로우 관계 삭제
+
+        // 일반 과제 진행에 반영 (현재 팔로워 수)
+        int currentFollowingCount = followRepository.countByFollower(user);
+        challengeService.updateChallengeProgressCount(user, ChallengeType.REACH_NEIGHBOR_COUNT, currentFollowingCount);
     }
 
     // 단짝 친구 설정 및 해제(토글(

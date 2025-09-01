@@ -1,6 +1,7 @@
 package doritos.doriroom.user.service;
 
 import doritos.doriroom.auth.exception.InvalidPasswordException;
+import doritos.doriroom.challenge.domain.challenge.ChallengeType;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
 import doritos.doriroom.user.dto.response.UserSearchResultDto;
@@ -41,6 +42,8 @@ public class UserService {
     private final S3Uploader s3Uploader;
     private final ItemService itemService;
     private final FollowRepository followRepository;
+    private final ChallengeService challengeService;
+
 
     public void checkUsernameDuplicate(String username){
         if (userRepository.existsByUsername(username)) {
@@ -152,16 +155,26 @@ public class UserService {
 
         List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(targetUserId);
 
-        incrementViewCount(targetUserId);
+        int viewCount = incrementViewCount(targetUserId);
+
+        // 다른 사람의 방 N번 방문하기 과제에 반영
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFoundException::new);
+        challengeService.updateChallengeProgress(user, ChallengeType.VISIT_NEIGHBOR, 1);
+
+        // 특정 유저의 총 방문 수 N번 달성 과제에 반영
+        challengeService.updateChallengeProgressCount(targetUser, ChallengeType.VISIT_NEIGHBOR, viewCount);
+
         return OtherUserRoomResponseDto.from(targetUser, equippedItems);
     }
 
     //조회수
     @Transactional
-    public void incrementViewCount(UUID userId){
+    public int incrementViewCount(UUID userId){
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFoundException::new);
         user.setViewCount(user.getViewCount()+1);
         userRepository.save(user);
+
+        return user.getViewCount();
     }
 
     // 유저 검색
