@@ -7,6 +7,8 @@ import doritos.doriroom.diary.service.DiaryService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.exception.UserNotFoundException;
+import doritos.doriroom.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class DiaryController {
     private final DiaryService diaryService;
     private final S3Uploader s3Uploader;
+    private final UserRepository userRepository;
 
     @Operation(summary = "일기 작성", description = "일기를 작성합니다. '\n' 자세한 내용은 노션 참고해주세요. ")
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -139,6 +142,16 @@ public class DiaryController {
         @AuthenticationPrincipal User user,
         @ParameterObject Pageable pageable) {
         Page<DiaryResponseDto> response = diaryService.getUserDiaries(user.getUserId(), userId, pageable);
+        return ApiResponse.ok(response);
+    }
+
+    @Operation(summary = "이달의 인기글 조회", description = "현재 월의 인기글을 좋아요 수 기준으로 조회합니다.")
+    @GetMapping("/popular")
+    public ApiResponse<List<DiaryResponseDto>> getPopularDiariesOfMonth(
+        @AuthenticationPrincipal User user
+    ) {
+        userRepository.findById(user.getUserId()).orElseThrow(UserNotFoundException::new);
+        List<DiaryResponseDto> response = diaryService.getPopularDiariesOfMonth();
         return ApiResponse.ok(response);
     }
 }

@@ -18,12 +18,14 @@ import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -320,4 +322,51 @@ public class DiaryService {
 
         return new PageImpl<>(diaryResponseList, pageable, diaries.getTotalElements());
     }
+
+    //이달의 인기글 조회
+    public List<DiaryResponseDto> getPopularDiariesOfMonth() {
+        // 현재 월의 시작과 끝 날짜 계산
+        LocalDate today = LocalDate.now();
+        LocalDate startOfMonth = today.withDayOfMonth(1);
+        LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
+
+        LocalDateTime startDateTime = startOfMonth.atStartOfDay();
+        LocalDateTime endDateTime = endOfMonth.atTime(23, 59, 59);
+
+        // 인기글 조회 (좋아요 수 기준으로 정렬)
+        Pageable pageable = PageRequest.of(0, 10);
+        List<Diary> popularDiaries = diaryRepository.findPopularDiariesByMonth(
+            startDateTime, endDateTime, pageable);
+
+        if (popularDiaries.isEmpty()) {
+            return List.of();
+        }
+
+        // 사용자와 이벤트 정보 배치 조회
+        List<UUID> userIds = popularDiaries.stream()
+            .map(Diary::getUserId)
+            .distinct()
+            .toList();
+
+        List<UUID> eventIds = popularDiaries.stream()
+            .map(Diary::getEventId)
+            .distinct()
+            .toList();
+
+        Map<UUID, User> userMap = userRepository.findByUserIdIn(userIds).stream()
+            .collect(Collectors.toMap(User::getUserId, user -> user));
+
+        Map<UUID, Event> eventMap = eventRepository.findByEventIdIn(eventIds).stream()
+            .collect(Collectors.toMap(Event::getEventId, event -> event));
+
+        return popularDiaries.stream()
+            .map(diary -> {
+                User user = userMap.get(diary.getUserId());
+                Event event = eventMap.get(diary.getEventId());
+
+                return DiaryResponseDto.from(diary, 0L, user, event);
+            })
+            .toList();
+    }
+
 }
