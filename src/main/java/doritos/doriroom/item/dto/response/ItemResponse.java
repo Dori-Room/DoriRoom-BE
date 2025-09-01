@@ -13,7 +13,7 @@ import lombok.Builder;
 public record ItemResponse (
         Long itemId,
         String name,
-        String imageUrl,
+//        String imageUrl,
         ItemType itemType,
         ItemGroup itemGroup, // COMMON or AREA
         AreaGroup areaGroup, // nullable
@@ -26,7 +26,7 @@ public record ItemResponse (
         return ItemResponse.builder()
                 .itemId(i.getItemId())
                 .name(i.getName())
-                .imageUrl(i.getImageUrl())
+//                .imageUrl(i.getImageUrl())
                 .itemType(i.getItemType())
                 .itemGroup(i.getItemGroup())
                 .areaGroup(i.getAreaGroup())

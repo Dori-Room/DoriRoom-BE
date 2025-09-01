@@ -18,7 +18,7 @@ public record AtlasRewardDto(
 
         // 아이템 정보
         String itemName,
-        String itemImageUrl,
+//        String itemImageUrl,
         ItemType itemType,
 
         boolean isClaimed // 이미 받았는지 여부
@@ -34,7 +34,7 @@ public record AtlasRewardDto(
                 .atlasRewardId(atlasReward.getId())
                 .targetLevel(atlasReward.getTargetLevel())
                 .itemName(atlasReward.getRewardItem().getName())
-                .itemImageUrl(atlasReward.getRewardItem().getImageUrl())
+//                .itemImageUrl(atlasReward.getRewardItem().getImageUrl())
                 .itemType(atlasReward.getRewardItem().getItemType())
                 .isClaimed(isClaimed)
                 .build();
