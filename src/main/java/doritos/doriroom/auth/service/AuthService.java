@@ -6,6 +6,7 @@ import doritos.doriroom.auth.exception.*;
 import doritos.doriroom.auth.template.EmailTemplate;
 import doritos.doriroom.global.jwt.JwtUtil;
 import doritos.doriroom.auth.domain.RefreshToken;
+import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.DuplicateException;
 import doritos.doriroom.auth.repository.RefreshTokenRedisRepository;
@@ -23,6 +24,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.util.Random;
@@ -42,6 +44,7 @@ public class AuthService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final JavaMailSender mailSender;
     private final EmailTemplate emailTemplate;
+    private final S3Uploader s3Uploader;
 
     // ttl
     private static final long VERIFICATION_EXPIRE_SECONDS = 300; // 5분 (인증 번호 확인 시간)
@@ -82,7 +85,16 @@ public class AuthService {
         redisTemplate.opsForValue().set(verifiedKey, "verified", Duration.ofSeconds(VERIFIED_EXPIRE_SECONDS));
     }
 
-    public void signup(SignupRequestDto request) {
+    public void signup(SignupRequestDto request, MultipartFile image) {
+        // 이메일 인증 완료 여부 확인
+        String verifiedKey = VERIFIED_KEY_PREFIX.getValue() + request.email();
+        String verified = (String) redisTemplate.opsForValue().get(verifiedKey);
+
+        if (verified == null) {
+            throw new EmailNotVerifiedException();
+        }
+        redisTemplate.delete(verifiedKey); // 유저 등록 후 인증 상태 삭제
+
 
         // 중복 아이디, 닉네임 예외 처리
         if (userRepository.existsByUsername(request.username())) {
@@ -95,15 +107,11 @@ public class AuthService {
             throw new DuplicateException("이메일");
         }
 
-        // 이메일 인증 완료 여부 확인
-        String verifiedKey = VERIFIED_KEY_PREFIX.getValue() + request.email();
-        String verified = (String) redisTemplate.opsForValue().get(verifiedKey);
-
-        if (verified == null) {
-            throw new EmailNotVerifiedException();
+        // 프로필 이미지 등록
+        String profileImageUrl = null;
+        if (image != null && !image.isEmpty()){
+            profileImageUrl = s3Uploader.uploadFile(image, "profile_image"); // s3에 업로드 후 url 반환
         }
-        redisTemplate.delete(verifiedKey); // 유저 등록 후 인증 상태 삭제
-
 
         User user = User.builder()
                 .userId(UUID.randomUUID())
@@ -111,6 +119,7 @@ public class AuthService {
                 .email(request.email())
                 .password(encoder.encode(request.password()))
                 .nickname(request.nickname())
+                .profileImageUrl(profileImageUrl)
                 .build();
 
         userRepository.save(user);
