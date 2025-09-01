@@ -3,6 +3,7 @@ package doritos.doriroom.diary.repository;
 import doritos.doriroom.diary.domain.Diary;
 import doritos.doriroom.user.domain.RoomVisibility;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -53,4 +54,16 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         @Param("visibilities") List<RoomVisibility> visibilities,
         @Param("startDate") LocalDate startDate,
         @Param("endDate") LocalDate endDate);
+
+    @Query("""
+        SELECT d FROM Diary d
+        WHERE d.diaryVisibility = 'PUBLIC'
+        AND d.createdAt >= :startDate
+        AND d.createdAt <= :endDate
+        ORDER BY (d.likes * 2) DESC, d.createdAt DESC
+        """)
+    List<Diary> findPopularDiariesByMonth(
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate,
+        Pageable pageable);
 }
