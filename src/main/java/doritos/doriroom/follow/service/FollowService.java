@@ -15,6 +15,7 @@ import doritos.doriroom.follow.repository.FollowRepository;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
+import java.util.List;
 import java.util.Optional;
 import lombok.*;
 import org.springframework.data.domain.Page;
@@ -189,5 +190,17 @@ public class FollowService {
         }
     }
 
+    // 특정 사용자가 팔로우하는 모든 사용자의 ID 목록을 반환
+    public List<UUID> getFollowingIds(UUID currentUserId) {
+        User user = userRepository.findById(currentUserId)
+            .orElseThrow(UserNotFoundException::new);
+
+        return followRepository.findFollowingIdsByFollower(user);
+    }
+
+    // 특정 사용자를 '단짝'으로 설정한 맞팔로우 사용자 ID 목록을 반환
+    public List<UUID> getMutualBestFriendIds(UUID currentUserId) {
+        return followRepository.findMutualBestFriendIds(currentUserId);
+    }
 }
 

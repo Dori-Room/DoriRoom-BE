@@ -66,4 +66,17 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate,
         Pageable pageable);
+
+    @Query("""
+    SELECT d FROM Diary d
+    WHERE d.createdAt >= :twoWeeksAgo AND (
+        (d.userId IN :followingIds AND d.diaryVisibility = 'PUBLIC') OR
+        (d.userId IN :mutualBestFriendIds AND d.diaryVisibility = 'FOLLOWERS')
+    )
+    """)
+    Page<Diary> findFriendsDiaries(
+        @Param("followingIds") List<UUID> followingIds,
+        @Param("mutualBestFriendIds") List<UUID> mutualBestFriendIds,
+        @Param("twoWeeksAgo") LocalDateTime twoWeeksAgo,
+        Pageable pageable);
 }
