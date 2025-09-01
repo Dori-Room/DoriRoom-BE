@@ -17,8 +17,8 @@ public class Item {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private String imageUrl;
+//    @Column(nullable = false)
+//    private String imageUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
