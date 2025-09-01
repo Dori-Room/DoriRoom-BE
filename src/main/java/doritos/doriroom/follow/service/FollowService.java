@@ -1,14 +1,12 @@
 package doritos.doriroom.follow.service;
 
 import doritos.doriroom.challenge.domain.challenge.ChallengeType;
-import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.service.ChallengeService;
 
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.FollowFilterType;
 import doritos.doriroom.follow.dto.request.FollowRequestDto;
 import doritos.doriroom.follow.dto.request.SetBestFriendRequestDto;
-import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
 import doritos.doriroom.follow.dto.response.*;
 import doritos.doriroom.follow.exception.CannotFollowSelfException;
 import doritos.doriroom.follow.exception.FollowAlreadyExistsException;
@@ -24,7 +22,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
