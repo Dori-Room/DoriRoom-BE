@@ -8,7 +8,6 @@ import doritos.doriroom.event.dto.response.EventDetailResponseDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.exception.EventNotFoundException;
 import doritos.doriroom.global.cache.RedisCacheService;
-import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.tourApi.dto.response.TourApiDetailInfoDto;
 import doritos.doriroom.tourApi.dto.response.TourApiDetailIntroDto;
 import doritos.doriroom.tourApi.dto.response.TourApiItemDto;

@@ -38,23 +38,6 @@ public class RedisCacheService {
         }
     }
 
-    //캐시 조회
-    public <T> Optional<T> getCache(String key, Class<T> clazz) {
-        try{
-            Object cachedData = redisTemplate.opsForValue().get(key);
-            if(cachedData != null) {
-                T result = objectMapper.readValue(cachedData.toString(), clazz);
-                log.info("캐시 조회: {}", key);
-                return Optional.of(result);
-            }
-            log.info("캐시 조회 정보 없음: {}", key);
-            return Optional.empty();
-        } catch (Exception e) {
-            log.error("캐시 조회 실패: {}", key, e);
-            return Optional.empty();
-        }
-    }
-
     // 리스트 캐시 조회
     public <T> Optional<List<T>> getCacheList(String key, TypeReference<List<T>> typeReference) {
         try {
