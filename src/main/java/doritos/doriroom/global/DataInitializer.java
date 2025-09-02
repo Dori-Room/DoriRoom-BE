@@ -135,7 +135,6 @@ public class DataInitializer implements ApplicationRunner {
                 Item.builder().name("빨간망토 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.PICNIC).price(30L).isPurchasable(true).build(),
                 Item.builder().name("튜브 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.SUMMER).price(40L).isPurchasable(true).build(),
                 Item.builder().name("메론빵 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.DESSERT).price(50L).isPurchasable(true).build(),
-                Item.builder().name("생일파리 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.BIRTHDAY).price(60L).isPurchasable(true).build(),
                 Item.builder().name("생일파티 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.BIRTHDAY).price(60L).isPurchasable(true).build(),
 
 
