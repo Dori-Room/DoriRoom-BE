@@ -49,12 +49,14 @@ public class DataInitializer implements ApplicationRunner {
             createInitialAtlases();
         }
 
-        createInitialItems();
-        createInitialFestivalChallenges();
+        if (itemRepository.count() == 0) {
+            createInitialItems();
+        }
 
         if (challengeRepository.count() == 0) {
             createInitialCommonChallenges();
             createInitialQuizzesAndChallenges();
+            createInitialFestivalChallenges();
         }
         long challengeCount = challengeRepository.count();
         System.out.println("현재 도전과제 개수: " + challengeCount);
@@ -450,20 +452,20 @@ public class DataInitializer implements ApplicationRunner {
 
 
     private void createItem(String name, ItemType type, ItemGroup group, Long price, boolean isPurchasable, AreaGroup areaGroup, CollectionTheme theme) {
-        // 이름으로 아이템이 이미 존재하는지 확인
-        if (!itemRepository.existsByName(name)) {
-            // 존재하지 않을 때만 Item 객체를 생성하여 저장
-            Item item = Item.builder()
-                    .name(name)
-                    .itemType(type)
-                    .itemGroup(group)
-                    .price(price)
-                    .isPurchasable(isPurchasable)
-                    .areaGroup(areaGroup)
-                    .theme(theme)
-                    .build();
-            itemRepository.save(item);
-        }
+//        // 이름으로 아이템이 이미 존재하는지 확인
+//        if (!itemRepository.existsByName(name)) {
+//            // 존재하지 않을 때만 Item 객체를 생성하여 저장
+        Item item = Item.builder()
+                .name(name)
+                .itemType(type)
+                .itemGroup(group)
+                .price(price)
+                .isPurchasable(isPurchasable)
+                .areaGroup(areaGroup)
+                .theme(theme)
+                .build();
+        itemRepository.save(item);
+//        }
     }
 
     // 일반 과제 생성 헬퍼
