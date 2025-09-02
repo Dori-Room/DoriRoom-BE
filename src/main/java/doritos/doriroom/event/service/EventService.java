@@ -1,11 +1,13 @@
 package doritos.doriroom.event.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.domain.EventDetailStatus;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventDetailResponseDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.exception.EventNotFoundException;
+import doritos.doriroom.global.cache.RedisCacheService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.tourApi.dto.response.TourApiDetailInfoDto;
 import doritos.doriroom.tourApi.dto.response.TourApiDetailIntroDto;
@@ -30,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class EventService {
     private final TourApiService tourApiService;
     private final EventRepository eventRepository;
+    private final RedisCacheService redisCacheService;
 
     @Transactional
     public void getAllEvents() {
@@ -148,8 +151,28 @@ public class EventService {
 
 
     public List<Event> getUpcomingEvents(){
+        // 캐시에서 먼저 조회
+        Optional<List<Event>> cachedEvents = redisCacheService.getCacheList(
+            RedisCacheService.UPCOMING_EVENTS_KEY,
+            new TypeReference<List<Event>>() {}
+        );
+
+        if (cachedEvents.isPresent()) {
+            return cachedEvents.get();
+        }
+
+        // 캐시에 없으면 DB에서 조회
         Pageable limit = PageRequest.of(0, 4);
-        return eventRepository.findUpcomingEvents(limit);
+        List<Event> events = eventRepository.findUpcomingEvents(limit);
+
+        // 캐시에 저장
+        redisCacheService.setCache(
+            RedisCacheService.UPCOMING_EVENTS_KEY,
+            events,
+            RedisCacheService.UPCOMING_EVENTS_TTL
+        );
+
+        return events;
     }
 
     public List<Event> getEndingSoonEvents() {
