@@ -6,6 +6,8 @@ import doritos.doriroom.atlas.repository.AtlasRepository;
 import doritos.doriroom.atlas.repository.AtlasRewardRepository;
 import doritos.doriroom.challenge.domain.challenge.*;
 import doritos.doriroom.challenge.repository.ChallengeRepository;
+import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.repository.EventRepository;
 import doritos.doriroom.item.domain.CollectionTheme;
 import doritos.doriroom.item.domain.Item;
 import doritos.doriroom.item.domain.ItemGroup;
@@ -13,7 +15,6 @@ import doritos.doriroom.item.domain.ItemType;
 import doritos.doriroom.item.repository.ItemRepository;
 import doritos.doriroom.quiz.domain.Question;
 import doritos.doriroom.quiz.domain.Quiz;
-import doritos.doriroom.quiz.repository.QuestionRepository;
 import doritos.doriroom.quiz.repository.QuizRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
@@ -38,6 +39,7 @@ public class DataInitializer implements ApplicationRunner {
     private final AtlasRewardRepository atlasRewardRepository;
     private final PasswordEncoder encoder;
     private final UserRepository userRepository;
+    private final EventRepository eventRepository;
 
     @Override
     @Transactional
@@ -48,6 +50,7 @@ public class DataInitializer implements ApplicationRunner {
         }
 
         createInitialItems();
+        createInitialFestivalChallenges();
 
         if (challengeRepository.count() == 0) {
             createInitialCommonChallenges();
@@ -342,7 +345,25 @@ public class DataInitializer implements ApplicationRunner {
         System.out.println("총 " + allQuizzes.size() + "개의 퀴즈 세트 초기 데이터가 생성되었습니다.");
     }
 
-    //TODO: 지역 축제 관련 과제 추가
+    // 지역 축제 관련 과제 추가
+    private void createInitialFestivalChallenges() {
+        List<Challenge> challenges = new ArrayList<>();
+
+        // --- 축제 과제 목록 ---
+        challenges.add(createFestivalChallenge("보령머드축제 방문하기", AreaGroup.CHUNGNAM, "2c120701-3c47-4b5a-a25b-747774954aae"));
+        challenges.add(createFestivalChallenge("춘천막국수닭갈비축제 방문하기", AreaGroup.GANGWON, "b6a1d6aa-c6ba-41c4-b137-14821e75bb87"));
+        challenges.add(createFestivalChallenge("APAP 작품투어 참여하기", AreaGroup.GYEONGGI, "abcc55a2-84b8-4107-b80b-73e0d1ea1627"));
+        challenges.add(createFestivalChallenge("DDP 건축투어 참여하기", AreaGroup.SEOUL, "479f6208-b3c7-4919-a124-c99c79316f88"));
+        challenges.add(createFestivalChallenge("광안리 M 드론라이트 쇼 보기", AreaGroup.GYEONGSANG, "077eb616-63df-4b0f-8883-5ad5d860d17e"));
+        challenges.add(createFestivalChallenge("목포해상W쇼 보기", AreaGroup.JEOLLA, "d3af3a7a-5385-49b8-bda3-b57a8fda1c19"));
+        challenges.add(createFestivalChallenge("휴애리 유럽 수국축제 방문하기", AreaGroup.JEJU, "182c6fe2-afb4-42ec-adfd-201c5b541e23"));
+
+        // Event ID 조회 실패로 null이 포함된 경우 제거
+        challenges.removeIf(Objects::isNull);
+
+        challengeRepository.saveAll(challenges);
+        System.out.println(challenges.size() + "개의 축제 방문 과제 초기 데이터가 생성되었습니다.");
+    }
 
     // 지역 도감 보상 아이템 추가
     private void createInitialAtlasRewards() {
@@ -404,6 +425,28 @@ public class DataInitializer implements ApplicationRunner {
 
 
     // --- Helper Methods ---
+    private Challenge createFestivalChallenge(String title, AreaGroup areaGroup, String eventId) {
+        Event event = eventRepository.findById(UUID.fromString(eventId)).orElse(null);
+        if (event == null) {
+            System.out.println("WARN: Event ID " + eventId + "를 찾을 수 없어 과제를 생성하지 못했습니다.");
+            return null;
+        }
+
+        Challenge challenge = Challenge.builder()
+                .title(title)
+                .challengeGroup(ChallengeGroup.AREA)
+                .challengeType(ChallengeType.VISIT_EVENT)
+                .targetCount(1)
+                .areaGroup(areaGroup)
+                .event(event)
+                .build();
+
+        // 보상: 크레딧 20 + 도감 경험치 200
+        challenge.getRewards().add(ChallengeReward.builder().challenge(challenge).rewardType(RewardType.CREDIT).amount(20L).build());
+        challenge.getRewards().add(ChallengeReward.builder().challenge(challenge).rewardType(RewardType.EXP).amount(200L).build());
+
+        return challenge;
+    }
 
 
     private void createItem(String name, ItemType type, ItemGroup group, Long price, boolean isPurchasable, AreaGroup areaGroup, CollectionTheme theme) {
