@@ -35,6 +35,7 @@ public class Item {
     private Long price; // 지역과제 보상 아이템의 경우 0으로 설정
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 50)
     private CollectionTheme theme;
 
     @Column(nullable = false)
