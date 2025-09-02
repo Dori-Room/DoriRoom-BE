@@ -378,13 +378,13 @@ public class DataInitializer implements ApplicationRunner {
     private void createInitialAtlasRewards() {
         // 각 지역과 보상으로 지급할 아이템 ID
         Map<AreaGroup, Long> rewardItemMap = Map.of(
-                AreaGroup.SEOUL, 48L,
-                AreaGroup.GYEONGGI, 49L,
-                AreaGroup.GANGWON, 50L,
-                AreaGroup.CHUNGNAM, 51L,
-                AreaGroup.JEOLLA, 52L,
-                AreaGroup.GYEONGSANG, 53L,
-                AreaGroup.JEJU, 54L
+                AreaGroup.SEOUL, 38L,
+                AreaGroup.GYEONGGI, 39L,
+                AreaGroup.GANGWON, 40L,
+                AreaGroup.CHUNGNAM, 41L,
+                AreaGroup.JEOLLA, 42L,
+                AreaGroup.GYEONGSANG, 43L,
+                AreaGroup.JEJU, 44L
         );
 
         List<AtlasReward> rewards = new ArrayList<>();
