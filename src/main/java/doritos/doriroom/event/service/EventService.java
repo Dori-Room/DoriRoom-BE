@@ -176,8 +176,28 @@ public class EventService {
     }
 
     public List<Event> getEndingSoonEvents() {
+        // 캐시에서 먼저 조회
+        Optional<List<Event>> cachedEvents = redisCacheService.getCacheList(
+            RedisCacheService.ENDING_SOON_EVENTS_KEY,
+            new TypeReference<List<Event>>() {}
+        );
+
+        if (cachedEvents.isPresent()) {
+            return cachedEvents.get();
+        }
+
+        // 캐시에 없으면 DB에서 조회
         Pageable limit = PageRequest.of(0, 4);
-        return eventRepository.findEndingSoonEvents(LocalDate.now(), limit);
+        List<Event> events = eventRepository.findEndingSoonEvents(LocalDate.now(), limit);
+
+        // 캐시에 저장
+        redisCacheService.setCache(
+            RedisCacheService.ENDING_SOON_EVENTS_KEY,
+            events,
+            RedisCacheService.ENDING_SOON_EVENTS_TTL
+        );
+
+        return events;
     }
 
     public List<Event> getPopularEvents(){
