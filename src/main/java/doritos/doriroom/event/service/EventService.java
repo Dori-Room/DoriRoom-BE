@@ -154,7 +154,8 @@ public class EventService {
         // 캐시에서 먼저 조회
         Optional<List<Event>> cachedEvents = redisCacheService.getCacheList(
             RedisCacheService.UPCOMING_EVENTS_KEY,
-            new TypeReference<List<Event>>() {}
+            new TypeReference<>() {
+            }
         );
 
         if (cachedEvents.isPresent()) {
@@ -179,7 +180,8 @@ public class EventService {
         // 캐시에서 먼저 조회
         Optional<List<Event>> cachedEvents = redisCacheService.getCacheList(
             RedisCacheService.ENDING_SOON_EVENTS_KEY,
-            new TypeReference<List<Event>>() {}
+            new TypeReference<>() {
+            }
         );
 
         if (cachedEvents.isPresent()) {
@@ -201,7 +203,28 @@ public class EventService {
     }
 
     public List<Event> getPopularEvents(){
-        return eventRepository.findPopularEvents(4);
+        // 캐시에서 먼저 조회
+        Optional<List<Event>> cachedEvents = redisCacheService.getCacheList(
+            RedisCacheService.POPULAR_EVENTS_KEY,
+            new TypeReference<>() {
+            }
+        );
+
+        if (cachedEvents.isPresent()) {
+            return cachedEvents.get();
+        }
+
+        // 캐시에 없으면 DB에서 조회
+        List<Event> events = eventRepository.findPopularEvents(4);
+
+        // 캐시에 저장
+        redisCacheService.setCache(
+            RedisCacheService.POPULAR_EVENTS_KEY,
+            events,
+            RedisCacheService.POPULAR_EVENTS_TTL
+        );
+
+        return events;
     }
 
     public Page<EventResponseDto> getFilteredEvents(EventItemFilterRequestDto request, Pageable pageable) {
