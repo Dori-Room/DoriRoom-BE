@@ -65,4 +65,6 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
         )
         """)
     List<UUID> findMutualBestFriendIds(@Param("currentUserId") UUID currentUserId);
+
+    void deleteByFollowerOrFollowed(User follower, User followed);
 }
