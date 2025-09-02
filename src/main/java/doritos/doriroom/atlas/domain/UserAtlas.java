@@ -20,7 +20,7 @@ import java.util.UUID;
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class UserAtlas { // 유저의 지역별 도감
-    @Id
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID userAtlasId;
 
     @ManyToOne(fetch = FetchType.LAZY)
