@@ -46,7 +46,7 @@ public class User {
     private int viewCount = 0;
 
     // 회원 탈퇴 필드
-    @Builder.Default
+    @Builder.Default @Column(nullable = false)
     private boolean isWithdraw  = false; // 탈퇴 상태
     private LocalDateTime withdrawDate; // 탈퇴 시각
 
