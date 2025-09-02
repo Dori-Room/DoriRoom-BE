@@ -1,5 +1,6 @@
 package doritos.doriroom.diary.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import doritos.doriroom.challenge.domain.challenge.ChallengeType;
 import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.diary.domain.Diary;
@@ -12,6 +13,7 @@ import doritos.doriroom.event.dto.response.EventDiaryResponseDto;
 import doritos.doriroom.event.exception.EventNotFoundException;
 import doritos.doriroom.event.repository.EventRepository;
 import doritos.doriroom.follow.service.FollowService;
+import doritos.doriroom.global.cache.RedisCacheService;
 import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.RoomVisibility;
 import doritos.doriroom.user.domain.User;
@@ -41,6 +43,7 @@ public class DiaryService {
     private final S3Uploader s3Uploader;
     private final ChallengeService challengeService;
     private final FollowService followService;
+    private final RedisCacheService redisCacheService;
 
     private static final Long DIARY_WRITE_BASE_CREDIT = 3L;
     private static final Long PHOTO_ATTACHMENT_BONUS_CREDIT = 2L;
@@ -325,6 +328,17 @@ public class DiaryService {
 
     //이달의 인기글 조회
     public List<DiaryResponseDto> getPopularDiariesOfMonth() {
+        // 캐시에서 먼저 조회
+        Optional<List<DiaryResponseDto>> cachedDiaries = redisCacheService.getCacheList(
+            RedisCacheService.POPULAR_DIARIES_KEY,
+            new TypeReference<>() {
+            }
+        );
+
+        if (cachedDiaries.isPresent()) {
+            return cachedDiaries.get();
+        }
+
         // 현재 월의 시작과 끝 날짜 계산
         LocalDate today = LocalDate.now();
         LocalDate startOfMonth = today.withDayOfMonth(1);
@@ -359,7 +373,7 @@ public class DiaryService {
         Map<UUID, Event> eventMap = eventRepository.findByEventIdIn(eventIds).stream()
             .collect(Collectors.toMap(Event::getEventId, event -> event));
 
-        return popularDiaries.stream()
+        List<DiaryResponseDto> diaryResponses = popularDiaries.stream()
             .map(diary -> {
                 User user = userMap.get(diary.getUserId());
                 Event event = eventMap.get(diary.getEventId());
@@ -367,6 +381,15 @@ public class DiaryService {
                 return DiaryResponseDto.from(diary, 0L, user, event);
             })
             .toList();
+
+        // 캐시에 저장
+        redisCacheService.setCache(
+            RedisCacheService.POPULAR_DIARIES_KEY,
+            diaryResponses,
+            RedisCacheService.POPULAR_DIARIES_TTL
+        );
+
+        return diaryResponses;
     }
 
     public Page<DiaryResponseDto> getFriendsDiaries(UUID currentUserId, Pageable pageable) {
