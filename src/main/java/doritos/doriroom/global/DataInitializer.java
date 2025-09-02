@@ -48,6 +48,7 @@ public class DataInitializer implements ApplicationRunner {
         if (atlasRepository.count() == 0) {
             createInitialAtlases();
         }
+
         if (itemRepository.count() == 0) {
             createInitialItems();
         }
