@@ -195,6 +195,42 @@ public class AuthService {
         sendEmail(user.getEmail(), EmailTemplate.Subject.FIND_USERNAME, content);
     }
 
+    // 비밀번호 재설정 1. 이메일 인증 코드 전송
+    public void sendPasswordResetCode(SendPasswordResetCodeRequestDto request){
+        // username과 email 정보에 맞는 유저 확인
+        User user = userRepository.findByUsernameAndEmail(request.username(),request.email())
+                .orElseThrow(() -> new UserNotFoundException("사용자 정보가 일치하지 않습니다."));
+
+        String verificationCode = String.format("%06d", new Random().nextInt(1000000)); // 6자리 인증 코드
+
+        // redis에 인증 코드 저장
+        String verificationKey = RESET_CODE_PREFIX.getValue() + request.email();
+        redisTemplate.opsForValue().set(verificationKey, verificationCode, Duration.ofSeconds(VERIFICATION_EXPIRE_SECONDS));
+
+        // 이메일 본문 구성 후 발송
+        String content = emailTemplate.createPasswordResetEmailContent(verificationCode);
+        sendEmail(request.email(), EmailTemplate.Subject.PASSWORD_RESET, content);
+
+    }
+
+    // 비밀전호 재설정 2. 비밀번호 변경
+    @Transactional
+    public void resetPassword(ResetPasswordRequestDto request){
+        // 인증 코드 조회
+        String verificationKey = RESET_CODE_PREFIX.getValue() + request.email();
+        String storedCode = (String) redisTemplate.opsForValue().get(verificationKey);
+
+        if (storedCode == null || !storedCode.equals(request.code())) {
+            throw new InvalidOrExpiredVerificationCodeException();
+        }
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new UserNotFoundException());
+
+        user.setPassword(encoder.encode(request.newPassword())); // 새로운 비밀번호로 설정
+        redisTemplate.delete(verificationKey); // 사용된 인증코드 삭제
+    }
+
     /* 내부 메서드 */
 
     // 이메일 발송 메서드
