@@ -64,7 +64,9 @@ public class AuthService {
         String verificationKey = VERIFICATION_KEY_PREFIX.getValue() + email;
         redisTemplate.opsForValue().set(verificationKey, verificationCode, Duration.ofSeconds(VERIFICATION_EXPIRE_SECONDS));
 
-        sendEmail(email, verificationCode);
+        // 이메일 본문 구성 후 발송
+        String content = emailTemplate.createVerificationEmailContent(verificationCode);
+        sendEmail(email, EmailTemplate.Subject.VERIFICATION, content);
     }
 
     public void verifyEmail(EmailVerificationRequestDto request){
@@ -177,16 +179,35 @@ public class AuthService {
         }
     }
 
-    private void sendEmail(String email, String verificationCode) {
+    /* 아이디 찾기 / 비밀번호 재설정 */
+
+    // 아이디 찾기
+    public void findUsername(EmailRequestDto request){
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(UserNotFoundException::new);
+
+        String username = user.getUsername();
+        // 아이디 일부 마스킹 처리 (예: user123 -> us***23)
+        String maskedUsername = username.substring(0, 2) + "***" + username.substring(username.length() - 2);
+
+        // EmailTemplate을 사용하여 이메일 본문 생성 후 발송
+        String content = emailTemplate.createFindUsernameEmailContent(maskedUsername);
+        sendEmail(user.getEmail(), EmailTemplate.Subject.FIND_USERNAME, content);
+    }
+
+    /* 내부 메서드 */
+
+    // 이메일 발송 메서드
+    private void sendEmail(String to, String subject, String content) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setTo(email);
-            helper.setSubject(EmailTemplate.Subject.VERIFICATION);
-            helper.setText(emailTemplate.createVerificationEmailContent(verificationCode), true); // 이메일 contect 구성
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(content, true); // true: HTML 형식으로 발송
 
-            mailSender.send(message); // 이메일 전송
+            mailSender.send(message);
         } catch (MessagingException e) {
             throw new EmailSendFailedException();
         }

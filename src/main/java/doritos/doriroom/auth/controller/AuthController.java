@@ -70,4 +70,12 @@ public class AuthController {
         authService.logout(token);
         return ApiResponse.ok();
     }
+
+    @PostMapping("/find-username")
+    @Operation(summary = "아이디 찾기", description = "이메일 포함하여 요청 시 마스킹 처리된 아이디 반환")
+    public ApiResponse<Void> findUsername(@RequestBody @Valid EmailRequestDto request){
+        authService.findUsername(request);
+        return ApiResponse.ok();
+    }
+
 }
