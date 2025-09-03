@@ -29,6 +29,7 @@ public record ChallengeResponseDto(
 
         int targetCount,
         UUID eventId, // nullable
+        String polygon,
         List<ChallengeRewardDto> rewards, // nullable
 
         int currentProgress,
@@ -47,6 +48,7 @@ public record ChallengeResponseDto(
                 .challengeType(challenge.getChallengeType())
                 .targetCount(challenge.getTargetCount())
                 .eventId(challenge.getEvent() != null ? challenge.getEvent().getEventId() : null)
+                .polygon(challenge.getEvent() != null ? challenge.getEvent().getPolygon() : null)
                 .rewards(challenge.getRewards() == null
                         ? List.of()
                         : challenge.getRewards().stream()
