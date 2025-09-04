@@ -212,14 +212,65 @@ public class DiaryService {
     }
 
     //일별 작성한 일기 목록 조회
-    public DailyDiaryListResponseDto getDailyDiaries(UUID userId, LocalDate date) {
-        List<Diary> diaries = diaryRepository.findByUserIdAndVisitedAtOrderByCreatedAtDesc(userId, date);
+//    public DailyDiaryListResponseDto getDailyDiaries(UUID userId, LocalDate date) {
+//        List<Diary> diaries = diaryRepository.findByUserIdAndVisitedAtOrderByCreatedAtDesc(userId, date);
+//
+//        if (diaries.isEmpty()) {
+//            return DailyDiaryListResponseDto.from(userId, date, List.of());
+//        }
+//
+//        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+//
+//        List<UUID> eventIds = diaries.stream()
+//            .map(Diary::getEventId)
+//            .distinct()
+//            .toList();
+//
+//        Map<UUID, Event> eventMap = eventRepository.findByEventIdIn(eventIds).stream()
+//            .collect(Collectors.toMap(Event::getEventId, event -> event));
+//
+//        List<DiaryResponseDto> diaryList = diaries.stream()
+//            .map(diary -> {
+//                Event event = eventMap.get(diary.getEventId());
+//
+//                return DiaryResponseDto.from(diary, 0L, user, event);
+//            })
+//            .toList();
+//
+//        return DailyDiaryListResponseDto.from(userId, date, diaryList);
+//    }
 
-        if (diaries.isEmpty()) {
-            return DailyDiaryListResponseDto.from(userId, date, List.of());
+    public DailyDiaryListResponseDto getDailyDiaries(UUID currentUserId, UUID targetUserId, LocalDate date) {
+        userRepository.findById(currentUserId).orElseThrow(UserNotFoundException::new);
+        User targetUser = userRepository.findById(targetUserId).orElseThrow(UserNotFoundException::new);
+
+        List<Diary> diaries;
+
+        // 자신의 일기인지 확인
+        boolean isOwnDiary = currentUserId.equals(targetUserId);
+
+        if (isOwnDiary) {
+            // 자신의 일기 - 모든 일기 조회
+            diaries = diaryRepository.findByUserIdAndVisitedAtOrderByCreatedAtDesc(targetUserId, date);
+        } else {
+            // 다른 사용자의 일기 - 단짝 여부에 따라 조회 범위 결정
+            boolean isBestFriend = followService.isBestFriendByDiaryWriter(targetUserId, currentUserId);
+
+            if (isBestFriend) {
+                // 일기 작성자가 조회자를 단짝으로 설정한 경우
+                diaries = diaryRepository.findPublicAndFollowersByUserIdAndVisitedAtOrderByCreatedAtDesc(
+                    targetUserId,
+                    List.of(RoomVisibility.PUBLIC, RoomVisibility.FOLLOWERS),
+                    date);
+            } else {
+                // 단짝친구 아닌 경우 - 공개 일기만 조회
+                diaries = diaryRepository.findPublicByUserIdAndVisitedAtOrderByCreatedAtDesc(targetUserId, date);
+            }
         }
 
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        if (diaries.isEmpty()) {
+            return DailyDiaryListResponseDto.from(targetUserId, date, List.of());
+        }
 
         List<UUID> eventIds = diaries.stream()
             .map(Diary::getEventId)
@@ -232,12 +283,11 @@ public class DiaryService {
         List<DiaryResponseDto> diaryList = diaries.stream()
             .map(diary -> {
                 Event event = eventMap.get(diary.getEventId());
-
-                return DiaryResponseDto.from(diary, 0L, user, event);
+                return DiaryResponseDto.from(diary, 0L, targetUser, event);
             })
             .toList();
 
-        return DailyDiaryListResponseDto.from(userId, date, diaryList);
+        return DailyDiaryListResponseDto.from(targetUserId, date, diaryList);
     }
 
     //축제별 일기 조회
