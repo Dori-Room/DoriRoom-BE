@@ -1,7 +1,7 @@
 # ================= STAGE 1: Build =================
 # Gradle과 JDK를 사용하여 애플리케이션을 빌드하는 단계
-FROM openjdk:17-jdk AS builder
-RUN apt-get update && apt-get install -y findutils
+FROM eclipse-temurin:17-jdk AS builder
+RUN apk add --no-cache findutils
 
 # 작업 디렉토리 설정
 WORKDIR /workspace
