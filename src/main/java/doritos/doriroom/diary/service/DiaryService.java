@@ -147,12 +147,6 @@ public class DiaryService {
         Diary diary = diaryRepository.findById(diaryId)
             .orElseThrow(DiaryNotFoundException::new);
 
-        User user = userRepository.findById(diary.getUserId())
-            .orElseThrow(UserNotFoundException::new);
-
-        Event event = eventRepository.findById(diary.getEventId())
-            .orElseThrow(EventNotFoundException::new);
-
         // 권한 검증
         boolean isOwnDiary = currentUserId.equals(diary.getUserId());
 
@@ -169,6 +163,12 @@ public class DiaryService {
                 throw new DiaryAuthorizationException();
             }
         }
+
+        User user = userRepository.findById(diary.getUserId())
+            .orElseThrow(UserNotFoundException::new);
+
+        Event event = eventRepository.findById(diary.getEventId())
+            .orElseThrow(EventNotFoundException::new);
 
         return DiaryDetailResponseDto.from(diary, user, event);
     }
@@ -227,35 +227,6 @@ public class DiaryService {
 
         return DiaryWritingStatusResponseDto.from(targetUserId, year, month, dailyStatusMap);
     }
-
-    //일별 작성한 일기 목록 조회
-//    public DailyDiaryListResponseDto getDailyDiaries(UUID userId, LocalDate date) {
-//        List<Diary> diaries = diaryRepository.findByUserIdAndVisitedAtOrderByCreatedAtDesc(userId, date);
-//
-//        if (diaries.isEmpty()) {
-//            return DailyDiaryListResponseDto.from(userId, date, List.of());
-//        }
-//
-//        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
-//
-//        List<UUID> eventIds = diaries.stream()
-//            .map(Diary::getEventId)
-//            .distinct()
-//            .toList();
-//
-//        Map<UUID, Event> eventMap = eventRepository.findByEventIdIn(eventIds).stream()
-//            .collect(Collectors.toMap(Event::getEventId, event -> event));
-//
-//        List<DiaryResponseDto> diaryList = diaries.stream()
-//            .map(diary -> {
-//                Event event = eventMap.get(diary.getEventId());
-//
-//                return DiaryResponseDto.from(diary, 0L, user, event);
-//            })
-//            .toList();
-//
-//        return DailyDiaryListResponseDto.from(userId, date, diaryList);
-//    }
 
     public DailyDiaryListResponseDto getDailyDiaries(UUID currentUserId, UUID targetUserId, LocalDate date) {
         userRepository.findById(currentUserId).orElseThrow(UserNotFoundException::new);
