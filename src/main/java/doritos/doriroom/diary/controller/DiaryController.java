@@ -120,17 +120,18 @@ public class DiaryController {
     }
 
     @Operation(summary = "일별 일기 목록 조회", description = "특정 날짜에 작성된 일기 목록을 조회합니다.")
-    @GetMapping("/daily")
+    @GetMapping("/{userId}/daily")
     public ApiResponse<DailyDiaryListResponseDto> getDailyDiaries(
         @AuthenticationPrincipal User user,
-        @RequestParam
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @PathVariable @Schema(description = "조회할 유저 ID", example = "43d1a5a2-58dc-4786-8dba-27c62cae1943")
+        UUID userId,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         @Schema(
             description = "조회할 날짜 (YYYY-MM-DD 형식)",
             example = "2025-08-10"
         )
         LocalDate date) {
-        DailyDiaryListResponseDto response = diaryService.getDailyDiaries(user.getUserId(), date);
+        DailyDiaryListResponseDto response = diaryService.getDailyDiaries(user.getUserId(), userId, date);
         return ApiResponse.ok(response);
     }
 
