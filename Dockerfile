@@ -22,12 +22,12 @@ RUN ./gradlew build -x test
 
 # ================= STAGE 2: Final Image =================
 # 실제 실행에 필요한 최소한의 환경으로 이미지를 만드는 단계
-FROM openjdk:17-jre-alpine
+FROM eclipse-temurin:17-jre-alpine
 
 # 타임존 환경변수 설정
 ENV TZ=Asia/Seoul
 
-# 시스템의 시간대를 서울로 설정
+# 시스템의 시간대를 서울로 설정 (alpine에는 tzdata가 없어 설치 필요)
 RUN apk add --no-cache tzdata
 
 # 빌드 스테이지(builder)에서 생성된 JAR 파일만 복사
