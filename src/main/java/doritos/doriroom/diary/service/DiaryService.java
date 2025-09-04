@@ -143,7 +143,7 @@ public class DiaryService {
         challengeService.updateChallengeProgress(user, ChallengeType.WRITE_DIARY, -1);
     }
 
-    public DiaryDetailResponseDto getDiaryDetail(UUID diaryId) {
+    public DiaryDetailResponseDto getDiaryDetail(UUID currentUserId,UUID diaryId) {
         Diary diary = diaryRepository.findById(diaryId)
             .orElseThrow(DiaryNotFoundException::new);
 
@@ -152,6 +152,23 @@ public class DiaryService {
 
         Event event = eventRepository.findById(diary.getEventId())
             .orElseThrow(EventNotFoundException::new);
+
+        // 권한 검증
+        boolean isOwnDiary = currentUserId.equals(diary.getUserId());
+
+        if (!isOwnDiary) {
+            boolean isBestFriend = followService.isBestFriendByDiaryWriter(diary.getUserId(), currentUserId);
+
+            if (!isBestFriend && diary.getDiaryVisibility() != RoomVisibility.PUBLIC) {
+                // 단짝이 아니고 공개 일기가 아닌 경우 접근 불가
+                throw new DiaryAuthorizationException();
+            }
+
+            if (isBestFriend && diary.getDiaryVisibility() == RoomVisibility.PRIVATE) {
+                // 단짝이라도 비공개 일기는 접근 불가
+                throw new DiaryAuthorizationException();
+            }
+        }
 
         return DiaryDetailResponseDto.from(diary, user, event);
     }

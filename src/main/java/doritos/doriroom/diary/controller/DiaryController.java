@@ -102,8 +102,9 @@ public class DiaryController {
     @Operation(summary = "일기 상세 조회", description = "일기 상세 정보를 조회합니다.")
     @GetMapping("/{diaryId}")
     public ApiResponse<DiaryDetailResponseDto> getDiaryDetail(
+        @AuthenticationPrincipal User user,
         @PathVariable UUID diaryId) {
-        DiaryDetailResponseDto response = diaryService.getDiaryDetail(diaryId);
+        DiaryDetailResponseDto response = diaryService.getDiaryDetail(user.getUserId(), diaryId);
         return ApiResponse.ok(response);
     }
 
