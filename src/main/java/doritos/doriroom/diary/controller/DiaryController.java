@@ -164,4 +164,14 @@ public class DiaryController {
         Page<DiaryResponseDto> response = diaryService.getFriendsDiaries(user.getUserId(), pageable);
         return ApiResponse.ok(response);
     }
+
+    @Operation(summary = "축제별 일기 작성 여부 확인", description = "사용자가 특정 축제에 대해 일기를 작성했는지 여부를 확인합니다.")
+    @GetMapping("/written/{eventId}")
+    public ApiResponse<Boolean> hasUserWrittenDiaryForEvent(
+        @AuthenticationPrincipal User user,
+        @PathVariable @Schema(description = "축제 ID", example = "550e8400-e29b-41d4-a716-446655440002")
+        UUID eventId) {
+        boolean hasWritten = diaryService.getUserWrittenDiaryForEvent(user.getUserId(), eventId);
+        return ApiResponse.ok(hasWritten);
+    }
 }

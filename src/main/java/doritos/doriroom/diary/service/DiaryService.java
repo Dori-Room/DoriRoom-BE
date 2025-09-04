@@ -427,4 +427,11 @@ public class DiaryService {
         return new PageImpl<>(diaryResponses, pageable, friendsDiariesPage.getTotalElements());
     }
 
+    public boolean getUserWrittenDiaryForEvent(UUID userId, UUID eventId) {
+        eventRepository.findById(eventId).orElseThrow(EventNotFoundException::new);
+        userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+
+        return diaryRepository.existsByUserIdAndEventId(userId, eventId);
+    }
+
 }
