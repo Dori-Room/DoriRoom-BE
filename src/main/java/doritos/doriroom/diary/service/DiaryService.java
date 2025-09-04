@@ -6,6 +6,7 @@ import doritos.doriroom.diary.domain.Diary;
 import doritos.doriroom.diary.dto.request.*;
 import doritos.doriroom.diary.dto.response.*;
 import doritos.doriroom.diary.exception.*;
+import doritos.doriroom.diary.repository.DiaryLikeRepository;
 import doritos.doriroom.diary.repository.DiaryRepository;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.response.EventDiaryResponseDto;
@@ -36,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class DiaryService {
     private final DiaryRepository diaryRepository;
+    private final DiaryLikeRepository diaryLikeRepository;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final S3Uploader s3Uploader;
@@ -121,6 +123,9 @@ public class DiaryService {
             throw new DiaryAuthorizationException();
         }
 
+        // 일기 삭제 전에 관련된 좋아요들을 먼저 삭제
+        diaryLikeRepository.deleteByDiaryId(diaryId);
+
         if (diary.getImageUrls() != null && !diary.getImageUrls().isEmpty()) {
             s3Uploader.deleteFiles(diary.getImageUrls());
         }
@@ -131,7 +136,6 @@ public class DiaryService {
             event.decrementDiaryCount();
             eventRepository.save(event);
         }
-
 
         diaryRepository.delete(diary);
 
