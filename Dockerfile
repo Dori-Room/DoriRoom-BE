@@ -11,14 +11,13 @@ COPY gradle gradle
 
 # build.gradle 파일 복사
 COPY build.gradle .
-# settings.gradle 파일이 있다면 그것도 복사합니다.
-# COPY settings.gradle .
+COPY settings.gradle .
 
 # 소스코드 복사
 COPY src src
 
 # Gradle 빌드 실행
-RUN ./gradlew build -x test
+RUN ./gradlew build -x test --info --stacktrace
 
 # ================= STAGE 2: Final Image =================
 # 실제 실행에 필요한 최소한의 환경으로 이미지를 만드는 단계
