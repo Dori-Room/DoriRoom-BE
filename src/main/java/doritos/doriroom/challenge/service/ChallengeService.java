@@ -14,9 +14,11 @@ import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.repository.UserChallengeRepository;
 import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
+import doritos.doriroom.tourApi.exception.AreaNotFoundException;
 import doritos.doriroom.tourApi.service.AreaService;
 import doritos.doriroom.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChallengeService {
     private final ChallengeRepository challengeRepository;
     private final UserChallengeRepository userChallengeRepository;
@@ -56,13 +59,7 @@ public class ChallengeService {
         boolean hasVisitSidoChallenge = challenges.stream()
             .anyMatch(challenge -> challenge.getChallengeType() == ChallengeType.VISIT_SIDO);
 
-        // VISIT_SIDO 과제가 있다면 좌표 정보 조회
-        String sidoPolygon;
-        if(hasVisitSidoChallenge && areaGroup != null){
-            sidoPolygon = areaService.getAreaPolygonInfo(areaGroup);
-        } else {
-            sidoPolygon = null;
-        }
+        String sidoPolygon = getSidoPolygon(hasVisitSidoChallenge, areaGroup);
 
         // 도전과제 정보와 유저의 진행 상태를 반영하여 반환
         return challenges.stream()
@@ -262,6 +259,21 @@ public class ChallengeService {
         // 그 이외 자동 집계 도전과제인 경우에는 예외 처리
         if (!manualStartTypes.contains(challenge.getChallengeType())) {
             throw new ChallengeStatusException("수동으로 시작할 수 없는 타입의 과제입니다.");
+        }
+    }
+
+    private String getSidoPolygon(boolean hasVisitSidoChallenge, AreaGroup areaGroup) {
+        if (!hasVisitSidoChallenge || areaGroup == null) {
+            return null;
+        }
+        try {
+            return areaService.getAreaPolygonInfo(areaGroup);
+        } catch (AreaNotFoundException e) {
+            log.warn("지역 정보를 찾을 수 없습니다: {}", areaGroup, e);
+            return null;
+        } catch (Exception e) {
+            log.error("시/도 좌표값 조회 중 예상치 못한 오류 발생: {}", areaGroup, e);
+            return null;
         }
     }
 }
