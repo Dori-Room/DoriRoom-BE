@@ -16,7 +16,7 @@ public class Area {
     @Column(nullable = false)
     private String name;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String geoPolygon;
 
     public void updatePolygonInfo(String geoJson) {
