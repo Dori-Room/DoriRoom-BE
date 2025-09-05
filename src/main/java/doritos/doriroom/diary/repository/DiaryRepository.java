@@ -88,7 +88,7 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         AND d.visitedAt = :visitedAt
         ORDER BY d.visitedAt DESC, d.diaryId DESC
         """)
-    List<Diary> findPublicByUserIdAndVisitedAtOrderByCreatedAtDesc(
+    List<Diary> findPublicByUserIdAndVisitedAtOrderByVisitedAtDesc(
         @Param("userId") UUID userId,
         @Param("visitedAt") LocalDate visitedAt);
 
@@ -99,7 +99,7 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         AND d.visitedAt = :visitedAt
         ORDER BY d.visitedAt DESC, d.diaryId DESC
         """)
-    List<Diary> findPublicAndFollowersByUserIdAndVisitedAtOrderByCreatedAtDesc(
+    List<Diary> findPublicAndFollowersByUserIdAndVisitedAtOrderByVisitedAtDesc(
         @Param("userId") UUID userId,
         @Param("visibilities") List<RoomVisibility> visibilities,
         @Param("visitedAt") LocalDate visitedAt);

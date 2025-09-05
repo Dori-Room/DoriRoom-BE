@@ -246,13 +246,13 @@ public class DiaryService {
 
             if (isBestFriend) {
                 // 일기 작성자가 조회자를 단짝으로 설정한 경우
-                diaries = diaryRepository.findPublicAndFollowersByUserIdAndVisitedAtOrderByCreatedAtDesc(
+                diaries = diaryRepository.findPublicAndFollowersByUserIdAndVisitedAtOrderByVisitedAtDesc(
                     targetUserId,
                     List.of(RoomVisibility.PUBLIC, RoomVisibility.FOLLOWERS),
                     date);
             } else {
                 // 단짝친구 아닌 경우 - 공개 일기만 조회
-                diaries = diaryRepository.findPublicByUserIdAndVisitedAtOrderByCreatedAtDesc(targetUserId, date);
+                diaries = diaryRepository.findPublicByUserIdAndVisitedAtOrderByVisitedAtDesc(targetUserId, date);
             }
         }
 
