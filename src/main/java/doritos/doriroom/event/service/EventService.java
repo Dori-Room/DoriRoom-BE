@@ -89,6 +89,11 @@ public class EventService {
         }
 
         eventRepository.saveAll(toSave);
+
+        // 축제 변경 시 캐시 무효화
+        redisCacheService.deleteCache(RedisCacheService.UPCOMING_EVENTS_KEY);
+        redisCacheService.deleteCache(RedisCacheService.ENDING_SOON_EVENTS_KEY);
+
         log.info("오늘 이벤트 upsert 완료: 총 {}, 업데이트 {}, 신규 {}", toSave.size(), updateCount, insertCount);
     }
 
@@ -97,6 +102,7 @@ public class EventService {
         List<Event> events = eventRepository.findByEventDetailStatusOrderByStartDateDesc(EventDetailStatus.PENDING);
         int dailyLimit = 900;
         int processedCount = 0;
+        boolean hasStatusChanges = false;
 
         log.info("축제 상세정보 업데이트 시작");
 
@@ -133,11 +139,13 @@ public class EventService {
                         event.updateDetailInfoFrom(detailInfoList);
                         currentStatus = EventDetailStatus.SUCCESS;
                     }
+                    hasStatusChanges = true;
                 } catch (Exception e) {
                     log.error("축제 상세정보 업데이트 실패. contentId: {}, error: {}", event.getContentId(),
                         e.getMessage());
                     currentStatus = EventDetailStatus.FAILED;
                     processedCount += 2;
+                    hasStatusChanges = true;
                 }
 
                 //결정된 상태를 엔티티에 반영하고 저장
@@ -145,6 +153,14 @@ public class EventService {
                 eventRepository.save(event);
             }
         }
+
+        // 상태 변경이 있었으면 관련 캐시 무효화
+        if (hasStatusChanges) {
+            redisCacheService.deleteCache(RedisCacheService.UPCOMING_EVENTS_KEY);
+            redisCacheService.deleteCache(RedisCacheService.ENDING_SOON_EVENTS_KEY);
+            redisCacheService.deleteCache(RedisCacheService.POPULAR_EVENTS_KEY);
+        }
+
         log.info("전체 축제 상세정보 업데이트 완료");
     }
 
