@@ -6,6 +6,7 @@ import lombok.*;
 @Entity
 @Table(name = "area")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -15,4 +16,11 @@ public class Area {
     
     @Column(nullable = false)
     private String name;
+
+    @Column(columnDefinition = "TEXT")
+    private String geoPolygon;
+
+    public void updatePolygonInfo(String geoJson) {
+        this.geoPolygon = geoJson;
+    }
 } 
