@@ -12,5 +12,6 @@ public enum ChallengeType {
 
     // 지역 과제 (도전 버튼 클릭으로 수행)
     VISIT_EVENT,     // 특정 축제 방문
-    REGIONAL_QUIZ // 지역 퀴즈 풀기
+    REGIONAL_QUIZ, // 지역 퀴즈 풀기
+    VISIT_SIDO //특정 시도 방문
 }
