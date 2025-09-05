@@ -104,7 +104,6 @@ public class TourApiController {
     @PostMapping("/initialize")
     public ApiResponse<String> initializeAll() {
         eventService.getAllEvents();
-        areaService.initializeAreas();
         sigunguService.initializeAllSigungu();
         return ApiResponse.ok("DB에 축제 관련 데이터 저장 완료");
     }
