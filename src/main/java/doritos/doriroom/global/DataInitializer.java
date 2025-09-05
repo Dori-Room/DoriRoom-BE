@@ -438,13 +438,13 @@ public class DataInitializer implements ApplicationRunner {
         List<Challenge> challenges = new ArrayList<>();
 
         // --- 축제 과제 목록 ---
-//        challenges.add(createFestivalChallenge("보령머드축제 방문하기", AreaGroup.CHUNGNAM, "2c120701-3c47-4b5a-a25b-747774954aae"));
-//        challenges.add(createFestivalChallenge("춘천막국수닭갈비축제 방문하기", AreaGroup.GANGWON, "b6a1d6aa-c6ba-41c4-b137-14821e75bb87"));
-//        challenges.add(createFestivalChallenge("APAP 작품투어 참여하기", AreaGroup.GYEONGGI, "abcc55a2-84b8-4107-b80b-73e0d1ea1627"));
-        challenges.add(createFestivalChallenge("DDP 건축투어 참여하기", AreaGroup.SEOUL, "051d8ae6-37d9-44c5-b2b7-9e07cb9728dd"));
-//        challenges.add(createFestivalChallenge("광안리 M 드론라이트 쇼 보기", AreaGroup.GYEONGSANG, "077eb616-63df-4b0f-8883-5ad5d860d17e"));
-//        challenges.add(createFestivalChallenge("목포해상W쇼 보기", AreaGroup.JEOLLA, "d3af3a7a-5385-49b8-bda3-b57a8fda1c19"));
-//        challenges.add(createFestivalChallenge("휴애리 유럽 수국축제 방문하기", AreaGroup.JEJU, "182c6fe2-afb4-42ec-adfd-201c5b541e23"));
+        challenges.add(createFestivalChallenge("보령머드축제 방문하기", AreaGroup.CHUNGNAM, "2c120701-3c47-4b5a-a25b-747774954aae"));
+        challenges.add(createFestivalChallenge("춘천막국수닭갈비축제 방문하기", AreaGroup.GANGWON, "b6a1d6aa-c6ba-41c4-b137-14821e75bb87"));
+        challenges.add(createFestivalChallenge("APAP 작품투어 참여하기", AreaGroup.GYEONGGI, "abcc55a2-84b8-4107-b80b-73e0d1ea1627"));
+        challenges.add(createFestivalChallenge("DDP 건축투어 참여하기", AreaGroup.SEOUL, "ff4758cc-c1c8-47a9-a0a9-862f08496bc2"));
+        challenges.add(createFestivalChallenge("광안리 M 드론라이트 쇼 보기", AreaGroup.GYEONGSANG, "077eb616-63df-4b0f-8883-5ad5d860d17e"));
+        challenges.add(createFestivalChallenge("목포해상W쇼 보기", AreaGroup.JEOLLA, "d3af3a7a-5385-49b8-bda3-b57a8fda1c19"));
+        challenges.add(createFestivalChallenge("휴애리 유럽 수국축제 방문하기", AreaGroup.JEJU, "182c6fe2-afb4-42ec-adfd-201c5b541e23"));
 
         // Event ID 조회 실패로 null이 포함된 경우 제거
         challenges.removeIf(Objects::isNull);
