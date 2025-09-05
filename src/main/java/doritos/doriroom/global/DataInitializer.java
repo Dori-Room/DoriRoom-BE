@@ -141,6 +141,10 @@ public class DataInitializer implements ApplicationRunner {
 
             try {
                 ClassPathResource resource = new ClassPathResource(filePath);
+                if(!resource.exists()){
+                    log.warn("지역 좌표 파일이 존재하지 않습니다: {}", filePath);
+                    continue;
+                }
                 JsonNode coordinateData = objectMapper.readTree(resource.getInputStream());
 
                 // 해당 AreaGroup의 첫 번째 areaCode로 Area 찾기
@@ -287,10 +291,6 @@ public class DataInitializer implements ApplicationRunner {
                 createMcQuestion(seoulMcQuiz, 4, "서울의 중심구역으로 청와대와 경복궁이 있는 자치구는?", "종로구", "마포구", "강남구", "성동구", (byte)1, "종로구는 서울의 역사, 정치의 핵심 지역입니다.")
         ));
         allQuizzes.add(seoulMcQuiz);
-
-        Challenge seoulVisitChallenge = createSidoVisitChallenge(AreaGroup.SEOUL);
-        allChallenges.add(seoulVisitChallenge);
-
 
         // --- 경기도 퀴즈 (2개) ---
         Challenge gyeonggiOxChallenge = createQuizChallenge("경기도 O/X 퀴즈", AreaGroup.GYEONGGI);
