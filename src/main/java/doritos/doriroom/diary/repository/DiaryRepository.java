@@ -20,10 +20,10 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
 
     List<Diary> findByUserIdAndVisitedAtOrderByCreatedAtDesc(UUID userId, LocalDate visitedAt);
 
-    @Query("SELECT d FROM Diary d WHERE d.eventId = :eventId AND d.diaryVisibility = 'PUBLIC' ORDER BY d.visitedAt DESC, d.diaryId DESC")
+    @Query("SELECT d FROM Diary d WHERE d.eventId = :eventId AND d.diaryVisibility = 'PUBLIC' ORDER BY d.createdAt DESC")
     Page<Diary> findPublicDiariesByEventId(@Param("eventId") UUID eventId, Pageable pageable);
 
-    @Query("SELECT d FROM Diary d WHERE d.userId = :userId AND d.diaryVisibility = 'PUBLIC' ORDER BY d.visitedAt DESC, d.diaryId DESC")
+    @Query("SELECT d FROM Diary d WHERE d.userId = :userId AND d.diaryVisibility = 'PUBLIC' ORDER BY d.visitedAt DESC, d.createdAt DESC")
     Page<Diary> findPublicByUserIdOrderByVisitedAtDesc(@Param("userId") UUID userId, Pageable pageable);
 
     @Query("""
@@ -31,7 +31,7 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         WHERE d.userId = :userId
         AND d.diaryVisibility = 'PUBLIC'
         AND d.visitedAt BETWEEN :startDate AND :endDate
-        ORDER BY d.visitedAt DESC, d.diaryId DESC
+        ORDER BY d.visitedAt
         """)
     List<Diary> findPublicByUserIdAndVisitedAtBetweenOrderByVisitedAt(
         @Param("userId") UUID userId,
@@ -47,7 +47,7 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         WHERE d.userId = :userId
         AND d.diaryVisibility IN (:visibilities)
         AND d.visitedAt BETWEEN :startDate AND :endDate
-        ORDER BY d.visitedAt DESC, d.diaryId DESC
+        ORDER BY d.visitedAt
         """)
     List<Diary> findPublicAndFollowersByUserIdAndVisitedAtBetweenOrderByVisitedAt(
         @Param("userId") UUID userId,
@@ -58,9 +58,9 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
     @Query("""
         SELECT d FROM Diary d
         WHERE d.diaryVisibility = 'PUBLIC'
-        AND d.visitedAt >= :startDate
-        AND d.visitedAt <= :endDate
-        ORDER BY (d.likes * 2) DESC, d.visitedAt DESC, d.diaryId DESC
+        AND d.createdAt >= :startDate
+        AND d.createdAt <= :endDate
+        ORDER BY (d.likes * 2) DESC, d.createdAt DESC
         """)
     List<Diary> findPopularDiariesByMonth(
         @Param("startDate") LocalDateTime startDate,
@@ -69,11 +69,11 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
 
     @Query("""
     SELECT d FROM Diary d
-    WHERE d.visitedAt >= :twoWeeksAgo AND (
+    WHERE d.createdAt >= :twoWeeksAgo AND (
         (d.userId IN :followingIds AND d.diaryVisibility = 'PUBLIC') OR
         (d.userId IN :mutualBestFriendIds AND d.diaryVisibility = 'FOLLOWERS')
     )
-    ORDER BY d.visitedAt DESC, d.diaryId DESC
+    ORDER BY d.createdAt DESC, d.diaryId DESC
     """)
     Page<Diary> findFriendsDiaries(
         @Param("followingIds") List<UUID> followingIds,
@@ -86,7 +86,7 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         WHERE d.userId = :userId
         AND d.diaryVisibility = 'PUBLIC'
         AND d.visitedAt = :visitedAt
-        ORDER BY d.visitedAt DESC, d.diaryId DESC
+        ORDER BY d.createdAt DESC
         """)
     List<Diary> findPublicByUserIdAndVisitedAtOrderByCreatedAtDesc(
         @Param("userId") UUID userId,
@@ -97,7 +97,7 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         WHERE d.userId = :userId
         AND d.diaryVisibility IN (:visibilities)
         AND d.visitedAt = :visitedAt
-        ORDER BY d.visitedAt DESC, d.diaryId DESC
+        ORDER BY d.createdAt DESC
         """)
     List<Diary> findPublicAndFollowersByUserIdAndVisitedAtOrderByCreatedAtDesc(
         @Param("userId") UUID userId,
