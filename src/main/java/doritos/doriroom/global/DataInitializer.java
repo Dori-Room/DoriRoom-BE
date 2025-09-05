@@ -1,5 +1,7 @@
 package doritos.doriroom.global;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import doritos.doriroom.atlas.domain.Atlas;
 import doritos.doriroom.atlas.domain.AtlasReward;
 import doritos.doriroom.atlas.repository.AtlasRepository;
@@ -16,12 +18,16 @@ import doritos.doriroom.item.repository.ItemRepository;
 import doritos.doriroom.quiz.domain.Question;
 import doritos.doriroom.quiz.domain.Quiz;
 import doritos.doriroom.quiz.repository.QuizRepository;
+import doritos.doriroom.tourApi.domain.Area;
 import doritos.doriroom.tourApi.domain.AreaGroup;
+import doritos.doriroom.tourApi.repository.AreaRepository;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +37,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DataInitializer implements ApplicationRunner {
     private final AtlasRepository atlasRepository;
     private final ItemRepository itemRepository;
@@ -40,6 +47,8 @@ public class DataInitializer implements ApplicationRunner {
     private final PasswordEncoder encoder;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
+    private final AreaRepository areaRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -48,6 +57,11 @@ public class DataInitializer implements ApplicationRunner {
         if (atlasRepository.count() == 0) {
             createInitialAtlases();
         }
+
+        if(areaRepository.count() == 0){
+            createInitialAreas();
+        }
+        createInitializeAreaPolygon();
 
         if (itemRepository.count() == 0) {
             createInitialItems();
@@ -59,6 +73,7 @@ public class DataInitializer implements ApplicationRunner {
             createInitialCommonChallenges();
             createInitialQuizzesAndChallenges();
             createInitialFestivalChallenges();
+            createInitialSidoVisitChallenges();
         }
         long challengeCount = challengeRepository.count();
         System.out.println("현재 도전과제 개수: " + challengeCount);
@@ -83,6 +98,66 @@ public class DataInitializer implements ApplicationRunner {
 
         atlasRepository.saveAll(initialAtlases);
         System.out.println(initialAtlases.size() + "개 지역 Atlas 초기 데이터가 생성되었습니다.");
+    }
+
+    // 지역 정보 데이터
+    private void createInitialAreas() {
+        List<Area> areas = List.of(
+            Area.builder().code(1).name("서울").build(),
+            Area.builder().code(2).name("인천").build(),
+            Area.builder().code(3).name("대전").build(),
+            Area.builder().code(4).name("대구").build(),
+            Area.builder().code(5).name("광주").build(),
+            Area.builder().code(6).name("부산").build(),
+            Area.builder().code(7).name("울산").build(),
+            Area.builder().code(8).name("세종").build(),
+            Area.builder().code(31).name("경기").build(),
+            Area.builder().code(32).name("강원").build(),
+            Area.builder().code(33).name("충북").build(),
+            Area.builder().code(34).name("충남").build(),
+            Area.builder().code(35).name("경북").build(),
+            Area.builder().code(36).name("경남").build(),
+            Area.builder().code(37).name("전북").build(),
+            Area.builder().code(38).name("전남").build(),
+            Area.builder().code(39).name("제주").build()
+        );
+
+        areaRepository.saveAll(areas);
+        System.out.println("지역 정보 초기화 완료: " + areas.size() + "개 지역");
+    }
+
+    private void createInitializeAreaPolygon() {
+        Map<AreaGroup, String> polygonFile = Map.of(
+            AreaGroup.SEOUL, "data/area-polygon/seoul.json"
+        );
+
+        List<Area> areas = areaRepository.findAll();
+        Map<Integer, Area> areaMap = areas.stream()
+            .collect(Collectors.toMap(Area::getCode, area -> area));
+
+        for (Map.Entry<AreaGroup, String> entry : polygonFile.entrySet()) {
+            AreaGroup areaGroup = entry.getKey();
+            String filePath = entry.getValue();
+
+            try {
+                ClassPathResource resource = new ClassPathResource(filePath);
+                JsonNode coordinateData = objectMapper.readTree(resource.getInputStream());
+
+                // 해당 AreaGroup의 첫 번째 areaCode로 Area 찾기
+                Integer areaCode = areaGroup.getAreaCodes().get(0);
+                Area area = areaMap.get(areaCode);
+
+                if (area != null) {
+                    area.updatePolygonInfo(objectMapper.writeValueAsString(coordinateData.get("coordinates")));
+                }
+
+            } catch (Exception e) {
+                log.error("지역 좌표 파일 로드 실패: {}", filePath, e);
+            }
+        }
+
+        areaRepository.saveAll(areas);
+        log.info("지역 좌표 정보 초기화 완료: {}개 지역", areas.size());
     }
 
     // 아이템 초기 데이터
@@ -212,6 +287,10 @@ public class DataInitializer implements ApplicationRunner {
                 createMcQuestion(seoulMcQuiz, 4, "서울의 중심구역으로 청와대와 경복궁이 있는 자치구는?", "종로구", "마포구", "강남구", "성동구", (byte)1, "종로구는 서울의 역사, 정치의 핵심 지역입니다.")
         ));
         allQuizzes.add(seoulMcQuiz);
+
+        Challenge seoulVisitChallenge = createSidoVisitChallenge(AreaGroup.SEOUL);
+        allChallenges.add(seoulVisitChallenge);
+
 
         // --- 경기도 퀴즈 (2개) ---
         Challenge gyeonggiOxChallenge = createQuizChallenge("경기도 O/X 퀴즈", AreaGroup.GYEONGGI);
@@ -359,13 +438,13 @@ public class DataInitializer implements ApplicationRunner {
         List<Challenge> challenges = new ArrayList<>();
 
         // --- 축제 과제 목록 ---
-        challenges.add(createFestivalChallenge("보령머드축제 방문하기", AreaGroup.CHUNGNAM, "2c120701-3c47-4b5a-a25b-747774954aae"));
-        challenges.add(createFestivalChallenge("춘천막국수닭갈비축제 방문하기", AreaGroup.GANGWON, "b6a1d6aa-c6ba-41c4-b137-14821e75bb87"));
-        challenges.add(createFestivalChallenge("APAP 작품투어 참여하기", AreaGroup.GYEONGGI, "abcc55a2-84b8-4107-b80b-73e0d1ea1627"));
-        challenges.add(createFestivalChallenge("DDP 건축투어 참여하기", AreaGroup.SEOUL, "479f6208-b3c7-4919-a124-c99c79316f88"));
-        challenges.add(createFestivalChallenge("광안리 M 드론라이트 쇼 보기", AreaGroup.GYEONGSANG, "077eb616-63df-4b0f-8883-5ad5d860d17e"));
-        challenges.add(createFestivalChallenge("목포해상W쇼 보기", AreaGroup.JEOLLA, "d3af3a7a-5385-49b8-bda3-b57a8fda1c19"));
-        challenges.add(createFestivalChallenge("휴애리 유럽 수국축제 방문하기", AreaGroup.JEJU, "182c6fe2-afb4-42ec-adfd-201c5b541e23"));
+//        challenges.add(createFestivalChallenge("보령머드축제 방문하기", AreaGroup.CHUNGNAM, "2c120701-3c47-4b5a-a25b-747774954aae"));
+//        challenges.add(createFestivalChallenge("춘천막국수닭갈비축제 방문하기", AreaGroup.GANGWON, "b6a1d6aa-c6ba-41c4-b137-14821e75bb87"));
+//        challenges.add(createFestivalChallenge("APAP 작품투어 참여하기", AreaGroup.GYEONGGI, "abcc55a2-84b8-4107-b80b-73e0d1ea1627"));
+        challenges.add(createFestivalChallenge("DDP 건축투어 참여하기", AreaGroup.SEOUL, "051d8ae6-37d9-44c5-b2b7-9e07cb9728dd"));
+//        challenges.add(createFestivalChallenge("광안리 M 드론라이트 쇼 보기", AreaGroup.GYEONGSANG, "077eb616-63df-4b0f-8883-5ad5d860d17e"));
+//        challenges.add(createFestivalChallenge("목포해상W쇼 보기", AreaGroup.JEOLLA, "d3af3a7a-5385-49b8-bda3-b57a8fda1c19"));
+//        challenges.add(createFestivalChallenge("휴애리 유럽 수국축제 방문하기", AreaGroup.JEJU, "182c6fe2-afb4-42ec-adfd-201c5b541e23"));
 
         // Event ID 조회 실패로 null이 포함된 경우 제거
         challenges.removeIf(Objects::isNull);
@@ -429,6 +508,19 @@ public class DataInitializer implements ApplicationRunner {
         System.out.println("유저 " + users.size() + "명이 생성되었습니다.");
     }
 
+    //시도 방문 과제 초기 데이터 생성
+    private void createInitialSidoVisitChallenges() {
+        List<Challenge> challenges = new ArrayList<>();
+
+        // 각 AreaGroup별로 시도 방문 과제 생성
+        for (AreaGroup areaGroup : AreaGroup.values()) {
+            Challenge challenge = createSidoVisitChallenge(areaGroup);
+            challenges.add(challenge);
+        }
+
+        challengeRepository.saveAll(challenges);
+        log.info("{}개의 시도 방문 과제 초기 데이터가 생성되었습니다.", challenges.size());
+    }
 
 
 
@@ -532,5 +624,24 @@ public class DataInitializer implements ApplicationRunner {
                 .correctAnswer(correctAnswer)
                 .commentary(commentary)
                 .build();
+    }
+
+    private Challenge createSidoVisitChallenge(AreaGroup areaGroup) {
+        Challenge challenge = Challenge.builder()
+            .title(areaGroup.getName() + " 방문하기")
+            .content(areaGroup.getName() + " 지역을 방문하여 인증하세요.")
+            .challengeGroup(ChallengeGroup.AREA)
+            .challengeType(ChallengeType.VISIT_SIDO)
+            .targetCount(1)
+            .areaGroup(areaGroup)
+            .startDate(null)
+            .endDate(null)
+            .build();
+
+        // 보상: 크레딧 20 + 도감 경험치 200
+        challenge.getRewards().add(ChallengeReward.builder().challenge(challenge).rewardType(RewardType.CREDIT).amount(20L).build());
+        challenge.getRewards().add(ChallengeReward.builder().challenge(challenge).rewardType(RewardType.EXP).amount(200L).build());
+
+        return challenge;
     }
 }
