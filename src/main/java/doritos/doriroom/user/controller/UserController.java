@@ -125,7 +125,8 @@ public class UserController {
         @Operation(summary = "다른 유저 방 정보 조회", description = "특정 유저의 방 정보 조회. 방문 시 조회수 증가")
         public ApiResponse<OtherUserRoomResponseDto> getOtherUserRoomInfo(
             @AuthenticationPrincipal User user,
-            @RequestParam @Valid UUID userId
+            @Parameter(description = "다른 유저 ID", example = "76ec4646-164b-41d8-8787-a66fd05af448", required = true)
+            @PathVariable("userId") UUID userId
         ){
             return ApiResponse.ok(userService.getOtherUserRoomInfo(user.getUserId(), userId));
         }
