@@ -84,6 +84,11 @@ public class DiaryService {
         // 일반 과제 진행에 반영 (진행도 +1)
         challengeService.updateChallengeProgress(user, ChallengeType.WRITE_DIARY, 1);
 
+        // 인기글 캐시 무효화 (공개 일기인 경우에만)
+        if (request.visibility() == RoomVisibility.PUBLIC) {
+            redisCacheService.deleteCache(RedisCacheService.POPULAR_DIARIES_KEY);
+        }
+
         return DiaryResponseDto.from(diary, totalCredit, user, event);
     }
 
@@ -98,7 +103,9 @@ public class DiaryService {
         }
 
         // 공개 설정이 변경된 경우 축제의 diary count 변경
+        boolean visibilityChanged = false;
         if (request.visibility() != null && !request.visibility().equals(diary.getDiaryVisibility())) {
+            visibilityChanged = true;
             if (request.visibility() == RoomVisibility.PUBLIC && diary.getDiaryVisibility() == RoomVisibility.PRIVATE) {
                 // 비공개 → 공개로 변경: 카운트 증가
                 event.incrementDiaryCount();
@@ -111,6 +118,11 @@ public class DiaryService {
 
         diary.updateDiary(request);
         Diary updatedDiary = diaryRepository.save(diary);
+
+        // 공개 설정이 변경되었거나, 기존에 공개였던 일기인 경우 캐시 무효화
+        if (visibilityChanged || diary.getDiaryVisibility() == RoomVisibility.PUBLIC) {
+            redisCacheService.deleteCache(RedisCacheService.POPULAR_DIARIES_KEY);
+        }
 
         return DiaryResponseDto.from(updatedDiary, 0L, user, event);
     }
@@ -137,6 +149,8 @@ public class DiaryService {
 
 
         diaryRepository.delete(diary);
+        // 캐시 무효화
+        redisCacheService.deleteCache(RedisCacheService.POPULAR_DIARIES_KEY);
 
         // 일반 과제 진행에 반영 (진행도 -1)
         challengeService.updateChallengeProgress(user, ChallengeType.WRITE_DIARY, -1);
