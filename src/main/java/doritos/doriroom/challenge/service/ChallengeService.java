@@ -14,6 +14,7 @@ import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.repository.UserChallengeRepository;
 import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
+import doritos.doriroom.tourApi.service.AreaService;
 import doritos.doriroom.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class ChallengeService {
     private final UserChallengeRepository userChallengeRepository;
     private final ItemService itemService;
     private final AtlasService atlasService;
+    private final AreaService areaService;
 
     // endDate가 지난 도전과제 상태를 EXPIRED로 변경, 스케줄러에서 호출
     @Transactional
@@ -50,11 +52,32 @@ public class ChallengeService {
         Map<Long, UserChallenge> userChallengeMap = userChallengeRepository.findByUserAndChallengeInWithFetch(user, challenges).stream()
                 .collect(Collectors.toMap(uc -> uc.getChallenge().getId(), uc -> uc));
 
+        // VISIT_SIDO 타입 과제 여부 확인
+        boolean hasVisitSidoChallenge = challenges.stream()
+            .anyMatch(challenge -> challenge.getChallengeType() == ChallengeType.VISIT_SIDO);
+
+        // VISIT_SIDO 과제가 있다면 좌표 정보 조회
+        String sidoPolygon;
+        if(hasVisitSidoChallenge && areaGroup != null){
+            sidoPolygon = areaService.getAreaPolygonInfo(areaGroup);
+        } else {
+            sidoPolygon = null;
+        }
+
         // 도전과제 정보와 유저의 진행 상태를 반영하여 반환
         return challenges.stream()
                 .map(challenge -> {
                     UserChallenge userProgress = userChallengeMap.get(challenge.getId());
-                    return ChallengeResponseDto.of(challenge, userProgress);
+
+                    if(challenge.getChallengeType() == ChallengeType.VISIT_SIDO){
+                        return ChallengeResponseDto.ofWithSido(
+                            challenge,
+                            userProgress,
+                            sidoPolygon
+                        );
+                    } else {
+                        return ChallengeResponseDto.of(challenge, userProgress);
+                    }
                 })
                 .collect(Collectors.toList());
 
@@ -232,7 +255,8 @@ public class ChallengeService {
         // 수동 시작이 가능한 과제 타입 목록 (도전 버튼 클릭으로 수행하는 과제)
         List<ChallengeType> manualStartTypes = List.of(
                 ChallengeType.VISIT_EVENT,
-                ChallengeType.REGIONAL_QUIZ
+                ChallengeType.REGIONAL_QUIZ,
+                ChallengeType.VISIT_SIDO
         );
 
         // 그 이외 자동 집계 도전과제인 경우에는 예외 처리
