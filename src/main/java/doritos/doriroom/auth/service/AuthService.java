@@ -6,6 +6,11 @@ import doritos.doriroom.auth.exception.*;
 import doritos.doriroom.auth.template.EmailTemplate;
 import doritos.doriroom.global.jwt.JwtUtil;
 import doritos.doriroom.auth.domain.RefreshToken;
+import doritos.doriroom.item.domain.Item;
+import doritos.doriroom.item.domain.UserItem;
+import doritos.doriroom.item.repository.ItemRepository;
+import doritos.doriroom.item.repository.UserItemRepository;
+import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.DuplicateException;
@@ -27,8 +32,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static doritos.doriroom.auth.common.AuthConstants.*;
 
@@ -45,6 +52,9 @@ public class AuthService {
     private final JavaMailSender mailSender;
     private final EmailTemplate emailTemplate;
     private final S3Uploader s3Uploader;
+    private final ItemService itemService;
+    private final ItemRepository itemRepository;
+    private final UserItemRepository userItemRepository;
 
     // ttl
     private static final long VERIFICATION_EXPIRE_SECONDS = 300; // 5분 (인증 번호 확인 시간)
@@ -123,6 +133,19 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+
+        List<Item> defaultItems = itemRepository.findByIsDefaultTrue(); // 기본 아이템 전부 조회
+
+        // 신규 유저 기본 아이템 지급 및 착용
+        List<UserItem> newUserItems = defaultItems.stream()
+                .map(item -> UserItem.builder()
+                        .user(user)
+                        .item(item)
+                        .isEquipped(true) // 착용 상태로 지정
+                        .build())
+                .collect(Collectors.toList());
+        userItemRepository.saveAll(newUserItems);
+
         redisTemplate.delete(verifiedKey); // 유저 등록 후 인증 상태 삭제
     }
 

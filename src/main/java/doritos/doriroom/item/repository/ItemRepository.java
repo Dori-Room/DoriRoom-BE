@@ -13,6 +13,7 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     Optional<Item> findById(Long itemId); // 아이템 단일 조회
     boolean existsByName(String name);
 
+    List<Item> findByIsDefaultTrue(); // 기본 아이템 전부 조회
     List<Item> findByItemGroup(ItemGroup itemGroup); // COMMON 아이템 조회 or AREA 아이템 전체 조회
     List<Item> findByItemGroupAndAreaGroup(ItemGroup itemGroup, AreaGroup areaGroup); // 특정 지역별 아이템 조회 (ex JEJU)
     List<Item> findByItemType(ItemType itemType); // 타입별 아이템 조회
