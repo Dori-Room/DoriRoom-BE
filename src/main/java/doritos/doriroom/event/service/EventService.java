@@ -1,11 +1,13 @@
 package doritos.doriroom.event.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.domain.EventDetailStatus;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
 import doritos.doriroom.event.dto.response.EventDetailResponseDto;
 import doritos.doriroom.event.dto.response.EventResponseDto;
 import doritos.doriroom.event.exception.EventNotFoundException;
+import doritos.doriroom.global.cache.RedisCacheService;
 import doritos.doriroom.tourApi.dto.response.TourApiDetailInfoDto;
 import doritos.doriroom.tourApi.dto.response.TourApiDetailIntroDto;
 import doritos.doriroom.tourApi.dto.response.TourApiItemDto;
@@ -31,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class EventService {
     private final TourApiService tourApiService;
     private final EventRepository eventRepository;
+    private final RedisCacheService redisCacheService;
 
     @Transactional
     public void getAllEvents() {
@@ -88,6 +91,11 @@ public class EventService {
         }
 
         eventRepository.saveAll(toSave);
+
+        // 축제 변경 시 캐시 무효화
+        redisCacheService.deleteCache(RedisCacheService.UPCOMING_EVENTS_KEY);
+        redisCacheService.deleteCache(RedisCacheService.ENDING_SOON_EVENTS_KEY);
+
         log.info("오늘 이벤트 upsert 완료: 총 {}, 업데이트 {}, 신규 {}", toSave.size(), updateCount, insertCount);
     }
 
@@ -96,6 +104,7 @@ public class EventService {
         List<Event> events = eventRepository.findByEventDetailStatusOrderByStartDateDesc(EventDetailStatus.PENDING);
         int dailyLimit = 450;
         int processedEvents = 0; // 이벤트 수로 집계
+        boolean hasStatusChanges = false;
 
         log.info("축제 상세정보 업데이트 시작");
 
@@ -132,6 +141,7 @@ public class EventService {
                         event.updateDetailInfoFrom(detailInfoList);
                         currentStatus = EventDetailStatus.SUCCESS;
                     }
+                    hasStatusChanges = true;
                 } catch (TimeoutException e) {
                     log.error("API 호출 타임아웃: contentId={}", event.getContentId(), e);
 
@@ -148,6 +158,7 @@ public class EventService {
                     log.error("축제 상세정보 업데이트 실패. contentId: {}, error: {}", event.getContentId(), e.getMessage());
                     currentStatus = EventDetailStatus.FAILED;
                     processedEvents++;
+                    hasStatusChanges = true;
                 }
 
                 //결정된 상태를 엔티티에 반영하고 저장
@@ -155,22 +166,93 @@ public class EventService {
                 eventRepository.save(event);
             }
         }
+
+        // 상태 변경이 있었으면 관련 캐시 무효화
+        if (hasStatusChanges) {
+            redisCacheService.deleteCache(RedisCacheService.UPCOMING_EVENTS_KEY);
+            redisCacheService.deleteCache(RedisCacheService.ENDING_SOON_EVENTS_KEY);
+            redisCacheService.deleteCache(RedisCacheService.POPULAR_EVENTS_KEY);
+        }
+
         log.info("전체 축제 상세정보 업데이트 완료");
     }
 
 
     public List<Event> getUpcomingEvents(){
+        // 캐시에서 먼저 조회
+        Optional<List<Event>> cachedEvents = redisCacheService.getCacheList(
+            RedisCacheService.UPCOMING_EVENTS_KEY,
+            new TypeReference<>() {
+            }
+        );
+
+        if (cachedEvents.isPresent()) {
+            return cachedEvents.get();
+        }
+
+        // 캐시에 없으면 DB에서 조회
         Pageable limit = PageRequest.of(0, 4);
-        return eventRepository.findUpcomingEvents(limit);
+        List<Event> events = eventRepository.findUpcomingEvents(limit);
+
+        // 캐시에 저장
+        redisCacheService.setCache(
+            RedisCacheService.UPCOMING_EVENTS_KEY,
+            events,
+            RedisCacheService.UPCOMING_EVENTS_TTL
+        );
+
+        return events;
     }
 
     public List<Event> getEndingSoonEvents() {
+        // 캐시에서 먼저 조회
+        Optional<List<Event>> cachedEvents = redisCacheService.getCacheList(
+            RedisCacheService.ENDING_SOON_EVENTS_KEY,
+            new TypeReference<>() {
+            }
+        );
+
+        if (cachedEvents.isPresent()) {
+            return cachedEvents.get();
+        }
+
+        // 캐시에 없으면 DB에서 조회
         Pageable limit = PageRequest.of(0, 4);
-        return eventRepository.findEndingSoonEvents(LocalDate.now(), limit);
+        List<Event> events = eventRepository.findEndingSoonEvents(LocalDate.now(), limit);
+
+        // 캐시에 저장
+        redisCacheService.setCache(
+            RedisCacheService.ENDING_SOON_EVENTS_KEY,
+            events,
+            RedisCacheService.ENDING_SOON_EVENTS_TTL
+        );
+
+        return events;
     }
 
     public List<Event> getPopularEvents(){
-        return eventRepository.findPopularEvents(4);
+        // 캐시에서 먼저 조회
+        Optional<List<Event>> cachedEvents = redisCacheService.getCacheList(
+            RedisCacheService.POPULAR_EVENTS_KEY,
+            new TypeReference<>() {
+            }
+        );
+
+        if (cachedEvents.isPresent()) {
+            return cachedEvents.get();
+        }
+
+        // 캐시에 없으면 DB에서 조회
+        List<Event> events = eventRepository.findPopularEvents(4);
+
+        // 캐시에 저장
+        redisCacheService.setCache(
+            RedisCacheService.POPULAR_EVENTS_KEY,
+            events,
+            RedisCacheService.POPULAR_EVENTS_TTL
+        );
+
+        return events;
     }
 
     public Page<EventResponseDto> getFilteredEvents(EventItemFilterRequestDto request, Pageable pageable) {
