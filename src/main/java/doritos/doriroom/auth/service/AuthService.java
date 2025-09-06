@@ -25,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Random;
 import java.util.UUID;
@@ -193,10 +194,12 @@ public class AuthService {
     // 비밀번호 재설정 1. 이메일 인증 코드 전송
     public void sendPasswordResetCode(SendPasswordResetCodeRequestDto request){
         // username과 email 정보에 맞는 유저 확인
-        userRepository.findByUsernameAndEmail(request.username(),request.email())
-                .orElseThrow(() -> new UserNotFoundException("사용자 정보가 일치하지 않습니다."));
+        var user = userRepository.findByUsernameAndEmail(request.username(),request.email());
+        if (user.isEmpty()) { // 유저가 존재하지 않는 경우에 스킵함
+            return;
+        }
 
-        String verificationCode = String.format("%06d", new Random().nextInt(1000000)); // 6자리 인증 코드
+        String verificationCode = String.format("%06d", new SecureRandom().nextInt(1000000)); // 6자리 인증 코드
 
         // redis에 인증 코드 저장
         String verificationKey = RESET_CODE_PREFIX.getValue() + request.email();
