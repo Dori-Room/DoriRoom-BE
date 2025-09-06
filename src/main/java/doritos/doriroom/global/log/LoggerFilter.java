@@ -55,7 +55,9 @@ public class LoggerFilter extends OncePerRequestFilter {
             } finally {
                 // ContentCachingResponseWrapper 정리
                 try {
-                    wrappedResponse.reset();
+                    if (!response.isCommitted()) {
+                        wrappedResponse.copyBodyToResponse();
+                    }
                 } catch (Exception e) {
                     log.warn("Response wrapper reset failed", e);
                 }
