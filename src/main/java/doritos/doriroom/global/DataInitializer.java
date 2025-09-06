@@ -399,13 +399,13 @@ public class DataInitializer implements ApplicationRunner {
         List<Challenge> challenges = new ArrayList<>();
 
         // --- 축제 과제 목록 ---
-        challenges.add(createFestivalChallenge("보령머드축제 방문하기", AreaGroup.CHUNGNAM, "2c120701-3c47-4b5a-a25b-747774954aae"));
-        challenges.add(createFestivalChallenge("춘천막국수닭갈비축제 방문하기", AreaGroup.GANGWON, "b6a1d6aa-c6ba-41c4-b137-14821e75bb87"));
-        challenges.add(createFestivalChallenge("APAP 작품투어 참여하기", AreaGroup.GYEONGGI, "abcc55a2-84b8-4107-b80b-73e0d1ea1627"));
-        challenges.add(createFestivalChallenge("DDP 건축투어 참여하기", AreaGroup.SEOUL, "ff4758cc-c1c8-47a9-a0a9-862f08496bc2"));
-        challenges.add(createFestivalChallenge("광안리 M 드론라이트 쇼 보기", AreaGroup.GYEONGSANG, "077eb616-63df-4b0f-8883-5ad5d860d17e"));
-        challenges.add(createFestivalChallenge("목포해상W쇼 보기", AreaGroup.JEOLLA, "d3af3a7a-5385-49b8-bda3-b57a8fda1c19"));
-        challenges.add(createFestivalChallenge("휴애리 유럽 수국축제 방문하기", AreaGroup.JEJU, "182c6fe2-afb4-42ec-adfd-201c5b541e23"));
+        challenges.add(createFestivalChallenge("보령머드축제 방문하기", AreaGroup.CHUNGNAM, 506534));
+        challenges.add(createFestivalChallenge("춘천막국수닭갈비축제 방문하기", AreaGroup.GANGWON, 1230074));
+        challenges.add(createFestivalChallenge("APAP 작품투어 참여하기", AreaGroup.GYEONGGI, 3113265));
+        challenges.add(createFestivalChallenge("DDP 건축투어 참여하기", AreaGroup.SEOUL, 3473295));
+        challenges.add(createFestivalChallenge("광안리 M 드론라이트 쇼 보기", AreaGroup.GYEONGSANG, 2786391));
+        challenges.add(createFestivalChallenge("목포해상W쇼 보기", AreaGroup.JEOLLA, 2774275));
+        challenges.add(createFestivalChallenge("휴애리 유럽 수국축제 방문하기", AreaGroup.JEJU, 2817255));
 
         // Event ID 조회 실패로 null이 포함된 경우 제거
         challenges.removeIf(Objects::isNull);
@@ -489,10 +489,10 @@ public class DataInitializer implements ApplicationRunner {
     // --- Helper Methods ---
 
     // 지역 축제 과제
-    private Challenge createFestivalChallenge(String title, AreaGroup areaGroup, String eventId) {
-        Event event = eventRepository.findById(UUID.fromString(eventId)).orElse(null);
+    private Challenge createFestivalChallenge(String title, AreaGroup areaGroup, int contentId) {
+        Event event = eventRepository.findByContentId(contentId).orElse(null);
         if (event == null) {
-            System.out.println("WARN: Event ID " + eventId + "를 찾을 수 없어 과제를 생성하지 못했습니다.");
+            System.out.println("WARN: Content ID " + contentId + "를 찾을 수 없어 과제를 생성하지 못했습니다.");
             return null;
         }
 
@@ -648,12 +648,7 @@ public class DataInitializer implements ApplicationRunner {
 
     //축제 polygon을 파일에서 가져오는 메서드
     private String getEventPolygonFromFile(int contentId) {
-        Map<Integer, String> eventPolygonFiles = Map.of(
-            // contentId와 JSON 파일 경로 매핑
-            3473295, "data/event-polygon/event_3473295.json"
-        );
-
-        String filePath = eventPolygonFiles.get(contentId);
+        String filePath = getString(contentId);
         if (filePath == null) {
             log.warn("축제 {}에 대한 polygon 파일이 설정되지 않았습니다.", contentId);
             return null;
@@ -671,5 +666,21 @@ public class DataInitializer implements ApplicationRunner {
             log.error("축제 polygon 파일 로드 실패: {}", filePath, e);
             return null;
         }
+    }
+
+    private static String getString(int contentId) {
+        Map<Integer, String> eventPolygonFiles = Map.of(
+            // contentId와 JSON 파일 경로 매핑
+            3473295, "data/event-polygon/event_3473295.json",
+            506534, "data/event-polygon/event_506534.json",
+            1230074, "data/event-polygon/event_1230074.json",
+            3113265, "data/event-polygon/event_3113265.json",
+            2786391, "data/event-polygon/event_2786391.json",
+            2774275, "data/event-polygon/event_2774275.json",
+            2817255, "data/event-polygon/event_2817255.json"
+        );
+
+        String filePath = eventPolygonFiles.get(contentId);
+        return filePath;
     }
 }
