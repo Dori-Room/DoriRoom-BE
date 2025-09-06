@@ -32,23 +32,35 @@ public class LoggerFilter extends OncePerRequestFilter {
         ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
         wrappedResponse.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
-        filterChain.doFilter(request, wrappedResponse);
+        try {
+            filterChain.doFilter(request, wrappedResponse);
+        } finally {
+            // 메모리 정리
+            try {
+                long end = System.currentTimeMillis();
+                long elapsed = end - start;
 
-        long end = System.currentTimeMillis();
-        long elapsed = end - start;
+                ResponseInfo responseInfo = getResponseInfo(wrappedResponse);
 
-        ResponseInfo responseInfo = getResponseInfo(wrappedResponse);
+                log.info("{} {} {} {}ms {}{}",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    getIp(request),
+                    elapsed,
+                    responseInfo.statusCode(),
+                    responseInfo.error() == null ? "" : " - %s".formatted(responseInfo.error())
+                );
 
-        log.info("{} {} {} {}ms {}{}",
-            request.getMethod(),
-            request.getRequestURI(),
-            getIp(request),
-            elapsed,
-            responseInfo.statusCode(),
-            responseInfo.error() == null ? "" : " - %s".formatted(responseInfo.error())
-        );
-
-        wrappedResponse.copyBodyToResponse(); // 응답을 원본에 복사
+                wrappedResponse.copyBodyToResponse();
+            } finally {
+                // ContentCachingResponseWrapper 정리
+                try {
+                    wrappedResponse.reset();
+                } catch (Exception e) {
+                    log.warn("Response wrapper reset failed", e);
+                }
+            }
+        }
     }
 
     private ResponseInfo getResponseInfo(ContentCachingResponseWrapper response) {
