@@ -14,8 +14,6 @@ import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.repository.UserChallengeRepository;
 import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
-import doritos.doriroom.tourApi.exception.AreaNotFoundException;
-import doritos.doriroom.tourApi.service.AreaService;
 import doritos.doriroom.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +33,6 @@ public class ChallengeService {
     private final UserChallengeRepository userChallengeRepository;
     private final ItemService itemService;
     private final AtlasService atlasService;
-    private final AreaService areaService;
 
     // endDate가 지난 도전과제 상태를 EXPIRED로 변경, 스케줄러에서 호출
     @Transactional
@@ -55,29 +52,13 @@ public class ChallengeService {
         Map<Long, UserChallenge> userChallengeMap = userChallengeRepository.findByUserAndChallengeInWithFetch(user, challenges).stream()
                 .collect(Collectors.toMap(uc -> uc.getChallenge().getId(), uc -> uc));
 
-        // VISIT_EVENT 타입 과제 여부 확인
-        boolean hasVisitSidoChallenge = challenges.stream()
-            .anyMatch(challenge -> challenge.getChallengeType() == ChallengeType.VISIT_EVENT);
-
-        String sidoPolygon = getSidoPolygon(hasVisitSidoChallenge, areaGroup);
-
         // 도전과제 정보와 유저의 진행 상태를 반영하여 반환
         return challenges.stream()
-                .map(challenge -> {
-                    UserChallenge userProgress = userChallengeMap.get(challenge.getId());
-
-                    if(challenge.getChallengeType() == ChallengeType.VISIT_EVENT){
-                        return ChallengeResponseDto.ofWithSido(
-                            challenge,
-                            userProgress,
-                            sidoPolygon
-                        );
-                    } else {
-                        return ChallengeResponseDto.of(challenge, userProgress);
-                    }
-                })
-                .collect(Collectors.toList());
-
+            .map(challenge -> {
+                UserChallenge userProgress = userChallengeMap.get(challenge.getId());
+                return ChallengeResponseDto.of(challenge, userProgress);
+            })
+            .collect(Collectors.toList());
     }
 
     @Transactional
@@ -258,21 +239,6 @@ public class ChallengeService {
         // 그 이외 자동 집계 도전과제인 경우에는 예외 처리
         if (!manualStartTypes.contains(challenge.getChallengeType())) {
             throw new ChallengeStatusException("수동으로 시작할 수 없는 타입의 과제입니다.");
-        }
-    }
-
-    private String getSidoPolygon(boolean hasVisitSidoChallenge, AreaGroup areaGroup) {
-        if (!hasVisitSidoChallenge || areaGroup == null) {
-            return null;
-        }
-        try {
-            return areaService.getAreaPolygonInfo(areaGroup);
-        } catch (AreaNotFoundException e) {
-            log.warn("지역 정보를 찾을 수 없습니다: {}", areaGroup, e);
-            return null;
-        } catch (Exception e) {
-            log.error("시/도 좌표값 조회 중 예상치 못한 오류 발생: {}", areaGroup, e);
-            return null;
         }
     }
 }
