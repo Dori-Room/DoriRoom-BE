@@ -26,12 +26,4 @@ public class AreaService {
         return areaRepository.findById(code)
             .orElseThrow(AreaNotFoundException::new);
     }
-
-    //AreaGroup에 해당하는 좌표 정보 조회
-    public String getAreaPolygonInfo(AreaGroup areaGroup){
-        Integer areaCode = areaGroup.getCode();
-        Area area = getAreaByCode(areaCode);
-
-        return area.getGeoPolygon();
-    }
 } 
