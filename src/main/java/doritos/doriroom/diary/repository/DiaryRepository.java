@@ -60,7 +60,7 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         WHERE d.diaryVisibility = 'PUBLIC'
         AND d.createdAt >= :startDate
         AND d.createdAt <= :endDate
-        ORDER BY (d.likes * 2) DESC, d.createdAt DESC
+        ORDER BY d.likes DESC, d.createdAt DESC, d.diaryId DESC
         limit 5
         """)
     List<Diary> findPopularDiariesByMonth(
