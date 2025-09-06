@@ -34,5 +34,5 @@ RUN apt-get update && \
 # 빌드 스테이지(builder)에서 생성된 JAR 파일만 안전하게 복사해옵니다.
 COPY --from=builder /workspace/build/libs/*.jar app.jar
 
-# 컨테이너의 안정성을 위해 JVM 힙 메모리 옵션을 명시합니다.
-ENTRYPOINT ["java", "-Xms512m", "-Xmx512m", "-jar", "/app.jar"]
+# 컨테이너의 안정성을 위해 JVM 힙 메모리 옵션과 CPU 사용제한 명시
+ENTRYPOINT ["java", "-Xms512m", "-Xmx512m", "-XX:ActiveProcessorCount=1", "-XX:+UseG1GC", "-jar", "/app.jar"]
