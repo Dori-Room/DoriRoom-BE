@@ -14,7 +14,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 import java.util.UUID;
 
 
@@ -52,6 +51,13 @@ public class FollowController {
     public ApiResponse<FollowStatusResponseDto> getFollowStatus(@AuthenticationPrincipal User user,
                                                                 @PathVariable UUID targetUserId) {
         return ApiResponse.ok(followService.getFollowStatus(user, targetUserId));
+    }
+
+    @Operation(summary = "단짝친구 여부 확인", description = "특정 유저와 단짝친구인지 여부만 확인")
+    @GetMapping("/status/best/{targetUserId}")
+    public ApiResponse<Boolean> checkBestFriendStatus(@AuthenticationPrincipal User user,
+        @PathVariable UUID targetUserId) {
+        return ApiResponse.ok(followService.isBestFriend(user, targetUserId));
     }
 
 
