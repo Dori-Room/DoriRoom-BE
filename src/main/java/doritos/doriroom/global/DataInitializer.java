@@ -617,7 +617,13 @@ public class DataInitializer implements ApplicationRunner {
     // 지역 polygon 좌표를 파일에서 가져오는 메서드
     private String getAreaPolygonFromFile(AreaGroup areaGroup) {
         Map<AreaGroup, String> polygonFile = Map.of(
-            AreaGroup.SEOUL, "data/area-polygon/seoul.json"
+            AreaGroup.SEOUL, "data/area-polygon/seoul.json",
+            AreaGroup.GYEONGGI, "data/area-polygon/gyeonggi.json",
+            AreaGroup.GANGWON, "data/area-polygon/gangwon.json",
+            AreaGroup.GYEONGSANG, "data/area-polygon/gyeongsang.json",
+            AreaGroup.JEOLLA, "data/area-polygon/jeolla.json",
+            AreaGroup.CHUNGNAM, "data/area-polygon/chungnam.json",
+            AreaGroup.JEJU, "data/area-polygon/jeju.json"
         );
 
         String filePath = polygonFile.get(areaGroup);
