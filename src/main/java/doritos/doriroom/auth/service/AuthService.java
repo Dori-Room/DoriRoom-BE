@@ -18,7 +18,6 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -128,7 +127,7 @@ public class AuthService {
 
     public LoginResponseDto login(LoginRequestDto request) {
         User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new UserNotFoundException());
+                .orElseThrow(UserNotFoundException::new);
 
         if (!encoder.matches(request.password(), user.getPassword())) {
             throw new InvalidPasswordException();
@@ -163,7 +162,7 @@ public class AuthService {
         Claims claims = jwtUtil.parseClaims(accessToken);
         String username = claims.getSubject();
 
-        if(username == null | username.isBlank())
+        if(username == null)
             throw new InvalidTokenException("토큰에서 username을 추출할 수 없습니다.");
 
         User user = userRepository.findByUsername(username)
@@ -183,22 +182,18 @@ public class AuthService {
 
     // 아이디 찾기
     public void findUsername(EmailRequestDto request){
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(UserNotFoundException::new);
-
-        String username = user.getUsername();
-        // 아이디 일부 마스킹 처리 (예: user123 -> us***23)
-        String maskedUsername = username.substring(0, 2) + "***" + username.substring(username.length() - 2);
-
-        // EmailTemplate을 사용하여 이메일 본문 생성 후 발송
-        String content = emailTemplate.createFindUsernameEmailContent(maskedUsername);
-        sendEmail(user.getEmail(), EmailTemplate.Subject.FIND_USERNAME, content);
+        userRepository.findByEmail(request.email()).ifPresent(user -> {
+            String maskedUsername = maskUsername(user.getUsername()); // 마스킹 처리된 username
+            // EmailTemplate을 사용하여 이메일 본문 생성 후 발송
+            String content = emailTemplate.createFindUsernameEmailContent(maskedUsername);
+            sendEmail(user.getEmail(), EmailTemplate.Subject.FIND_USERNAME, content);
+        });
     }
 
     // 비밀번호 재설정 1. 이메일 인증 코드 전송
     public void sendPasswordResetCode(SendPasswordResetCodeRequestDto request){
         // username과 email 정보에 맞는 유저 확인
-        User user = userRepository.findByUsernameAndEmail(request.username(),request.email())
+        userRepository.findByUsernameAndEmail(request.username(),request.email())
                 .orElseThrow(() -> new UserNotFoundException("사용자 정보가 일치하지 않습니다."));
 
         String verificationCode = String.format("%06d", new Random().nextInt(1000000)); // 6자리 인증 코드
@@ -225,7 +220,7 @@ public class AuthService {
         }
 
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new UserNotFoundException());
+                .orElseThrow(UserNotFoundException::new);
 
         user.setPassword(encoder.encode(request.newPassword())); // 새로운 비밀번호로 설정
         redisTemplate.delete(verificationKey); // 사용된 인증코드 삭제
@@ -247,5 +242,16 @@ public class AuthService {
         } catch (MessagingException e) {
             throw new EmailSendFailedException();
         }
+    }
+
+    // 아이디 마스킹 처리 메서드
+    // 아이디 찾기 시 username 길이가 3 이하인 경우 인덱스 에러 방지
+    private String maskUsername(String username) {
+        if (username == null || username.isEmpty()) return "***";
+        int len = username.length();
+        if (len == 1) return "*";
+        if (len == 2) return username.charAt(0) + "*";
+        if (len == 3) return username.charAt(0) + "*" + username.charAt(2);
+        return username.substring(0, 2) + "*".repeat(len - 4) + username.substring(len - 2);
     }
 }
