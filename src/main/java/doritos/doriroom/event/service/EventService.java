@@ -134,8 +134,7 @@ public class EventService {
                     }
                 } catch (TimeoutException e) {
                     log.error("API 호출 타임아웃: contentId={}", event.getContentId(), e);
-                    currentStatus = EventDetailStatus.FAILED;
-                    
+
                     // 진행 중인 future 취소
                     if (introFuture != null) {
                         introFuture.cancel(true);
@@ -187,13 +186,13 @@ public class EventService {
         //DB에 상세정보가 없으면 tourAPI 호출
         if(event.getEventDetailStatus() == EventDetailStatus.PENDING){
             EventDetailStatus currentStatus;
-            CompletableFuture<TourApiDetailIntroDto> introFuture = null;
-            CompletableFuture<List<TourApiDetailInfoDto>> infoFuture = null;
-            
+//            CompletableFuture<TourApiDetailIntroDto> introFuture = null;
+//            CompletableFuture<List<TourApiDetailInfoDto>> infoFuture = null;
+
             try{
                 // 두 API를 비동기 호출
-                introFuture = tourApiService.fetchEventDetailIntro(event.getContentId());
-                infoFuture = tourApiService.fetchEventDetailInfo(event.getContentId());
+                CompletableFuture<TourApiDetailIntroDto> introFuture = tourApiService.fetchEventDetailIntro(event.getContentId());
+                CompletableFuture<List<TourApiDetailInfoDto>> infoFuture = tourApiService.fetchEventDetailInfo(event.getContentId());
 
                 // 타임아웃 설정 (30초)
                 CompletableFuture.allOf(
