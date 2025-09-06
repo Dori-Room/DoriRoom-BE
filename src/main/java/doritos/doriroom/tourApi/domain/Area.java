@@ -15,11 +15,4 @@ public class Area {
     
     @Column(nullable = false)
     private String name;
-
-    @Column(columnDefinition = "LONGTEXT")
-    private String geoPolygon;
-
-    public void updatePolygonInfo(String geoJson) {
-        this.geoPolygon = geoJson;
-    }
 } 

@@ -1,7 +1,6 @@
 package doritos.doriroom.challenge.domain.challenge;
 
 import doritos.doriroom.event.domain.Event;
-import doritos.doriroom.item.domain.Item;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,7 +8,6 @@ import java.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "challenges")
@@ -42,7 +40,10 @@ public class Challenge {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
-    private Event event; // 과제에 관련 축제가 있다면 값을 포함 (해당 event_id로 지도에 표시할 범위 위치 리스트를 가져옴)
+    private Event event; // 과제에 관련 축제가 있다면 값을 포함
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String polygon;
 
     private LocalDate startDate; // 필요 시 기한을 설정 (예: 축제 관련 과제)
     private LocalDate endDate;
