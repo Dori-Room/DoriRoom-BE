@@ -4,6 +4,7 @@ import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.domain.EventDetailStatus;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -47,4 +48,7 @@ public interface EventRepository extends JpaRepository<Event, UUID>, EventReposi
 
     @Query("SELECT e FROM Event e WHERE e.eventId IN :eventIds")
     List<Event> findByEventIdIn(@Param("eventIds") List<UUID> eventIds);
+
+    // contentId로 Event를 찾는 메서드 추가
+    Optional<Event> findByContentId(Integer contentId);
 }
