@@ -33,6 +33,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(SWAGGER_ENDPOINTS).permitAll()
                 .requestMatchers("/api/auth/**", "/api/users/check-username", "/api/users/check-nickname").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/**").authenticated()
             ).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
