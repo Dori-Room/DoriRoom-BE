@@ -202,5 +202,22 @@ public class FollowService {
     public List<UUID> getMutualBestFriendIds(UUID currentUserId) {
         return followRepository.findMutualBestFriendIds(currentUserId);
     }
+
+    public boolean isBestFriend(User user, UUID targetUserId) {
+        try {
+            // 자신과의 단짝친구 관계는 불가능
+            if (user.getUserId().equals(targetUserId)) {
+                return false;
+            }
+
+            User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(UserNotFoundException::new);
+
+            Optional<Follow> follow = followRepository.findByFollowerAndFollowed(user, targetUser);
+            return follow.isPresent() && follow.get().isBestFriend();
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
 
