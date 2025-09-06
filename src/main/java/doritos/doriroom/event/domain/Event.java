@@ -99,9 +99,6 @@ public class Event {
     @Builder.Default
     private long diaryCount = 0L;
 
-    @Column(columnDefinition = "json")
-    private String polygon;
-
     @Column
     @Enumerated(EnumType.STRING)
     private EventDetailStatus eventDetailStatus;
