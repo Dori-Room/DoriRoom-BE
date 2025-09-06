@@ -1,7 +1,6 @@
 package doritos.doriroom.tourApi.service;
 
 import doritos.doriroom.tourApi.domain.Area;
-import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.tourApi.exception.AreaNotFoundException;
 import doritos.doriroom.tourApi.repository.AreaRepository;
 import lombok.RequiredArgsConstructor;
