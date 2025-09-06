@@ -1,11 +1,15 @@
 package doritos.doriroom.global;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import doritos.doriroom.atlas.domain.Atlas;
 import doritos.doriroom.atlas.domain.AtlasReward;
 import doritos.doriroom.atlas.repository.AtlasRepository;
 import doritos.doriroom.atlas.repository.AtlasRewardRepository;
 import doritos.doriroom.challenge.domain.challenge.*;
 import doritos.doriroom.challenge.repository.ChallengeRepository;
+import doritos.doriroom.event.domain.Event;
+import doritos.doriroom.event.repository.EventRepository;
 import doritos.doriroom.item.domain.CollectionTheme;
 import doritos.doriroom.item.domain.Item;
 import doritos.doriroom.item.domain.ItemGroup;
@@ -13,14 +17,17 @@ import doritos.doriroom.item.domain.ItemType;
 import doritos.doriroom.item.repository.ItemRepository;
 import doritos.doriroom.quiz.domain.Question;
 import doritos.doriroom.quiz.domain.Quiz;
-import doritos.doriroom.quiz.repository.QuestionRepository;
 import doritos.doriroom.quiz.repository.QuizRepository;
+import doritos.doriroom.tourApi.domain.Area;
 import doritos.doriroom.tourApi.domain.AreaGroup;
+import doritos.doriroom.tourApi.repository.AreaRepository;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +37,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DataInitializer implements ApplicationRunner {
     private final AtlasRepository atlasRepository;
     private final ItemRepository itemRepository;
@@ -38,6 +46,9 @@ public class DataInitializer implements ApplicationRunner {
     private final AtlasRewardRepository atlasRewardRepository;
     private final PasswordEncoder encoder;
     private final UserRepository userRepository;
+    private final EventRepository eventRepository;
+    private final AreaRepository areaRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -46,6 +57,11 @@ public class DataInitializer implements ApplicationRunner {
         if (atlasRepository.count() == 0) {
             createInitialAtlases();
         }
+
+        if(areaRepository.count() == 0){
+            createInitialAreas();
+        }
+        createInitializeAreaPolygon();
 
         if (itemRepository.count() == 0) {
             createInitialItems();
@@ -56,6 +72,8 @@ public class DataInitializer implements ApplicationRunner {
         if (challengeRepository.count() == 0) {
             createInitialCommonChallenges();
             createInitialQuizzesAndChallenges();
+            createInitialFestivalChallenges();
+            createInitialSidoVisitChallenges();
         }
         long challengeCount = challengeRepository.count();
         System.out.println("현재 도전과제 개수: " + challengeCount);
@@ -82,74 +100,141 @@ public class DataInitializer implements ApplicationRunner {
         System.out.println(initialAtlases.size() + "개 지역 Atlas 초기 데이터가 생성되었습니다.");
     }
 
+    // 지역 정보 데이터
+    private void createInitialAreas() {
+        List<Area> areas = List.of(
+            Area.builder().code(1).name("서울").build(),
+            Area.builder().code(2).name("인천").build(),
+            Area.builder().code(3).name("대전").build(),
+            Area.builder().code(4).name("대구").build(),
+            Area.builder().code(5).name("광주").build(),
+            Area.builder().code(6).name("부산").build(),
+            Area.builder().code(7).name("울산").build(),
+            Area.builder().code(8).name("세종").build(),
+            Area.builder().code(31).name("경기").build(),
+            Area.builder().code(32).name("강원").build(),
+            Area.builder().code(33).name("충북").build(),
+            Area.builder().code(34).name("충남").build(),
+            Area.builder().code(35).name("경북").build(),
+            Area.builder().code(36).name("경남").build(),
+            Area.builder().code(37).name("전북").build(),
+            Area.builder().code(38).name("전남").build(),
+            Area.builder().code(39).name("제주").build()
+        );
+
+        areaRepository.saveAll(areas);
+        System.out.println("지역 정보 초기화 완료: " + areas.size() + "개 지역");
+    }
+
+    private void createInitializeAreaPolygon() {
+        Map<AreaGroup, String> polygonFile = Map.of(
+            AreaGroup.SEOUL, "data/area-polygon/seoul.json"
+        );
+
+        List<Area> areas = areaRepository.findAll();
+        Map<Integer, Area> areaMap = areas.stream()
+            .collect(Collectors.toMap(Area::getCode, area -> area));
+
+        for (Map.Entry<AreaGroup, String> entry : polygonFile.entrySet()) {
+            AreaGroup areaGroup = entry.getKey();
+            String filePath = entry.getValue();
+
+            try {
+                ClassPathResource resource = new ClassPathResource(filePath);
+                if(!resource.exists()){
+                    log.warn("지역 좌표 파일이 존재하지 않습니다: {}", filePath);
+                    continue;
+                }
+                JsonNode coordinateData = objectMapper.readTree(resource.getInputStream());
+
+                // 해당 AreaGroup의 첫 번째 areaCode로 Area 찾기
+                Integer areaCode = areaGroup.getAreaCodes().get(0);
+                Area area = areaMap.get(areaCode);
+
+                if (area != null) {
+                    area.updatePolygonInfo(objectMapper.writeValueAsString(coordinateData.get("coordinates")));
+                }
+
+            } catch (Exception e) {
+                log.error("지역 좌표 파일 로드 실패: {}", filePath, e);
+            }
+        }
+
+        areaRepository.saveAll(areas);
+        log.info("지역 좌표 정보 초기화 완료: {}개 지역", areas.size());
+    }
+
     // 아이템 초기 데이터
     private void createInitialItems() {
         List<Item> items = List.of(
-                // --- SHELF ---
-                Item.builder().name("사물함 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.CLASSROOM).price(0L).isPurchasable(true).build(),
-                Item.builder().name("굴뚝 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.WINTER).price(10L).isPurchasable(true).build(),
-                Item.builder().name("캠핑의자 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.PICNIC).price(20L).isPurchasable(true).build(),
-                Item.builder().name("파라솔 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.SUMMER).price(30L).isPurchasable(true).build(),
-                Item.builder().name("아이스크림 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.DESSERT).price(40L).isPurchasable(true).build(),
-                Item.builder().name("선물 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.BIRTHDAY).price(50L).isPurchasable(true).build(),
+                // 1~6: SHELF (COMMON)
+                Item.builder().name("사물함 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).price(0L).theme(CollectionTheme.CLASSROOM).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("굴뚝 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).price(10L).theme(CollectionTheme.WINTER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("캠핑의자 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).price(20L).theme(CollectionTheme.PICNIC).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("파라솔 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).price(30L).theme(CollectionTheme.SUMMER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("아이스크림 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).price(40L).theme(CollectionTheme.DESSERT).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("선물 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).price(50L).theme(CollectionTheme.BIRTHDAY).isPurchasable(false).isDefault(false).build(),
 
-                // --- OBJECT ---
-                Item.builder().name("책").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.CLASSROOM).price(10L).isPurchasable(true).build(),
-                Item.builder().name("이글루").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.WINTER).price(20L).isPurchasable(true).build(),
-                Item.builder().name("사과바구니").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.PICNIC).price(30L).isPurchasable(true).build(),
-                Item.builder().name("해바라기").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.SUMMER).price(40L).isPurchasable(true).build(),
-                Item.builder().name("사탕다발").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.DESSERT).price(50L).isPurchasable(true).build(),
-                Item.builder().name("풍선개").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.BIRTHDAY).price(60L).isPurchasable(true).build(),
+                // 7~12: OBJECT (COMMON)
+                Item.builder().name("책").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).price(10L).theme(CollectionTheme.CLASSROOM).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("이글루").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).price(20L).theme(CollectionTheme.WINTER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("사과바구니").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).price(30L).theme(CollectionTheme.PICNIC).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("해바라기").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).price(40L).theme(CollectionTheme.SUMMER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("사탕다발").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).price(50L).theme(CollectionTheme.DESSERT).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("풍선개").itemType(ItemType.OBJECT).itemGroup(ItemGroup.COMMON).price(60L).theme(CollectionTheme.BIRTHDAY).isPurchasable(false).isDefault(false).build(),
 
-                // --- WINDOW ---
-                Item.builder().name("비행기 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.CLASSROOM).price(0L).isPurchasable(true).build(),
-                Item.builder().name("눈밭 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.WINTER).price(10L).isPurchasable(true).build(),
-                Item.builder().name("자연 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.PICNIC).price(20L).isPurchasable(true).build(),
-                Item.builder().name("야자수 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.SUMMER).price(30L).isPurchasable(true).build(),
-                Item.builder().name("초콜릿 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.DESSERT).price(40L).isPurchasable(true).build(),
-                Item.builder().name("전구 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.BIRTHDAY).price(50L).isPurchasable(true).build(),
+                // 13~18: WINDOW (COMMON)
+                Item.builder().name("비행기 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).price(10L).theme(CollectionTheme.CLASSROOM).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("눈밭 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).price(20L).theme(CollectionTheme.WINTER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("자연 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).price(30L).theme(CollectionTheme.PICNIC).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("야자수 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).price(40L).theme(CollectionTheme.SUMMER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("초콜릿 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).price(50L).theme(CollectionTheme.DESSERT).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("전구 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).price(60L).theme(CollectionTheme.BIRTHDAY).isPurchasable(false).isDefault(false).build(),
 
-                // --- FLOOR ---
-                Item.builder().name("교실 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.CLASSROOM).price(10L).isPurchasable(true).build(),
-                Item.builder().name("얼음 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.WINTER).price(20L).isPurchasable(true).build(),
-                Item.builder().name("식탁보 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.PICNIC).price(30L).isPurchasable(true).build(),
-                Item.builder().name("모래사장 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.SUMMER).price(40L).isPurchasable(true).build(),
-                Item.builder().name("쿠키 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.DESSERT).price(50L).isPurchasable(true).build(),
-                Item.builder().name("핑크 카펫 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.BIRTHDAY).price(60L).isPurchasable(true).build(),
+                // 19~24: FLOOR (COMMON)
+                Item.builder().name("교실 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).price(10L).theme(CollectionTheme.CLASSROOM).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("얼음 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).price(20L).theme(CollectionTheme.WINTER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("식탁보 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).price(30L).theme(CollectionTheme.PICNIC).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("모래사장 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).price(40L).theme(CollectionTheme.SUMMER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("쿠키 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).price(50L).theme(CollectionTheme.DESSERT).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("핑크 카펫 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).price(60L).theme(CollectionTheme.BIRTHDAY).isPurchasable(false).isDefault(false).build(),
 
-                // --- WALL ---
-                Item.builder().name("칠판 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.CLASSROOM).price(10L).isPurchasable(true).build(),
-                Item.builder().name("눈꽃 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.WINTER).price(20L).isPurchasable(true).build(),
-                Item.builder().name("구름 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.PICNIC).price(30L).isPurchasable(true).build(),
-                Item.builder().name("조개 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.SUMMER).price(40L).isPurchasable(true).build(),
-                Item.builder().name("롤리팝 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.DESSERT).price(50L).isPurchasable(true).build(),
-                Item.builder().name("풍선 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.BIRTHDAY).price(60L).isPurchasable(true).build(),
+                // 25~30: WALL (COMMON)
+                Item.builder().name("칠판 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).price(10L).theme(CollectionTheme.CLASSROOM).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("눈꽃 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).price(20L).theme(CollectionTheme.WINTER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("구름 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).price(30L).theme(CollectionTheme.PICNIC).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("조개 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).price(40L).theme(CollectionTheme.SUMMER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("롤리팝 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).price(50L).theme(CollectionTheme.DESSERT).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("풍선 벽지").itemType(ItemType.WALL).itemGroup(ItemGroup.COMMON).price(60L).theme(CollectionTheme.BIRTHDAY).isPurchasable(false).isDefault(false).build(),
 
-                // --- APPAREL ---
-                Item.builder().name("도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(null).price(0L).isPurchasable(true).build(),
-                Item.builder().name("학사모 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.CLASSROOM).price(10L).isPurchasable(true).build(),
-                Item.builder().name("목도리 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.WINTER).price(20L).isPurchasable(true).build(),
-                Item.builder().name("빨간망토 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.PICNIC).price(30L).isPurchasable(true).build(),
-                Item.builder().name("튜브 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.SUMMER).price(40L).isPurchasable(true).build(),
-                Item.builder().name("메론빵 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.DESSERT).price(50L).isPurchasable(true).build(),
-                Item.builder().name("생일파리 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).areaGroup(null).theme(CollectionTheme.BIRTHDAY).price(60L).isPurchasable(true).build(),
+                // 31~37: APPAREL (COMMON)
+                Item.builder().name("도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).price(0L).isPurchasable(true).isDefault(true).build(),
+                Item.builder().name("학사모 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).price(10L).theme(CollectionTheme.CLASSROOM).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("목도리 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).price(20L).theme(CollectionTheme.WINTER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("빨간망토 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).price(30L).theme(CollectionTheme.PICNIC).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("튜브 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).price(40L).theme(CollectionTheme.SUMMER).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("메론빵 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).price(50L).theme(CollectionTheme.DESSERT).isPurchasable(false).isDefault(false).build(),
+                Item.builder().name("생일파티 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.COMMON).price(60L).theme(CollectionTheme.BIRTHDAY).isPurchasable(false).isDefault(false).build(),
 
+                // 38~40: 기본템 (COMMON, Default = true)
+                Item.builder().name("기본 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.COMMON).price(0L).isPurchasable(true).isDefault(true).build(),
+                Item.builder().name("기본 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.COMMON).price(0L).isPurchasable(true).isDefault(true).build(),
+                Item.builder().name("기본 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.COMMON).price(0L).isPurchasable(true).isDefault(true).build(),
 
-                // --- 지역(AREA) 그룹 아이템 (임시 도감 보상용)
-                Item.builder().name("서울 남산타워 모형").itemType(ItemType.OBJECT).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.SEOUL).price(0L).isPurchasable(false).build(),
-                Item.builder().name("경기도 행궁 담벼락").itemType(ItemType.WALL).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.GYEONGGI).price(0L).isPurchasable(false).build(),
-                Item.builder().name("강원도 오징어 인형").itemType(ItemType.APPAREL).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.GANGWON).price(0L).isPurchasable(false).build(),
-                Item.builder().name("충청도 소나무 분재").itemType(ItemType.OBJECT).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.CHUNGNAM).price(0L).isPurchasable(false).build(),
-                Item.builder().name("전라도 풍년 볏짚 바닥").itemType(ItemType.FLOOR).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.JEOLLA).price(0L).isPurchasable(false).build(),
-                Item.builder().name("경상도 돌고래 창문").itemType(ItemType.WINDOW).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.GYEONGSANG).price(0L).isPurchasable(false).build(),
-                Item.builder().name("제주 유채꽃 선반").itemType(ItemType.SHELF).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.JEJU).price(0L).isPurchasable(false).build()
-
-
+                // 41~47: AREA 아이템
+                Item.builder().name("감귤 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.JEJU).price(0L).isPurchasable(true).isDefault(false).build(),
+                Item.builder().name("복숭아 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.CHUNGNAM).price(0L).isPurchasable(true).isDefault(false).build(),
+                Item.builder().name("부산어묵 도리").itemType(ItemType.APPAREL).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.GYEONGSANG).price(0L).isPurchasable(true).isDefault(false).build(),
+                Item.builder().name("반달가슴곰 인형").itemType(ItemType.OBJECT).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.GANGWON).price(0L).isPurchasable(true).isDefault(false).build(),
+                Item.builder().name("빨간버스").itemType(ItemType.OBJECT).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.GYEONGGI).price(0L).isPurchasable(true).isDefault(false).build(),
+                Item.builder().name("해치 인형").itemType(ItemType.OBJECT).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.SEOUL).price(0L).isPurchasable(true).isDefault(false).build(),
+                Item.builder().name("토용 도리").itemType(ItemType.OBJECT).itemGroup(ItemGroup.AREA).areaGroup(AreaGroup.JEOLLA).price(0L).isPurchasable(true).isDefault(false).build()
         );
 
         itemRepository.saveAll(items);
         System.out.println(items.size() + "개 아이템이 생성되었습니다.");
     }
+
 
     // 일반과제 초기 데이터
     private void createInitialCommonChallenges() {
@@ -351,19 +436,37 @@ public class DataInitializer implements ApplicationRunner {
         System.out.println("총 " + allQuizzes.size() + "개의 퀴즈 세트 초기 데이터가 생성되었습니다.");
     }
 
-    //TODO: 지역 축제 관련 과제 추가
+    // 지역 축제 관련 과제 추가
+    private void createInitialFestivalChallenges() {
+        List<Challenge> challenges = new ArrayList<>();
+
+        // --- 축제 과제 목록 ---
+        challenges.add(createFestivalChallenge("보령머드축제 방문하기", AreaGroup.CHUNGNAM, "2c120701-3c47-4b5a-a25b-747774954aae"));
+        challenges.add(createFestivalChallenge("춘천막국수닭갈비축제 방문하기", AreaGroup.GANGWON, "b6a1d6aa-c6ba-41c4-b137-14821e75bb87"));
+        challenges.add(createFestivalChallenge("APAP 작품투어 참여하기", AreaGroup.GYEONGGI, "abcc55a2-84b8-4107-b80b-73e0d1ea1627"));
+        challenges.add(createFestivalChallenge("DDP 건축투어 참여하기", AreaGroup.SEOUL, "ff4758cc-c1c8-47a9-a0a9-862f08496bc2"));
+        challenges.add(createFestivalChallenge("광안리 M 드론라이트 쇼 보기", AreaGroup.GYEONGSANG, "077eb616-63df-4b0f-8883-5ad5d860d17e"));
+        challenges.add(createFestivalChallenge("목포해상W쇼 보기", AreaGroup.JEOLLA, "d3af3a7a-5385-49b8-bda3-b57a8fda1c19"));
+        challenges.add(createFestivalChallenge("휴애리 유럽 수국축제 방문하기", AreaGroup.JEJU, "182c6fe2-afb4-42ec-adfd-201c5b541e23"));
+
+        // Event ID 조회 실패로 null이 포함된 경우 제거
+        challenges.removeIf(Objects::isNull);
+
+        challengeRepository.saveAll(challenges);
+        System.out.println(challenges.size() + "개의 축제 방문 과제 초기 데이터가 생성되었습니다.");
+    }
 
     // 지역 도감 보상 아이템 추가
     private void createInitialAtlasRewards() {
         // 각 지역과 보상으로 지급할 아이템 ID
         Map<AreaGroup, Long> rewardItemMap = Map.of(
-                AreaGroup.SEOUL, 38L,
-                AreaGroup.GYEONGGI, 39L,
-                AreaGroup.GANGWON, 40L,
-                AreaGroup.CHUNGNAM, 41L,
-                AreaGroup.JEOLLA, 42L,
+                AreaGroup.JEJU, 41L,
+                AreaGroup.CHUNGNAM, 42L,
                 AreaGroup.GYEONGSANG, 43L,
-                AreaGroup.JEJU, 44L
+                AreaGroup.GANGWON, 44L,
+                AreaGroup.GYEONGGI, 45L,
+                AreaGroup.SEOUL, 46L,
+                AreaGroup.JEOLLA, 47L
         );
 
         List<AtlasReward> rewards = new ArrayList<>();
@@ -408,11 +511,48 @@ public class DataInitializer implements ApplicationRunner {
         System.out.println("유저 " + users.size() + "명이 생성되었습니다.");
     }
 
+    //시도 방문 과제 초기 데이터 생성
+    private void createInitialSidoVisitChallenges() {
+        List<Challenge> challenges = new ArrayList<>();
+
+        // 각 AreaGroup별로 시도 방문 과제 생성
+        for (AreaGroup areaGroup : AreaGroup.values()) {
+            Challenge challenge = createSidoVisitChallenge(areaGroup);
+            challenges.add(challenge);
+        }
+
+        challengeRepository.saveAll(challenges);
+        log.info("{}개의 시도 방문 과제 초기 데이터가 생성되었습니다.", challenges.size());
+    }
 
 
 
 
     // --- Helper Methods ---
+
+    // 지역 축제 과제
+    private Challenge createFestivalChallenge(String title, AreaGroup areaGroup, String eventId) {
+        Event event = eventRepository.findById(UUID.fromString(eventId)).orElse(null);
+        if (event == null) {
+            System.out.println("WARN: Event ID " + eventId + "를 찾을 수 없어 과제를 생성하지 못했습니다.");
+            return null;
+        }
+
+        Challenge challenge = Challenge.builder()
+                .title(title)
+                .challengeGroup(ChallengeGroup.AREA)
+                .challengeType(ChallengeType.VISIT_EVENT)
+                .targetCount(1)
+                .areaGroup(areaGroup)
+                .event(event)
+                .build();
+
+        // 보상: 크레딧 20 + 도감 경험치 200
+        challenge.getRewards().add(ChallengeReward.builder().challenge(challenge).rewardType(RewardType.CREDIT).amount(20L).build());
+        challenge.getRewards().add(ChallengeReward.builder().challenge(challenge).rewardType(RewardType.EXP).amount(200L).build());
+
+        return challenge;
+    }
 
     // 일반 과제 생성 헬퍼
     private Challenge createCommonChallenge(String title, String content, ChallengeType type, int targetCount) {
@@ -469,5 +609,24 @@ public class DataInitializer implements ApplicationRunner {
                 .correctAnswer(correctAnswer)
                 .commentary(commentary)
                 .build();
+    }
+
+    private Challenge createSidoVisitChallenge(AreaGroup areaGroup) {
+        Challenge challenge = Challenge.builder()
+            .title(areaGroup.getName() + " 방문하기")
+            .content(areaGroup.getName() + " 지역을 방문하여 인증하세요.")
+            .challengeGroup(ChallengeGroup.AREA)
+            .challengeType(ChallengeType.VISIT_SIDO)
+            .targetCount(1)
+            .areaGroup(areaGroup)
+            .startDate(null)
+            .endDate(null)
+            .build();
+
+        // 보상: 크레딧 20 + 도감 경험치 200
+        challenge.getRewards().add(ChallengeReward.builder().challenge(challenge).rewardType(RewardType.CREDIT).amount(20L).build());
+        challenge.getRewards().add(ChallengeReward.builder().challenge(challenge).rewardType(RewardType.EXP).amount(200L).build());
+
+        return challenge;
     }
 }

@@ -102,8 +102,9 @@ public class DiaryController {
     @Operation(summary = "일기 상세 조회", description = "일기 상세 정보를 조회합니다.")
     @GetMapping("/{diaryId}")
     public ApiResponse<DiaryDetailResponseDto> getDiaryDetail(
+        @AuthenticationPrincipal User user,
         @PathVariable UUID diaryId) {
-        DiaryDetailResponseDto response = diaryService.getDiaryDetail(diaryId);
+        DiaryDetailResponseDto response = diaryService.getDiaryDetail(user.getUserId(), diaryId);
         return ApiResponse.ok(response);
     }
 
@@ -120,17 +121,18 @@ public class DiaryController {
     }
 
     @Operation(summary = "일별 일기 목록 조회", description = "특정 날짜에 작성된 일기 목록을 조회합니다.")
-    @GetMapping("/daily")
+    @GetMapping("/{userId}/daily")
     public ApiResponse<DailyDiaryListResponseDto> getDailyDiaries(
         @AuthenticationPrincipal User user,
-        @RequestParam
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @PathVariable @Schema(description = "조회할 유저 ID", example = "43d1a5a2-58dc-4786-8dba-27c62cae1943")
+        UUID userId,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         @Schema(
             description = "조회할 날짜 (YYYY-MM-DD 형식)",
             example = "2025-08-10"
         )
         LocalDate date) {
-        DailyDiaryListResponseDto response = diaryService.getDailyDiaries(user.getUserId(), date);
+        DailyDiaryListResponseDto response = diaryService.getDailyDiaries(user.getUserId(), userId, date);
         return ApiResponse.ok(response);
     }
 
@@ -163,5 +165,15 @@ public class DiaryController {
 
         Page<DiaryResponseDto> response = diaryService.getFriendsDiaries(user.getUserId(), pageable);
         return ApiResponse.ok(response);
+    }
+
+    @Operation(summary = "축제별 일기 작성 여부 확인", description = "사용자가 특정 축제에 대해 일기를 작성했는지 여부를 확인합니다.")
+    @GetMapping("/written/{eventId}")
+    public ApiResponse<Boolean> hasUserWrittenDiaryForEvent(
+        @AuthenticationPrincipal User user,
+        @PathVariable @Schema(description = "축제 ID", example = "550e8400-e29b-41d4-a716-446655440002")
+        UUID eventId) {
+        boolean hasWritten = diaryService.getUserWrittenDiaryForEvent(user.getUserId(), eventId);
+        return ApiResponse.ok(hasWritten);
     }
 }

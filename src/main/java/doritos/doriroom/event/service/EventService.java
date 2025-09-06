@@ -16,6 +16,8 @@ import doritos.doriroom.event.repository.EventRepository;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -100,38 +102,38 @@ public class EventService {
     @Transactional
     public void updateEventDetails() {
         List<Event> events = eventRepository.findByEventDetailStatusOrderByStartDateDesc(EventDetailStatus.PENDING);
-        int dailyLimit = 900;
-        int processedCount = 0;
+        int dailyLimit = 450;
+        int processedEvents = 0; // 이벤트 수로 집계
         boolean hasStatusChanges = false;
 
         log.info("축제 상세정보 업데이트 시작");
 
         for (Event event : events) {
             EventDetailStatus currentStatus;
-            if (processedCount >= dailyLimit) {
-                log.info("오늘의 업데이트 한도({}개)에 도달했습니다. 남은 이벤트: {}개", dailyLimit, events.size() - processedCount);
+            if (processedEvents >= dailyLimit) {
+                log.info("오늘의 업데이트 한도({}개)에 도달했습니다. 남은 이벤트: {}개", dailyLimit, events.size() - processedEvents);
                 break;
             }
 
             if(event.getEventDetailStatus() == EventDetailStatus.PENDING) {
+                CompletableFuture<TourApiDetailIntroDto> introFuture = null;
+                CompletableFuture<List<TourApiDetailInfoDto>> infoFuture = null;
+                
                 try {
                     // 두 API를 비동기 호출
-                    CompletableFuture<TourApiDetailIntroDto> introFuture = tourApiService.fetchEventDetailIntro(
-                        event.getContentId());
-                    CompletableFuture<List<TourApiDetailInfoDto>> infoFuture = tourApiService.fetchEventDetailInfo(
-                        event.getContentId());
+                    introFuture = tourApiService.fetchEventDetailIntro(event.getContentId());
+                    infoFuture = tourApiService.fetchEventDetailInfo(event.getContentId());
 
-                    // 두 작업이 모두 끝날 때까지 기다림
-                    CompletableFuture.allOf(introFuture, infoFuture).join();
-                    processedCount += 2;
+                    // 타임아웃 설정 (30초)
+                    CompletableFuture.allOf(introFuture, infoFuture).get(30, TimeUnit.SECONDS);
+                    processedEvents++; // 이벤트 단위로 카운트
 
                     // 결과 가져오기
                     TourApiDetailIntroDto detailIntroDto = introFuture.get();
                     List<TourApiDetailInfoDto> detailInfoList = infoFuture.get();
 
                     // API에서 삭제된 경우
-                    if (detailIntroDto == null && (detailInfoList == null
-                        || detailInfoList.isEmpty())) {
+                    if (detailIntroDto == null && (detailInfoList == null || detailInfoList.isEmpty())) {
                         currentStatus = EventDetailStatus.DELETED_FROM_API;
                         log.warn("API에서 삭제된 이벤트 발견. contentId: {}", event.getContentId());
                     } else {
@@ -140,11 +142,22 @@ public class EventService {
                         currentStatus = EventDetailStatus.SUCCESS;
                     }
                     hasStatusChanges = true;
+                } catch (TimeoutException e) {
+                    log.error("API 호출 타임아웃: contentId={}", event.getContentId(), e);
+
+                    // 진행 중인 future 취소
+                    if (introFuture != null) {
+                        introFuture.cancel(true);
+                    }
+                    if (infoFuture != null) {
+                        infoFuture.cancel(true);
+                    }
+                    processedEvents++;
+                    continue;
                 } catch (Exception e) {
-                    log.error("축제 상세정보 업데이트 실패. contentId: {}, error: {}", event.getContentId(),
-                        e.getMessage());
+                    log.error("축제 상세정보 업데이트 실패. contentId: {}, error: {}", event.getContentId(), e.getMessage());
                     currentStatus = EventDetailStatus.FAILED;
-                    processedCount += 2;
+                    processedEvents++;
                     hasStatusChanges = true;
                 }
 
@@ -255,13 +268,17 @@ public class EventService {
         //DB에 상세정보가 없으면 tourAPI 호출
         if(event.getEventDetailStatus() == EventDetailStatus.PENDING){
             EventDetailStatus currentStatus;
+
             try{
                 // 두 API를 비동기 호출
                 CompletableFuture<TourApiDetailIntroDto> introFuture = tourApiService.fetchEventDetailIntro(event.getContentId());
                 CompletableFuture<List<TourApiDetailInfoDto>> infoFuture = tourApiService.fetchEventDetailInfo(event.getContentId());
 
-                // 두 작업이 모두 끝날 때까지 기다림
-                CompletableFuture.allOf(introFuture, infoFuture).join();
+                // 타임아웃 설정 (30초)
+                CompletableFuture.allOf(
+                    introFuture.orTimeout(30, TimeUnit.SECONDS),
+                    infoFuture.orTimeout(30, TimeUnit.SECONDS)
+                ).join();
 
                 // 결과 가져오기
                 TourApiDetailIntroDto detailIntroDto = introFuture.get();
@@ -277,9 +294,10 @@ public class EventService {
                     event.updateDetailInfoFrom(detailInfoList);
                 }
             } catch (Exception e){
-                currentStatus = EventDetailStatus.FAILED;
                 log.error("축제 상세 정보 업데이트 실패: eventId={}, error={}", eventId, e.getMessage());
+                currentStatus = EventDetailStatus.FAILED;
             }
+            
             event.changeEventDetailStatus(currentStatus);
             eventRepository.save(event);
         }

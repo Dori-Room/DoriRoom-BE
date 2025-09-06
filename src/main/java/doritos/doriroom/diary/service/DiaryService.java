@@ -7,6 +7,7 @@ import doritos.doriroom.diary.domain.Diary;
 import doritos.doriroom.diary.dto.request.*;
 import doritos.doriroom.diary.dto.response.*;
 import doritos.doriroom.diary.exception.*;
+import doritos.doriroom.diary.repository.DiaryLikeRepository;
 import doritos.doriroom.diary.repository.DiaryRepository;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.dto.response.EventDiaryResponseDto;
@@ -38,6 +39,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class DiaryService {
     private final DiaryRepository diaryRepository;
+    private final DiaryLikeRepository diaryLikeRepository;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final S3Uploader s3Uploader;
@@ -136,6 +138,9 @@ public class DiaryService {
             throw new DiaryAuthorizationException();
         }
 
+        // 일기 삭제 전에 관련된 좋아요들을 먼저 삭제
+        diaryLikeRepository.deleteByDiaryId(diaryId);
+
         if (diary.getImageUrls() != null && !diary.getImageUrls().isEmpty()) {
             s3Uploader.deleteFiles(diary.getImageUrls());
         }
@@ -147,7 +152,6 @@ public class DiaryService {
             eventRepository.save(event);
         }
 
-
         diaryRepository.delete(diary);
         // 캐시 무효화
         redisCacheService.deleteCache(RedisCacheService.POPULAR_DIARIES_KEY);
@@ -156,7 +160,7 @@ public class DiaryService {
         challengeService.updateChallengeProgress(user, ChallengeType.WRITE_DIARY, -1);
     }
 
-    public DiaryDetailResponseDto getDiaryDetail(UUID diaryId) {
+    public DiaryDetailResponseDto getDiaryDetail(UUID currentUserId,UUID diaryId) {
         Diary diary = diaryRepository.findById(diaryId)
             .orElseThrow(DiaryNotFoundException::new);
 
@@ -165,6 +169,23 @@ public class DiaryService {
 
         Event event = eventRepository.findById(diary.getEventId())
             .orElseThrow(EventNotFoundException::new);
+
+        // 권한 검증
+        boolean isOwnDiary = currentUserId.equals(diary.getUserId());
+
+        if (!isOwnDiary) {
+            boolean isBestFriend = followService.isBestFriendByDiaryWriter(diary.getUserId(), currentUserId);
+
+            if (!isBestFriend && diary.getDiaryVisibility() != RoomVisibility.PUBLIC) {
+                // 단짝이 아니고 공개 일기가 아닌 경우 접근 불가
+                throw new DiaryAuthorizationException();
+            }
+
+            if (isBestFriend && diary.getDiaryVisibility() == RoomVisibility.PRIVATE) {
+                // 단짝이라도 비공개 일기는 접근 불가
+                throw new DiaryAuthorizationException();
+            }
+        }
 
         return DiaryDetailResponseDto.from(diary, user, event);
     }
@@ -225,14 +246,65 @@ public class DiaryService {
     }
 
     //일별 작성한 일기 목록 조회
-    public DailyDiaryListResponseDto getDailyDiaries(UUID userId, LocalDate date) {
-        List<Diary> diaries = diaryRepository.findByUserIdAndVisitedAtOrderByCreatedAtDesc(userId, date);
+//    public DailyDiaryListResponseDto getDailyDiaries(UUID userId, LocalDate date) {
+//        List<Diary> diaries = diaryRepository.findByUserIdAndVisitedAtOrderByCreatedAtDesc(userId, date);
+//
+//        if (diaries.isEmpty()) {
+//            return DailyDiaryListResponseDto.from(userId, date, List.of());
+//        }
+//
+//        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+//
+//        List<UUID> eventIds = diaries.stream()
+//            .map(Diary::getEventId)
+//            .distinct()
+//            .toList();
+//
+//        Map<UUID, Event> eventMap = eventRepository.findByEventIdIn(eventIds).stream()
+//            .collect(Collectors.toMap(Event::getEventId, event -> event));
+//
+//        List<DiaryResponseDto> diaryList = diaries.stream()
+//            .map(diary -> {
+//                Event event = eventMap.get(diary.getEventId());
+//
+//                return DiaryResponseDto.from(diary, 0L, user, event);
+//            })
+//            .toList();
+//
+//        return DailyDiaryListResponseDto.from(userId, date, diaryList);
+//    }
 
-        if (diaries.isEmpty()) {
-            return DailyDiaryListResponseDto.from(userId, date, List.of());
+    public DailyDiaryListResponseDto getDailyDiaries(UUID currentUserId, UUID targetUserId, LocalDate date) {
+        userRepository.findById(currentUserId).orElseThrow(UserNotFoundException::new);
+        User targetUser = userRepository.findById(targetUserId).orElseThrow(UserNotFoundException::new);
+
+        List<Diary> diaries;
+
+        // 자신의 일기인지 확인
+        boolean isOwnDiary = currentUserId.equals(targetUserId);
+
+        if (isOwnDiary) {
+            // 자신의 일기 - 모든 일기 조회
+            diaries = diaryRepository.findByUserIdAndVisitedAtOrderByCreatedAtDesc(targetUserId, date);
+        } else {
+            // 다른 사용자의 일기 - 단짝 여부에 따라 조회 범위 결정
+            boolean isBestFriend = followService.isBestFriendByDiaryWriter(targetUserId, currentUserId);
+
+            if (isBestFriend) {
+                // 일기 작성자가 조회자를 단짝으로 설정한 경우
+                diaries = diaryRepository.findPublicAndFollowersByUserIdAndVisitedAtOrderByCreatedAtDesc(
+                    targetUserId,
+                    List.of(RoomVisibility.PUBLIC, RoomVisibility.FOLLOWERS),
+                    date);
+            } else {
+                // 단짝친구 아닌 경우 - 공개 일기만 조회
+                diaries = diaryRepository.findPublicByUserIdAndVisitedAtOrderByCreatedAtDesc(targetUserId, date);
+            }
         }
 
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        if (diaries.isEmpty()) {
+            return DailyDiaryListResponseDto.from(targetUserId, date, List.of());
+        }
 
         List<UUID> eventIds = diaries.stream()
             .map(Diary::getEventId)
@@ -245,12 +317,11 @@ public class DiaryService {
         List<DiaryResponseDto> diaryList = diaries.stream()
             .map(diary -> {
                 Event event = eventMap.get(diary.getEventId());
-
-                return DiaryResponseDto.from(diary, 0L, user, event);
+                return DiaryResponseDto.from(diary, 0L, targetUser, event);
             })
             .toList();
 
-        return DailyDiaryListResponseDto.from(userId, date, diaryList);
+        return DailyDiaryListResponseDto.from(targetUserId, date, diaryList);
     }
 
     //축제별 일기 조회
@@ -458,6 +529,13 @@ public class DiaryService {
             .toList();
 
         return new PageImpl<>(diaryResponses, pageable, friendsDiariesPage.getTotalElements());
+    }
+
+    public boolean getUserWrittenDiaryForEvent(UUID userId, UUID eventId) {
+        eventRepository.findById(eventId).orElseThrow(EventNotFoundException::new);
+        userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+
+        return diaryRepository.existsByUserIdAndEventId(userId, eventId);
     }
 
 }

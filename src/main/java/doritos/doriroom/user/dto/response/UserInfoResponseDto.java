@@ -9,7 +9,10 @@ public record UserInfoResponseDto(
     UUID userId,
 
     @Schema(description = "사용자 닉네임", example = "도리토스")
-    String nickname
+    String nickname,
+
+    @Schema(description = "사용자 프로필 이미지", example = "https://local.png")
+    String profileImageUrl
 ) {
     public static UserInfoResponseDto from(User user) {
         if (user == null) {
@@ -18,7 +21,8 @@ public record UserInfoResponseDto(
 
         return new UserInfoResponseDto(
             user.getUserId(),
-            user.getNickname()
+            user.getNickname(),
+            user.getProfileImageUrl()
         );
     }
 }

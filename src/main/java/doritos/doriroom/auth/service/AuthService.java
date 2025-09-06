@@ -6,6 +6,11 @@ import doritos.doriroom.auth.exception.*;
 import doritos.doriroom.auth.template.EmailTemplate;
 import doritos.doriroom.global.jwt.JwtUtil;
 import doritos.doriroom.auth.domain.RefreshToken;
+import doritos.doriroom.item.domain.Item;
+import doritos.doriroom.item.domain.UserItem;
+import doritos.doriroom.item.repository.ItemRepository;
+import doritos.doriroom.item.repository.UserItemRepository;
+import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.DuplicateException;
@@ -18,7 +23,6 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -26,9 +30,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static doritos.doriroom.auth.common.AuthConstants.*;
 
@@ -45,6 +52,9 @@ public class AuthService {
     private final JavaMailSender mailSender;
     private final EmailTemplate emailTemplate;
     private final S3Uploader s3Uploader;
+    private final ItemService itemService;
+    private final ItemRepository itemRepository;
+    private final UserItemRepository userItemRepository;
 
     // ttl
     private static final long VERIFICATION_EXPIRE_SECONDS = 300; // 5분 (인증 번호 확인 시간)
@@ -64,7 +74,9 @@ public class AuthService {
         String verificationKey = VERIFICATION_KEY_PREFIX.getValue() + email;
         redisTemplate.opsForValue().set(verificationKey, verificationCode, Duration.ofSeconds(VERIFICATION_EXPIRE_SECONDS));
 
-        sendEmail(email, verificationCode);
+        // 이메일 본문 구성 후 발송
+        String content = emailTemplate.createVerificationEmailContent(verificationCode);
+        sendEmail(email, EmailTemplate.Subject.VERIFICATION, content);
     }
 
     public void verifyEmail(EmailVerificationRequestDto request){
@@ -121,12 +133,25 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+
+        List<Item> defaultItems = itemRepository.findByIsDefaultTrue(); // 기본 아이템 전부 조회
+
+        // 신규 유저 기본 아이템 지급 및 착용
+        List<UserItem> newUserItems = defaultItems.stream()
+                .map(item -> UserItem.builder()
+                        .user(user)
+                        .item(item)
+                        .isEquipped(true) // 착용 상태로 지정
+                        .build())
+                .collect(Collectors.toList());
+        userItemRepository.saveAll(newUserItems);
+
         redisTemplate.delete(verifiedKey); // 유저 등록 후 인증 상태 삭제
     }
 
     public LoginResponseDto login(LoginRequestDto request) {
         User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new UserNotFoundException());
+                .orElseThrow(UserNotFoundException::new);
 
         if (!encoder.matches(request.password(), user.getPassword())) {
             throw new InvalidPasswordException();
@@ -161,7 +186,7 @@ public class AuthService {
         Claims claims = jwtUtil.parseClaims(accessToken);
         String username = claims.getSubject();
 
-        if(username == null | username.isBlank())
+        if(username == null)
             throw new InvalidTokenException("토큰에서 username을 추출할 수 없습니다.");
 
         User user = userRepository.findByUsername(username)
@@ -177,18 +202,82 @@ public class AuthService {
         }
     }
 
-    private void sendEmail(String email, String verificationCode) {
+    /* 아이디 찾기 / 비밀번호 재설정 */
+
+    // 아이디 찾기
+    public void findUsername(EmailRequestDto request){
+        userRepository.findByEmail(request.email()).ifPresent(user -> {
+            String maskedUsername = maskUsername(user.getUsername()); // 마스킹 처리된 username
+            // EmailTemplate을 사용하여 이메일 본문 생성 후 발송
+            String content = emailTemplate.createFindUsernameEmailContent(maskedUsername);
+            sendEmail(user.getEmail(), EmailTemplate.Subject.FIND_USERNAME, content);
+        });
+    }
+
+    // 비밀번호 재설정 1. 이메일 인증 코드 전송
+    public void sendPasswordResetCode(SendPasswordResetCodeRequestDto request){
+        // username과 email 정보에 맞는 유저 확인
+        var user = userRepository.findByUsernameAndEmail(request.username(),request.email());
+        if (user.isEmpty()) { // 유저가 존재하지 않는 경우에 스킵함
+            return;
+        }
+
+        String verificationCode = String.format("%06d", new SecureRandom().nextInt(1000000)); // 6자리 인증 코드
+
+        // redis에 인증 코드 저장
+        String verificationKey = RESET_CODE_PREFIX.getValue() + request.email();
+        redisTemplate.opsForValue().set(verificationKey, verificationCode, Duration.ofSeconds(VERIFICATION_EXPIRE_SECONDS));
+
+        // 이메일 본문 구성 후 발송
+        String content = emailTemplate.createPasswordResetEmailContent(verificationCode);
+        sendEmail(request.email(), EmailTemplate.Subject.PASSWORD_RESET, content);
+
+    }
+
+    // 비밀전호 재설정 2. 비밀번호 변경
+    @Transactional
+    public void resetPassword(ResetPasswordRequestDto request){
+        // 인증 코드 조회
+        String verificationKey = RESET_CODE_PREFIX.getValue() + request.email();
+        String storedCode = (String) redisTemplate.opsForValue().get(verificationKey);
+
+        if (storedCode == null || !storedCode.equals(request.code())) {
+            throw new InvalidOrExpiredVerificationCodeException();
+        }
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(UserNotFoundException::new);
+
+        user.setPassword(encoder.encode(request.newPassword())); // 새로운 비밀번호로 설정
+        redisTemplate.delete(verificationKey); // 사용된 인증코드 삭제
+    }
+
+    /* 내부 메서드 */
+
+    // 이메일 발송 메서드
+    private void sendEmail(String to, String subject, String content) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setTo(email);
-            helper.setSubject(EmailTemplate.Subject.VERIFICATION);
-            helper.setText(emailTemplate.createVerificationEmailContent(verificationCode), true); // 이메일 contect 구성
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(content, true); // true: HTML 형식으로 발송
 
-            mailSender.send(message); // 이메일 전송
+            mailSender.send(message);
         } catch (MessagingException e) {
             throw new EmailSendFailedException();
         }
+    }
+
+    // 아이디 마스킹 처리 메서드
+    // 아이디 찾기 시 username 길이가 3 이하인 경우 인덱스 에러 방지
+    private String maskUsername(String username) {
+        if (username == null || username.isEmpty()) return "***";
+        int len = username.length();
+        if (len == 1) return "*";
+        if (len == 2) return username.charAt(0) + "*";
+        if (len == 3) return username.charAt(0) + "*" + username.charAt(2);
+        return username.substring(0, 2) + "*".repeat(len - 4) + username.substring(len - 2);
     }
 }

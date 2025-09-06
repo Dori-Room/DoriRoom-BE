@@ -12,7 +12,6 @@ import lombok.Builder;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Builder
 public record ChallengeResponseDto(
@@ -29,6 +28,8 @@ public record ChallengeResponseDto(
 
         int targetCount,
         UUID eventId, // nullable
+        String polygon,
+        String geoPolygon,
         List<ChallengeRewardDto> rewards, // nullable
 
         int currentProgress,
@@ -47,6 +48,8 @@ public record ChallengeResponseDto(
                 .challengeType(challenge.getChallengeType())
                 .targetCount(challenge.getTargetCount())
                 .eventId(challenge.getEvent() != null ? challenge.getEvent().getEventId() : null)
+                .polygon(challenge.getEvent() != null ? challenge.getEvent().getPolygon() : null)
+                .geoPolygon(null)
                 .rewards(challenge.getRewards() == null
                         ? List.of()
                         : challenge.getRewards().stream()
@@ -55,5 +58,30 @@ public record ChallengeResponseDto(
                 .currentProgress(userChallenge != null ? userChallenge.getCurrentProgress() : 0)
                 .status(userChallenge != null ? userChallenge.getStatus() : ChallengeStatus.NOT_STARTED)
                 .build();
+    }
+
+    //VISIT_SIDO인 경우 좌표 정보 제공
+    public static ChallengeResponseDto ofWithSido(Challenge challenge, UserChallenge userChallenge, String geoPolygon) {
+        return ChallengeResponseDto.builder()
+            .challengeId(challenge.getId())
+            .title(challenge.getTitle())
+            .content(challenge.getContent())
+            .startDate(challenge.getStartDate())
+            .endDate(challenge.getEndDate())
+            .challengeGroup(challenge.getChallengeGroup())
+            .areaGroup(challenge.getAreaGroup())
+            .challengeType(challenge.getChallengeType())
+            .targetCount(challenge.getTargetCount())
+            .eventId(challenge.getEvent() != null ? challenge.getEvent().getEventId() : null)
+            .polygon(challenge.getEvent() != null ? challenge.getEvent().getPolygon() : null)
+            .geoPolygon(geoPolygon)
+            .rewards(challenge.getRewards() == null
+                ? List.of()
+                : challenge.getRewards().stream()
+                    .map(ChallengeRewardDto::from)
+                    .toList())
+            .currentProgress(userChallenge != null ? userChallenge.getCurrentProgress() : 0)
+            .status(userChallenge != null ? userChallenge.getStatus() : ChallengeStatus.NOT_STARTED)
+            .build();
     }
 }

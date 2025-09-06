@@ -3,6 +3,7 @@ import doritos.doriroom.user.exception.NotEnoughCreditException;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -43,6 +44,11 @@ public class User {
     @Builder.Default
     @Column(nullable = false)
     private int viewCount = 0;
+
+    // 회원 탈퇴 필드
+    @Builder.Default @Column(nullable = false)
+    private boolean isWithdraw  = false; // 탈퇴 상태
+    private LocalDateTime withdrawDate; // 탈퇴 시각
 
     // 포인트 관련 메서드 추가
     public void addCredit(Long creditCount) {

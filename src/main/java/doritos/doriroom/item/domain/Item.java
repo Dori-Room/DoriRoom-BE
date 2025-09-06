@@ -17,9 +17,6 @@ public class Item {
     @Column(nullable = false)
     private String name;
 
-//    @Column(nullable = false)
-//    private String imageUrl;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ItemType itemType;
@@ -35,8 +32,13 @@ public class Item {
     private Long price; // 지역과제 보상 아이템의 경우 0으로 설정
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 50)
     private CollectionTheme theme;
 
     @Column(nullable = false)
     private boolean isPurchasable; // true: 구매 가능, false: 이벤트/한정 지급
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isDefault = false; // 아이템이 기본 아이템인지 확인
 }

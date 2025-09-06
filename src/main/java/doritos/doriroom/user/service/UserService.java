@@ -5,6 +5,7 @@ import doritos.doriroom.challenge.domain.challenge.ChallengeType;
 import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
+import doritos.doriroom.user.dto.request.UserWithdrawalRequestDto;
 import doritos.doriroom.user.dto.response.UserSearchResultDto;
 import doritos.doriroom.follow.repository.FollowRepository;
 import doritos.doriroom.item.dto.response.EquippedItemResponse;
@@ -22,6 +23,8 @@ import doritos.doriroom.user.exception.DuplicateException;
 import doritos.doriroom.user.exception.SelfRoomInfoNotAllowedException;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -130,6 +133,43 @@ public class UserService {
         }
 
         foundUser.setPassword(encoder.encode(request.newPassword())); // 새 비밀번호를 암호화하여 저장
+    }
+
+    @Transactional
+    public void withdraw(User user, UserWithdrawalRequestDto request){
+        User foundUser = userRepository.findByUserId(user.getUserId())
+                .orElseThrow(UserNotFoundException::new);
+
+        if (foundUser.isWithdraw()) {
+            return;
+        }
+
+        if (!encoder.matches(request.password(), foundUser.getPassword())){
+            throw new InvalidPasswordException("비밀번호가 일치하지 않습니다.");
+        }
+
+        // 기존 프로필 이미지가 있으면 S3에서 삭제 후 URL 제거
+        if (StringUtils.hasText(foundUser.getProfileImageUrl())) {
+            s3Uploader.deleteFile(foundUser.getProfileImageUrl());
+            foundUser.setProfileImageUrl(null);
+        }
+
+        // 개인정보 비식별화
+        String key = "WITHDRAWN_";
+        String withdrawnUserId = (key + foundUser.getUserId().toString()+ "_" + System.currentTimeMillis());
+        foundUser.setUsername(withdrawnUserId);
+        foundUser.setEmail(withdrawnUserId + "@dori.com");
+        foundUser.setNickname(key + foundUser.getNickname()+ "_" + System.currentTimeMillis());
+        foundUser.setPassword(encoder.encode(UUID.randomUUID().toString())); // 비밀번호를 아무도 모르는 값으로 변경
+        foundUser.setProfileImageUrl(null);
+
+        // 상태 및 탈퇴일시 변경
+        foundUser.setWithdraw(true);
+        foundUser.setWithdrawDate(LocalDateTime.now());
+
+        // 팔로우 관계 연관 데이터 정리
+        followRepository.deleteByFollowerOrFollowed(foundUser, foundUser);
+
     }
 
     //내 방 정보

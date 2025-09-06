@@ -13,20 +13,19 @@ import lombok.Builder;
 public record ItemResponse (
         Long itemId,
         String name,
-//        String imageUrl,
         ItemType itemType,
         ItemGroup itemGroup, // COMMON or AREA
         AreaGroup areaGroup, // nullable
         CollectionTheme theme, // nullable
         Long price,
         boolean isPurchasable,
-        boolean isOwned
+        boolean isOwned,
+        boolean isDefault
 ){
     public static ItemResponse from(Item i, boolean isOwned) {
         return ItemResponse.builder()
                 .itemId(i.getItemId())
                 .name(i.getName())
-//                .imageUrl(i.getImageUrl())
                 .itemType(i.getItemType())
                 .itemGroup(i.getItemGroup())
                 .areaGroup(i.getAreaGroup())
@@ -34,6 +33,7 @@ public record ItemResponse (
                 .theme(i.getTheme())
                 .isPurchasable(i.isPurchasable())
                 .isOwned(isOwned)
+                .isDefault(i.isDefault())
                 .build();
     }
 }

@@ -2,8 +2,8 @@ package doritos.doriroom.user.controller;
 
 
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
+import doritos.doriroom.user.dto.request.UserWithdrawalRequestDto;
 import doritos.doriroom.user.dto.response.UserSearchResultDto;
-import doritos.doriroom.follow.service.FollowService;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
@@ -31,14 +31,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-@Tag(name = "User", description = "")
+@Tag(name = "User", description = "유저 관련 API")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
     private final RoomLikeService roomLikeService;
-    private final FollowService followService;
 
         @GetMapping("/check-username")
         @Operation(summary = "아이디 중복 확인")
@@ -107,6 +106,14 @@ public class UserController {
             return ApiResponse.ok();
         }
 
+        @PostMapping("/me/withdraw")
+        @Operation(summary = "회원 탈퇴 요청", description = "유저 정보 및 팔로우 정보 삭제")
+        public ApiResponse<Void> withdraw(@AuthenticationPrincipal User user,
+                                          @Valid @RequestBody UserWithdrawalRequestDto request){
+            userService.withdraw(user, request);
+            return ApiResponse.ok();
+        }
+
         @GetMapping("/room")
         @Operation(summary = "내 방 정보 조회", description = "현재 로그인한 사용자의 방 정보를 조회합니다.")
         public ApiResponse<MyRoomResponseDto> getMyRoomInfo(@AuthenticationPrincipal User user) {
@@ -118,7 +125,8 @@ public class UserController {
         @Operation(summary = "다른 유저 방 정보 조회", description = "특정 유저의 방 정보 조회. 방문 시 조회수 증가")
         public ApiResponse<OtherUserRoomResponseDto> getOtherUserRoomInfo(
             @AuthenticationPrincipal User user,
-            @RequestParam @Valid UUID userId
+            @Parameter(description = "다른 유저 ID", example = "76ec4646-164b-41d8-8787-a66fd05af448", required = true)
+            @PathVariable("userId") UUID userId
         ){
             return ApiResponse.ok(userService.getOtherUserRoomInfo(user.getUserId(), userId));
         }

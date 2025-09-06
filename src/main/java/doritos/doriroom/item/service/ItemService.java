@@ -13,7 +13,10 @@ import doritos.doriroom.item.repository.ItemRepository;
 import doritos.doriroom.item.repository.UserItemRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
+
+import java.util.Optional;
 import java.util.UUID;
 import lombok.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -52,7 +55,7 @@ public class ItemService {
     }
 
     /* ---- 아이템 조회 관련 ---- */
-  
+
 
     // 전체 아이템 조회 (유저 보유 여부 포함)
     @Transactional(readOnly = true)
@@ -161,10 +164,12 @@ public class ItemService {
     // 아이템 구매
     @Transactional
     public PurchaseItemResponse purchase(User user, PurchaseItemRequest request) {
-        Long itemId = request.itemId();
+        // 해당 유저가 존재하는지 확인
+        User foundUser = userRepository.findById(user.getUserId())
+                .orElseThrow(UserNotFoundException::new);
 
         // 해당 아이템이 존재하는지 확인
-        Item item = itemRepository.findById(itemId)
+        Item item = itemRepository.findById(request.itemId())
                 .orElseThrow(ItemNotFoundException::new);
 
         // 구매 가능한 아이템인지 확인
@@ -172,16 +177,17 @@ public class ItemService {
             throw new ItemNotPurchasableException();
         }
 
-        user.deductCredit(item.getPrice()); // 크레딧 보유 여부 확인 및 차감
+        // DB에서 조회한 foundUser의 크레딧 차감 로직 수행 (dirty checking)
+        foundUser.deductCredit(item.getPrice()); // 크레딧 보유 여부 확인 및 차감
 
         // 아이템 저장
-        addToInventory(user, item);
+        addToInventory(foundUser, item);
 
         return new PurchaseItemResponse(
                 item.getItemId(),
                 item.getName(),
                 item.getPrice(),
-                user.getCredit()
+                foundUser.getCredit()
         );
     }
 
@@ -191,35 +197,34 @@ public class ItemService {
     // 아이템 착용 및 해제 (타입별)
     @Transactional
     public EquipItemResponse equip(User user, EquipItemRequest request) {
-        Long itemId = request.itemId();
-
         // 해당 아이템이 존재하는지 확인
-        Item item = itemRepository.findById(itemId)
+        Item item = itemRepository.findById(request.itemId())
                 .orElseThrow(ItemNotFoundException::new);
 
         // 유저가 보유하고 있는지 확인
         UserItem userItem = userItemRepository.findByUserAndItem(user, item)
                 .orElseThrow(NotOwnedException::new);
 
-        // 해당 타입의 기존 착용 아이템 해제
-        userItemRepository.findByUserAndItem_ItemTypeAndIsEquippedTrue(user, item.getItemType())
-                .ifPresent(current -> {
-                    current.unequip();
-                    userItemRepository.save(current);
-                });
+        // 해당 타입의 기존 착용 아이템이 있는지 여부 확인
+        Optional<UserItem> currentlyEquippedItem = userItemRepository.findByUserAndItem_ItemTypeAndIsEquippedTrue(user, item.getItemType());
 
-        // 아이템 해제 및 착용
-        if (userItem.isEquipped()) {
-            userItem.unequip();
-        } // 같은 아이템 착용 중이었다면 해제
-        else {
+        // 유저 아이템의 착용 상태
+        boolean isEquipped = userItem.isEquipped();
+
+        // 해당 타입에 착용하고 있는 아이템이 있는 경우 이를 해제
+        if (currentlyEquippedItem.isPresent()) {
+            currentlyEquippedItem.get().unequip();
+        }
+
+        // 유저가 원래 착용 중이었던 아이템이 아니면 새로 착용
+        if (!isEquipped) {
             userItem.equip();
         }
 
         userItemRepository.save(userItem);
 
         return new EquipItemResponse(
-                itemId,
+                item.getItemId(),
                 item.getName(),
                 item.getItemType(),
                 userItem.isEquipped()
@@ -236,10 +241,10 @@ public class ItemService {
     //다른 유저 착용 아이템 조회
     public List<EquippedItemResponse> getOtherUserEquippedItems(UUID userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
 
         return userItemRepository.findByUserAndIsEquippedTrue(user)
-            .stream().map(EquippedItemResponse::from).toList();
+                .stream().map(EquippedItemResponse::from).toList();
     }
 
 
