@@ -94,7 +94,7 @@ public class EventService {
     @Transactional
     public void updateEventDetails() {
         List<Event> events = eventRepository.findByEventDetailStatusOrderByStartDateDesc(EventDetailStatus.PENDING);
-        int dailyLimit = 900;
+        int dailyLimit = 450;
         int processedEvents = 0; // 이벤트 수로 집계
 
         log.info("축제 상세정보 업데이트 시작");
@@ -186,8 +186,6 @@ public class EventService {
         //DB에 상세정보가 없으면 tourAPI 호출
         if(event.getEventDetailStatus() == EventDetailStatus.PENDING){
             EventDetailStatus currentStatus;
-//            CompletableFuture<TourApiDetailIntroDto> introFuture = null;
-//            CompletableFuture<List<TourApiDetailInfoDto>> infoFuture = null;
 
             try{
                 // 두 API를 비동기 호출
