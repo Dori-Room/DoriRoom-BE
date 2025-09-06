@@ -55,9 +55,9 @@ public class ChallengeService {
         Map<Long, UserChallenge> userChallengeMap = userChallengeRepository.findByUserAndChallengeInWithFetch(user, challenges).stream()
                 .collect(Collectors.toMap(uc -> uc.getChallenge().getId(), uc -> uc));
 
-        // VISIT_SIDO 타입 과제 여부 확인
+        // VISIT_EVENT 타입 과제 여부 확인
         boolean hasVisitSidoChallenge = challenges.stream()
-            .anyMatch(challenge -> challenge.getChallengeType() == ChallengeType.VISIT_SIDO);
+            .anyMatch(challenge -> challenge.getChallengeType() == ChallengeType.VISIT_EVENT);
 
         String sidoPolygon = getSidoPolygon(hasVisitSidoChallenge, areaGroup);
 
@@ -66,7 +66,7 @@ public class ChallengeService {
                 .map(challenge -> {
                     UserChallenge userProgress = userChallengeMap.get(challenge.getId());
 
-                    if(challenge.getChallengeType() == ChallengeType.VISIT_SIDO){
+                    if(challenge.getChallengeType() == ChallengeType.VISIT_EVENT){
                         return ChallengeResponseDto.ofWithSido(
                             challenge,
                             userProgress,
@@ -252,8 +252,7 @@ public class ChallengeService {
         // 수동 시작이 가능한 과제 타입 목록 (도전 버튼 클릭으로 수행하는 과제)
         List<ChallengeType> manualStartTypes = List.of(
                 ChallengeType.VISIT_EVENT,
-                ChallengeType.REGIONAL_QUIZ,
-                ChallengeType.VISIT_SIDO
+                ChallengeType.REGIONAL_QUIZ
         );
 
         // 그 이외 자동 집계 도전과제인 경우에는 예외 처리

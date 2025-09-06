@@ -60,7 +60,7 @@ public record ChallengeResponseDto(
                 .build();
     }
 
-    //VISIT_SIDO인 경우 좌표 정보 제공
+    //VISIT_EVENT인 경우 좌표 정보 제공
     public static ChallengeResponseDto ofWithSido(Challenge challenge, UserChallenge userChallenge, String geoPolygon) {
         return ChallengeResponseDto.builder()
             .challengeId(challenge.getId())

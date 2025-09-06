@@ -616,7 +616,7 @@ public class DataInitializer implements ApplicationRunner {
             .title(areaGroup.getName() + " 방문하기")
             .content(areaGroup.getName() + " 지역을 방문하여 인증하세요.")
             .challengeGroup(ChallengeGroup.AREA)
-            .challengeType(ChallengeType.VISIT_SIDO)
+            .challengeType(ChallengeType.VISIT_EVENT)
             .targetCount(1)
             .areaGroup(areaGroup)
             .startDate(null)
