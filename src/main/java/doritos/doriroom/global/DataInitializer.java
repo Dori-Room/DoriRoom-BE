@@ -125,44 +125,6 @@ public class DataInitializer implements ApplicationRunner {
         System.out.println("지역 정보 초기화 완료: " + areas.size() + "개 지역");
     }
 
-    private void createInitializeAreaPolygon() {
-        Map<AreaGroup, String> polygonFile = Map.of(
-            AreaGroup.SEOUL, "data/area-polygon/seoul.json"
-        );
-
-        List<Area> areas = areaRepository.findAll();
-        Map<Integer, Area> areaMap = areas.stream()
-            .collect(Collectors.toMap(Area::getCode, area -> area));
-
-        for (Map.Entry<AreaGroup, String> entry : polygonFile.entrySet()) {
-            AreaGroup areaGroup = entry.getKey();
-            String filePath = entry.getValue();
-
-            try {
-                ClassPathResource resource = new ClassPathResource(filePath);
-                if(!resource.exists()){
-                    log.warn("지역 좌표 파일이 존재하지 않습니다: {}", filePath);
-                    continue;
-                }
-                JsonNode coordinateData = objectMapper.readTree(resource.getInputStream());
-
-                // 해당 AreaGroup의 첫 번째 areaCode로 Area 찾기
-                Integer areaCode = areaGroup.getAreaCodes().get(0);
-                Area area = areaMap.get(areaCode);
-
-//                if (area != null) {
-//                    area.updatePolygonInfo(objectMapper.writeValueAsString(coordinateData.get("coordinates")));
-//                }
-
-            } catch (Exception e) {
-                log.error("지역 좌표 파일 로드 실패: {}", filePath, e);
-            }
-        }
-
-        areaRepository.saveAll(areas);
-        log.info("지역 좌표 정보 초기화 완료: {}개 지역", areas.size());
-    }
-
     // 아이템 초기 데이터
     private void createInitialItems() {
         List<Item> items = List.of(
