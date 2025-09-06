@@ -361,7 +361,7 @@ public class DiaryService {
         boolean isOwnDiary = currentUserId.equals(targetUserId);
 
         Page<Diary> diaries = isOwnDiary ?
-            diaryRepository.findByUserIdOrderByVisitedAtDesc(targetUserId, pageable) :
+            diaryRepository.findByUserIdOrderByCreatedAtDesc(targetUserId, pageable) :
             diaryRepository.findPublicByUserIdOrderByVisitedAtDesc(targetUserId, pageable);
 
         return createDiaryResponsePage(diaries, targetUser, pageable);

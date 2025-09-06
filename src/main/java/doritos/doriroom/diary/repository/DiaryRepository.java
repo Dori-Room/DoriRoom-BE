@@ -40,7 +40,7 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
 
     boolean existsByUserIdAndEventId(UUID userId, UUID eventId);
 
-    Page<Diary> findByUserIdOrderByVisitedAtDesc(UUID userId, Pageable pageable);
+    Page<Diary> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
     @Query("""
         SELECT d FROM Diary d
