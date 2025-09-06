@@ -405,7 +405,7 @@ public class DiaryService {
         LocalDateTime endDateTime = endOfMonth.atTime(23, 59, 59);
 
         // 인기글 조회 (좋아요 수 기준으로 정렬)
-        Pageable pageable = PageRequest.of(0, 10);
+        Pageable pageable = PageRequest.of(0, 5);
         List<Diary> popularDiaries = diaryRepository.findPopularDiariesByMonth(
             startDateTime, endDateTime, pageable);
 
