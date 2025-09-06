@@ -15,6 +15,8 @@ import doritos.doriroom.event.repository.EventRepository;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -114,7 +116,7 @@ public class EventService {
                         event.getContentId());
 
                     // 두 작업이 모두 끝날 때까지 기다림
-                    CompletableFuture.allOf(introFuture, infoFuture).join();
+                    CompletableFuture.allOf(introFuture, infoFuture).get(30, TimeUnit.SECONDS);
                     processedCount += 2;
 
                     // 결과 가져오기
@@ -131,6 +133,10 @@ public class EventService {
                         event.updateDetailInfoFrom(detailInfoList);
                         currentStatus = EventDetailStatus.SUCCESS;
                     }
+                } catch (TimeoutException e) {
+                    log.error("API 호출 타임아웃: contentId={}", event.getContentId(), e);
+                    currentStatus = EventDetailStatus.FAILED;
+                    processedCount += 2;
                 } catch (Exception e) {
                     log.error("축제 상세정보 업데이트 실패. contentId: {}, error: {}", event.getContentId(),
                         e.getMessage());
