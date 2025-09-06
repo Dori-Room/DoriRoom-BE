@@ -61,7 +61,6 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         AND d.createdAt >= :startDate
         AND d.createdAt <= :endDate
         ORDER BY d.likes DESC, d.createdAt DESC, d.diaryId DESC
-        limit 5
         """)
     List<Diary> findPopularDiariesByMonth(
         @Param("startDate") LocalDateTime startDate,
