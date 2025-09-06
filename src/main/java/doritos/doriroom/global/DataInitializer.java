@@ -61,7 +61,6 @@ public class DataInitializer implements ApplicationRunner {
         if(areaRepository.count() == 0){
             createInitialAreas();
         }
-        createInitializeAreaPolygon();
 
         if (itemRepository.count() == 0) {
             createInitialItems();
@@ -151,9 +150,9 @@ public class DataInitializer implements ApplicationRunner {
                 Integer areaCode = areaGroup.getAreaCodes().get(0);
                 Area area = areaMap.get(areaCode);
 
-                if (area != null) {
-                    area.updatePolygonInfo(objectMapper.writeValueAsString(coordinateData.get("coordinates")));
-                }
+//                if (area != null) {
+//                    area.updatePolygonInfo(objectMapper.writeValueAsString(coordinateData.get("coordinates")));
+//                }
 
             } catch (Exception e) {
                 log.error("지역 좌표 파일 로드 실패: {}", filePath, e);
@@ -538,6 +537,10 @@ public class DataInitializer implements ApplicationRunner {
             return null;
         }
 
+        log.info("축제 좌표 생성: {}, contentId: {}", title, event.getContentId());
+        String polygon = getEventPolygonFromFile(event.getContentId());
+        log.info("축제 polygon 결과: {}", polygon != null ? "성공" : "실패");
+
         Challenge challenge = Challenge.builder()
                 .title(title)
                 .challengeGroup(ChallengeGroup.AREA)
@@ -545,6 +548,7 @@ public class DataInitializer implements ApplicationRunner {
                 .targetCount(1)
                 .areaGroup(areaGroup)
                 .event(event)
+                .polygon(polygon)
                 .build();
 
         // 보상: 크레딧 20 + 도감 경험치 200
@@ -612,6 +616,8 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     private Challenge createSidoVisitChallenge(AreaGroup areaGroup) {
+        String polygon = getAreaPolygonFromFile(areaGroup);
+
         Challenge challenge = Challenge.builder()
             .title(areaGroup.getName() + " 방문하기")
             .content(areaGroup.getName() + " 지역을 방문하여 인증하세요.")
@@ -619,6 +625,7 @@ public class DataInitializer implements ApplicationRunner {
             .challengeType(ChallengeType.VISIT_EVENT)
             .targetCount(1)
             .areaGroup(areaGroup)
+            .polygon(polygon)
             .startDate(null)
             .endDate(null)
             .build();
@@ -628,5 +635,58 @@ public class DataInitializer implements ApplicationRunner {
         challenge.getRewards().add(ChallengeReward.builder().challenge(challenge).rewardType(RewardType.EXP).amount(200L).build());
 
         return challenge;
+    }
+
+    // 지역 polygon 좌표를 파일에서 가져오는 메서드
+    private String getAreaPolygonFromFile(AreaGroup areaGroup) {
+        Map<AreaGroup, String> polygonFile = Map.of(
+            AreaGroup.SEOUL, "data/area-polygon/seoul.json"
+        );
+
+        String filePath = polygonFile.get(areaGroup);
+        if (filePath == null) {
+            log.warn("지역 {}에 대한 polygon 파일이 설정되지 않았습니다.", areaGroup);
+            return null;
+        }
+
+        try {
+            ClassPathResource resource = new ClassPathResource(filePath);
+            if (!resource.exists()) {
+                log.warn("지역 좌표 파일이 존재하지 않습니다: {}", filePath);
+                return null;
+            }
+            JsonNode coordinateData = objectMapper.readTree(resource.getInputStream());
+            return objectMapper.writeValueAsString(coordinateData);
+        } catch (Exception e) {
+            log.error("지역 좌표 파일 로드 실패: {}", filePath, e);
+            return null;
+        }
+    }
+
+    //축제 polygon을 파일에서 가져오는 메서드
+    private String getEventPolygonFromFile(int contentId) {
+        Map<Integer, String> eventPolygonFiles = Map.of(
+            // contentId와 JSON 파일 경로 매핑
+            3473295, "data/event-polygon/event_3473295.json"
+        );
+
+        String filePath = eventPolygonFiles.get(contentId);
+        if (filePath == null) {
+            log.warn("축제 {}에 대한 polygon 파일이 설정되지 않았습니다.", contentId);
+            return null;
+        }
+
+        try {
+            ClassPathResource resource = new ClassPathResource(filePath);
+            if (!resource.exists()) {
+                log.warn("축제 polygon 파일이 존재하지 않습니다: {}", filePath);
+                return null;
+            }
+            JsonNode coordinateData = objectMapper.readTree(resource.getInputStream());
+            return objectMapper.writeValueAsString(coordinateData);
+        } catch (Exception e) {
+            log.error("축제 polygon 파일 로드 실패: {}", filePath, e);
+            return null;
+        }
     }
 }
