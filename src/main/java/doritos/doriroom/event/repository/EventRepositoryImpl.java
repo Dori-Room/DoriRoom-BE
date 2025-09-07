@@ -47,7 +47,7 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
             query.orderBy(getOrderSpecifier(filter.sortType(), event));
         } else {
             // 기본 정렬: 최신순
-            query.orderBy(event.startDate.desc());
+            query.orderBy(event.startDate.desc(), event.eventId.desc());
         }
 
         List<Event> results = query
@@ -167,10 +167,10 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
                     .add(event.favoriteCount)
                     .intValue();
 
-                yield new OrderSpecifier<?>[]{recommendationScore.desc(), event.startDate.desc()};
+                yield new OrderSpecifier<?>[]{recommendationScore.desc(), event.startDate.desc(), event.eventId.desc()};
             }
             case LATEST -> new OrderSpecifier<?>[]{event.startDate.desc()};
-            case POPULAR -> new OrderSpecifier<?>[]{event.favoriteCount.desc(), event.startDate.desc()};
+            case POPULAR -> new OrderSpecifier<?>[]{event.favoriteCount.desc(), event.startDate.desc(), event.eventId.desc()};
         };
     }
 }
