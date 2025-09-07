@@ -94,8 +94,8 @@ public class FollowService {
         followRepository.delete(follow); // 팔로우 관계 삭제
 
         // 일반 과제 진행에 반영 (현재 팔로워 수 새로 반영)
-        int currentFollowingCount = followRepository.countByFollower(user);
-        challengeService.updateChallengeProgressCount(user, ChallengeType.REACH_NEIGHBOR_COUNT, currentFollowingCount);
+        int currentFollowerCount = followRepository.countByFollowed(user);
+        challengeService.updateChallengeProgressCount(user, ChallengeType.REACH_FOLLOWER_COUNT, currentFollowerCount);
     }
 
     // 단짝 친구 설정 및 해제(토글(

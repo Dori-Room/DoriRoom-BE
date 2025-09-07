@@ -20,6 +20,7 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
     Optional<Follow> findByFollowerAndFollowed(User follower, User followed); // 팔로우 관계 조회
 
     int countByFollower(User follower); // 내가 팔로우 하는 유저의 총합
+    int countByFollowed(User followed); // 나를 팔로우 하는 유저의 총합
 
     // 내가 팔로우하는 사람들 조회
     @EntityGraph(attributePaths = {"followed"}) // 한 번에 조회하도록 설정

@@ -5,7 +5,8 @@ public enum ChallengeType {
     WRITE_DIARY,        // 일기 작성
     VISIT_NEIGHBOR,     // 이웃 집 방문
     REACH_VISIT_COUNT,      // 방 조회수 N번 달성
-    REACH_NEIGHBOR_COUNT, // 이웃 N명 달성
+    REACH_NEIGHBOR_COUNT, // 이웃 N명 달성 (내가 추가한 이웃, 팔로잉)
+    REACH_FOLLOWER_COUNT, // 나를 추가한 이웃 N명 달성 (팔로워)
     REACH_ROOM_COUNT,    // 방 좋아요 수 N개 달성
     COLLECT_ITEM,       // 아이템 수집
 
