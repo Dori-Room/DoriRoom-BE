@@ -212,11 +212,11 @@ public class DataInitializer implements ApplicationRunner {
                 ChallengeType.REACH_VISIT_COUNT, 20);
 
         // 4. 이웃 N명 달성
-        Challenge reachNeighborCount = createCommonChallenge("이웃 10명 달성하기", "총 10명의 이웃(팔로잉)을 만들어보세요.",
+        Challenge reachNeighborCount = createCommonChallenge("내가 추가한 이웃 10명 달성하기", "총 10명의 이웃(팔로잉)을 만들어보세요.",
                 ChallengeType.REACH_NEIGHBOR_COUNT, 10);
 
         // 4-1. 나를 추가한 이웃 N명 달성
-        Challenge reachFollowerCount = createCommonChallenge("이웃 10명 달성하기", "총 10명의 나를 추가한 이웃(팔로워)을 만들어보세요.",
+        Challenge reachFollowerCount = createCommonChallenge("나를 추가한 이웃 10명 달성하기", "총 10명의 나를 추가한 이웃(팔로워)을 만들어보세요.",
                 ChallengeType.REACH_FOLLOWER_COUNT, 10);
 
         // 5. 방 좋아요 수 N개 달성
