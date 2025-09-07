@@ -215,6 +215,10 @@ public class DataInitializer implements ApplicationRunner {
         Challenge reachNeighborCount = createCommonChallenge("이웃 10명 달성하기", "총 10명의 이웃(팔로잉)을 만들어보세요.",
                 ChallengeType.REACH_NEIGHBOR_COUNT, 10);
 
+        // 4-1. 나를 추가한 이웃 N명 달성
+        Challenge reachFollowerCount = createCommonChallenge("이웃 10명 달성하기", "총 10명의 나를 추가한 이웃(팔로워)을 만들어보세요.",
+                ChallengeType.REACH_FOLLOWER_COUNT, 10);
+
         // 5. 방 좋아요 수 N개 달성
         Challenge reachRoomLikeCount = createCommonChallenge("방 좋아요 15개 받기", "내 방의 좋아요 수를 15개 달성해보세요.",
                 ChallengeType.REACH_ROOM_COUNT, 15);
@@ -223,8 +227,8 @@ public class DataInitializer implements ApplicationRunner {
         Challenge collectItem = createCommonChallenge("아이템 3개 수집하기", "종류에 상관없이 아이템을 3개 수집해보세요.",
                 ChallengeType.COLLECT_ITEM, 3);
 
-        challengeRepository.saveAll(List.of(writeDiary, visitNeighbor, reachVisitCount, reachNeighborCount, reachRoomLikeCount, collectItem));
-        System.out.println("일반 과제 초기 데이터가 6개 생성되었습니다.");
+        challengeRepository.saveAll(List.of(writeDiary, visitNeighbor, reachVisitCount, reachNeighborCount, reachFollowerCount, reachRoomLikeCount, collectItem));
+        System.out.println("일반 과제 초기 데이터가 7개 생성되었습니다.");
     }
 
     // 도전과제 초기 데이터 (지역 퀴즈)
