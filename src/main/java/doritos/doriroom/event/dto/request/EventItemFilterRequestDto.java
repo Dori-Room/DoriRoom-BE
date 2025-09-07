@@ -1,5 +1,6 @@
 package doritos.doriroom.event.dto.request;
 
+import doritos.doriroom.event.domain.EventSortType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
@@ -21,6 +22,9 @@ public record EventItemFilterRequestDto(
     LocalDate endDate,
 
     @Schema(description = "검색 키워드", example = "축제")
-    String keyword
+    String keyword,
+
+    @Schema(description = "정렬 타입 (RECOMMENDED: 추천순, LATEST: 최신순, POPULAR: 좋아요순)", example = "RECOMMENDED")
+    EventSortType sortType
     ) {
 }

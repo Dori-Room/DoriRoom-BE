@@ -1,12 +1,15 @@
 package doritos.doriroom.event.repository;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import doritos.doriroom.diary.domain.QDiary;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.domain.EventDetailStatus;
+import doritos.doriroom.event.domain.EventSortType;
 import doritos.doriroom.event.domain.QEvent;
 import doritos.doriroom.event.domain.QEventFavorite;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
@@ -38,6 +41,14 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
                 eqDateRange(filter.startDate(), filter.endDate(), event),
                 eqKeyword(filter.keyword(), event)
             );
+
+        // 정렬 적용
+        if (filter.sortType() != null) {
+            query.orderBy(getOrderSpecifier(filter.sortType(), event));
+        } else {
+            // 기본 정렬: 최신순
+            query.orderBy(event.startDate.desc());
+        }
 
         List<Event> results = query
             .offset(pageable.getOffset())
@@ -146,5 +157,20 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
 
     private BooleanExpression isSuccessStatus(QEvent event) {
         return event.eventDetailStatus.eq(EventDetailStatus.SUCCESS);
+    }
+
+    private OrderSpecifier<?>[] getOrderSpecifier(EventSortType sortType, QEvent event) {
+        return switch (sortType) {
+            case RECOMMENDED -> {
+                // 추천순: (일기개수*2 + 좋아요수) 내림차순, 시작일 내림차순
+                NumberExpression<Integer> recommendationScore = event.diaryCount.multiply(2)
+                    .add(event.favoriteCount)
+                    .intValue();
+
+                yield new OrderSpecifier<?>[]{recommendationScore.desc(), event.startDate.desc()};
+            }
+            case LATEST -> new OrderSpecifier<?>[]{event.startDate.desc()};
+            case POPULAR -> new OrderSpecifier<?>[]{event.favoriteCount.desc(), event.startDate.desc()};
+        };
     }
 }
