@@ -61,19 +61,19 @@ public class FollowController {
     }
 
 
-    @Operation(summary = "팔로워 목록 조회", description = "내가 팔로우하는 유저 목록을 조회. 최신, 오래된순, 단짝친구만(최신순) 으로 필터링. 기본값 최신순")
-    @GetMapping("/followers")
+    @Operation(summary = "팔로잉 목록 조회", description = "내가 팔로우하는 유저 목록을 조회. 최신, 오래된순, 단짝친구만(최신순) 으로 필터링. 기본값 최신순")
+    @GetMapping("/following")
     public ApiResponse<Page<FollowUserInfoDto>> getFollowingList(@AuthenticationPrincipal User user,
                                                                  @RequestParam(defaultValue = "RECENT") FollowFilterType filterType,
                                                                  @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ApiResponse.ok(followService.getFollowerList(user, filterType, pageable));
+        return ApiResponse.ok(followService.getFollowingList(user, filterType, pageable));
     }
 
-    @Operation(summary = "팔로잉 목록 조회", description = "나를 팔로우하는 유저 목록을 조회. 최신순, 오래된순으로 정렬")
-    @GetMapping("/following")
+    @Operation(summary = "팔로워 목록 조회", description = "나를 팔로우하는 유저 목록을 조회. 최신순, 오래된순으로 정렬")
+    @GetMapping("/followers")
     public ApiResponse<Page<FollowUserInfoDto>> getFollowerList(@AuthenticationPrincipal User user,
                                                                 @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ApiResponse.ok(followService.getFollowingList(user, pageable));
+        return ApiResponse.ok(followService.getFollowerList(user, pageable));
     }
 
 }
