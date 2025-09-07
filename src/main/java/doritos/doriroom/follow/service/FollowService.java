@@ -82,6 +82,22 @@ public class FollowService {
         challengeService.updateChallengeProgressCount(user, ChallengeType.REACH_NEIGHBOR_COUNT, currentFollowingCount);
     }
 
+    @Transactional
+    public void removeFollower(User user, UUID targetUserId) {
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 팔로우 관계가 존재하는지 확인
+        Follow follow = followRepository.findByFollowerAndFollowed(targetUser, user)
+                .orElseThrow(FollowNotFoundException::new);
+
+        followRepository.delete(follow); // 팔로우 관계 삭제
+
+        // 일반 과제 진행에 반영 (현재 팔로워 수 새로 반영)
+        int currentFollowingCount = followRepository.countByFollower(user);
+        challengeService.updateChallengeProgressCount(user, ChallengeType.REACH_NEIGHBOR_COUNT, currentFollowingCount);
+    }
+
     // 단짝 친구 설정 및 해제(토글(
     @Transactional
     public FollowResponseDto toggleBestFriend(User user, UUID targetUserId, SetBestFriendRequestDto request) {
