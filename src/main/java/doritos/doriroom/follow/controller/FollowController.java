@@ -38,6 +38,15 @@ public class FollowController {
         return ApiResponse.ok();
     }
 
+    @Operation(summary = "팔로워 삭제하기", description = "나를 팔로우 하는 특정 유저를 팔로우 해제 처리")
+    @DeleteMapping("/follower/{targetUserId}")
+    public ApiResponse<Void> removeFollower(@AuthenticationPrincipal User user,
+                                          @PathVariable UUID targetUserId){
+        followService.removeFollower(user, targetUserId);
+        return ApiResponse.ok();
+    }
+
+
     @Operation(summary = "단짝 친구 설정 및 해제", description = "팔로우한 유저를 단짝 친구로 설정하거나 해제. 변경하려는 상태를 요청에 포함하여 반영.")
     @PutMapping("/{targetUserId}/best-friend")
     public ApiResponse<FollowResponseDto> toggleBestFriend(@AuthenticationPrincipal User user,
