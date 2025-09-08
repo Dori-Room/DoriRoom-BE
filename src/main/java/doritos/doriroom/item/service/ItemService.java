@@ -64,7 +64,8 @@ public class ItemService {
     @Transactional(readOnly = true)
     public List<ItemResponse> getAllItems(User user) {
         // 캐시에서 아이템 조회
-        Optional<List<Item>> cachedItems = redisCacheService.getCacheList(RedisCacheService.ALL_ITEMS_KEY, new TypeReference<>() {});
+        Optional<List<Item>> cachedItems = redisCacheService.getCacheList(
+                RedisCacheService.ALL_ITEMS_KEY, new TypeReference<List<Item>>() {});
 
         List<Item> allItems;
         if (cachedItems.isPresent()) {

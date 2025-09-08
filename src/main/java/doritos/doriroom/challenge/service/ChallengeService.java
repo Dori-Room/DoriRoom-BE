@@ -50,10 +50,11 @@ public class ChallengeService {
     @Transactional(readOnly = true)
     public List<ChallengeResponseDto> getChallengesByGroup(User user, ChallengeGroup challengeGroup, AreaGroup areaGroup){
         // 그룹별로 사용할 캐시 키 정의
-        String cacheKeyByGroup = RedisCacheService.CHALLENGES_KEY + challengeGroup.toString() + (areaGroup != null ? "_" + areaGroup.toString() : "");
+        String cacheKeyByGroup = RedisCacheService.CHALLENGES_KEY + challengeGroup + (areaGroup != null ? ":" + areaGroup : "");
 
         // 캐시에서 조회
-        Optional<List<Challenge>> cachedChallenges = redisCacheService.getCacheList(cacheKeyByGroup, new TypeReference<>() {});
+        Optional<List<Challenge>> cachedChallenges = redisCacheService.getCacheList(
+                cacheKeyByGroup, new TypeReference<List<Challenge>>() {});
 
         List<Challenge> challenges;
         if (cachedChallenges.isPresent()) { // 캐시에 있으면 가져옴
@@ -61,6 +62,10 @@ public class ChallengeService {
         } else {
             challenges = challengeFilterByGroup(challengeGroup, areaGroup); // 없으면 db에서 조회
             redisCacheService.setCache(cacheKeyByGroup, challenges, RedisCacheService.CHALLENGES_TTL); // 캐시에 저장해둠
+        }
+
+        if (challenges.isEmpty()) {
+            return List.of();
         }
 
         // 과제들에 대한 유저의 과제 상태 리스트 -> Map으로 변환
