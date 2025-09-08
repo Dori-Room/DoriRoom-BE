@@ -21,11 +21,15 @@ public class RedisCacheService {
     public static final String UPCOMING_EVENTS_KEY = "upcoming_events";
     public static final String ENDING_SOON_EVENTS_KEY = "ending_soon_events";
     public static final String POPULAR_DIARIES_KEY = "popular_diaries";
+    public static final String ALL_ITEM_KEY = "all_items";
+    public static final String CHALLENGES_KEY = "challenges:";
 
     public static final Duration POPULAR_EVENTS_TTL = Duration.ofMinutes(30);
     public static final Duration UPCOMING_EVENTS_TTL = Duration.ofDays(1);
     public static final Duration ENDING_SOON_EVENTS_TTL = Duration.ofDays(1);
     public static final Duration POPULAR_DIARIES_TTL = Duration.ofMinutes(30);
+    public static final Duration ALL_ITEM_TTL = Duration.ofDays(1);
+    public static final Duration CHALLENGES_TTL = Duration.ofHours(1);
 
     //캐시 저장
     public <T> void setCache(String key, T data, Duration ttl) {
