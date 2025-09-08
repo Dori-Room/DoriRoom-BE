@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-@Table(uniqueConstraints = {
+@Table(name = "user_items", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"user_id", "item_id"})
 }) // 유저는 각 아이템을 하나씩만 소지 가능
 public class UserItem {
