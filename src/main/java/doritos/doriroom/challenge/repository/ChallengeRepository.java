@@ -3,6 +3,7 @@ package doritos.doriroom.challenge.repository;
 import doritos.doriroom.challenge.domain.challenge.Challenge;
 import doritos.doriroom.challenge.domain.challenge.ChallengeGroup;
 import doritos.doriroom.challenge.domain.challenge.ChallengeType;
+import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import lombok.NonNull;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,6 +17,7 @@ import java.util.Optional;
 public interface ChallengeRepository extends JpaRepository<Challenge, Long> {
     @NonNull
     Optional<Challenge> findById(@NonNull Long challengeId); // 단일과제 조회
+    Optional<Challenge> findFirstByEvent(Event event); // 해당 이벤트와 관련된 도전과제  (첫 번째 하나만 조회)
 
     List<Challenge> findByChallengeType(ChallengeType challengeType); // 도전과제 타입별 리스트 조회
 

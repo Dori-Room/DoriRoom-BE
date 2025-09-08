@@ -1,6 +1,8 @@
 package doritos.doriroom.event.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import doritos.doriroom.challenge.domain.challenge.Challenge;
+import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.event.domain.Event;
 import doritos.doriroom.event.domain.EventDetailStatus;
 import doritos.doriroom.event.dto.request.EventItemFilterRequestDto;
@@ -34,21 +36,22 @@ public class EventService {
     private final TourApiService tourApiService;
     private final EventRepository eventRepository;
     private final RedisCacheService redisCacheService;
+    private final ChallengeRepository challengeRepository;
 
     @Transactional
     public void getAllEvents() {
         List<TourApiItemDto> items = tourApiService.fetchAllEvents();
 
         List<String> contentIds = items.stream()
-            .map(TourApiItemDto::getContentid)
-            .toList();
+                .map(TourApiItemDto::getContentid)
+                .toList();
 
         List<String> existingIds = eventRepository.findAllContentIdIn(contentIds);
 
         List<Event> newEvents = items.stream()
-            .filter(dto -> !existingIds.contains(dto.getContentid()))
-            .map(Event::fromEntity)
-            .toList();
+                .filter(dto -> !existingIds.contains(dto.getContentid()))
+                .map(Event::fromEntity)
+                .toList();
 
         eventRepository.saveAll(newEvents);
         log.info(" 총 {}개 이벤트 저장 완료", newEvents.size());
@@ -59,10 +62,10 @@ public class EventService {
         List<TourApiItemDto> items = tourApiService.fetchTodayEvents();
 
         List<Integer> contentIds = items.stream()
-            .map(TourApiItemDto::getContentid)
-            .filter(id -> id != null && !id.isBlank())
-            .map(Integer::parseInt)
-            .toList();
+                .map(TourApiItemDto::getContentid)
+                .filter(id -> id != null && !id.isBlank())
+                .map(Integer::parseInt)
+                .toList();
 
         List<Event> existingEvents = eventRepository.findEventsByContentIds(contentIds);
         Map<Integer, Event> existingEventMap = new HashMap<>();
@@ -118,7 +121,7 @@ public class EventService {
             if(event.getEventDetailStatus() == EventDetailStatus.PENDING) {
                 CompletableFuture<TourApiDetailIntroDto> introFuture = null;
                 CompletableFuture<List<TourApiDetailInfoDto>> infoFuture = null;
-                
+
                 try {
                     // 두 API를 비동기 호출
                     introFuture = tourApiService.fetchEventDetailIntro(event.getContentId());
@@ -181,9 +184,9 @@ public class EventService {
     public List<Event> getUpcomingEvents(){
         // 캐시에서 먼저 조회
         Optional<List<Event>> cachedEvents = redisCacheService.getCacheList(
-            RedisCacheService.UPCOMING_EVENTS_KEY,
-            new TypeReference<>() {
-            }
+                RedisCacheService.UPCOMING_EVENTS_KEY,
+                new TypeReference<>() {
+                }
         );
 
         if (cachedEvents.isPresent()) {
@@ -196,9 +199,9 @@ public class EventService {
 
         // 캐시에 저장
         redisCacheService.setCache(
-            RedisCacheService.UPCOMING_EVENTS_KEY,
-            events,
-            RedisCacheService.UPCOMING_EVENTS_TTL
+                RedisCacheService.UPCOMING_EVENTS_KEY,
+                events,
+                RedisCacheService.UPCOMING_EVENTS_TTL
         );
 
         return events;
@@ -207,9 +210,9 @@ public class EventService {
     public List<Event> getEndingSoonEvents() {
         // 캐시에서 먼저 조회
         Optional<List<Event>> cachedEvents = redisCacheService.getCacheList(
-            RedisCacheService.ENDING_SOON_EVENTS_KEY,
-            new TypeReference<>() {
-            }
+                RedisCacheService.ENDING_SOON_EVENTS_KEY,
+                new TypeReference<>() {
+                }
         );
 
         if (cachedEvents.isPresent()) {
@@ -222,9 +225,9 @@ public class EventService {
 
         // 캐시에 저장
         redisCacheService.setCache(
-            RedisCacheService.ENDING_SOON_EVENTS_KEY,
-            events,
-            RedisCacheService.ENDING_SOON_EVENTS_TTL
+                RedisCacheService.ENDING_SOON_EVENTS_KEY,
+                events,
+                RedisCacheService.ENDING_SOON_EVENTS_TTL
         );
 
         return events;
@@ -233,9 +236,9 @@ public class EventService {
     public List<Event> getPopularEvents(){
         // 캐시에서 먼저 조회
         Optional<List<Event>> cachedEvents = redisCacheService.getCacheList(
-            RedisCacheService.POPULAR_EVENTS_KEY,
-            new TypeReference<>() {
-            }
+                RedisCacheService.POPULAR_EVENTS_KEY,
+                new TypeReference<>() {
+                }
         );
 
         if (cachedEvents.isPresent()) {
@@ -247,9 +250,9 @@ public class EventService {
 
         // 캐시에 저장
         redisCacheService.setCache(
-            RedisCacheService.POPULAR_EVENTS_KEY,
-            events,
-            RedisCacheService.POPULAR_EVENTS_TTL
+                RedisCacheService.POPULAR_EVENTS_KEY,
+                events,
+                RedisCacheService.POPULAR_EVENTS_TTL
         );
 
         return events;
@@ -257,13 +260,16 @@ public class EventService {
 
     public Page<EventResponseDto> getFilteredEvents(EventItemFilterRequestDto request, Pageable pageable) {
         return eventRepository.findFiltered(request, pageable)
-            .map(EventResponseDto::from);
+                .map(EventResponseDto::from);
     }
 
     @Transactional
     public EventDetailResponseDto getEventDetail(UUID eventId) {
         Event event = eventRepository.findById(eventId)
-            .orElseThrow(EventNotFoundException::new);
+                .orElseThrow(EventNotFoundException::new);
+
+        // 관련 도전과제 Id (값이 없으면 null)
+        Long relatedChallengeId = challengeRepository.findFirstByEvent(event).map(Challenge::getId).orElse(null);
 
         //DB에 상세정보가 없으면 tourAPI 호출
         if(event.getEventDetailStatus() == EventDetailStatus.PENDING){
@@ -276,8 +282,8 @@ public class EventService {
 
                 // 타임아웃 설정 (30초)
                 CompletableFuture.allOf(
-                    introFuture.orTimeout(30, TimeUnit.SECONDS),
-                    infoFuture.orTimeout(30, TimeUnit.SECONDS)
+                        introFuture.orTimeout(30, TimeUnit.SECONDS),
+                        infoFuture.orTimeout(30, TimeUnit.SECONDS)
                 ).join();
 
                 // 결과 가져오기
@@ -297,11 +303,11 @@ public class EventService {
                 log.error("축제 상세 정보 업데이트 실패: eventId={}, error={}", eventId, e.getMessage());
                 currentStatus = EventDetailStatus.FAILED;
             }
-            
+
             event.changeEventDetailStatus(currentStatus);
             eventRepository.save(event);
         }
 
-        return EventDetailResponseDto.from(event);
+        return EventDetailResponseDto.from(event, relatedChallengeId);
     }
 }
