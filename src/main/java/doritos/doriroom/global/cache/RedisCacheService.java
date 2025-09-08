@@ -21,7 +21,7 @@ public class RedisCacheService {
     public static final String UPCOMING_EVENTS_KEY = "upcoming_events";
     public static final String ENDING_SOON_EVENTS_KEY = "ending_soon_events";
     public static final String POPULAR_DIARIES_KEY = "popular_diaries";
-    public static final String ALL_ITEM_KEY = "all_items";
+    public static final String ALL_ITEMS_KEY = "all_items";
     public static final String CHALLENGES_KEY = "challenges:";
 
     public static final Duration POPULAR_EVENTS_TTL = Duration.ofMinutes(30);
