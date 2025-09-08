@@ -1,5 +1,6 @@
 package doritos.doriroom.challenge.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import doritos.doriroom.atlas.service.AtlasService;
 import doritos.doriroom.challenge.domain.challenge.Challenge;
 import doritos.doriroom.challenge.domain.challenge.ChallengeGroup;
@@ -12,6 +13,7 @@ import doritos.doriroom.challenge.exception.ChallengeNotFoundException;
 import doritos.doriroom.challenge.exception.ChallengeStatusException;
 import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.repository.UserChallengeRepository;
+import doritos.doriroom.global.cache.RedisCacheService;
 import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +36,7 @@ public class ChallengeService {
     private final UserChallengeRepository userChallengeRepository;
     private final ItemService itemService;
     private final AtlasService atlasService;
+    private final RedisCacheService redisCacheService;
 
     // endDate가 지난 도전과제 상태를 EXPIRED로 변경, 스케줄러에서 호출
     @Transactional
@@ -45,8 +49,19 @@ public class ChallengeService {
 
     @Transactional(readOnly = true)
     public List<ChallengeResponseDto> getChallengesByGroup(User user, ChallengeGroup challengeGroup, AreaGroup areaGroup){
-        // 요청 조건에 따라 필터링된 과제 리스트
-        List<Challenge> challenges = challengeFilterByGroup(challengeGroup, areaGroup);
+        // 그룹별로 사용할 캐시 키 정의
+        String cacheKeyByGroup = RedisCacheService.CHALLENGES_KEY + challengeGroup.toString() + (areaGroup != null ? "_" + areaGroup.toString() : "");
+
+        // 캐시에서 조회
+        Optional<List<Challenge>> cachedChallenges = redisCacheService.getCacheList(cacheKeyByGroup, new TypeReference<>() {});
+
+        List<Challenge> challenges;
+        if (cachedChallenges.isPresent()) { // 캐시에 있으면 가져옴
+            challenges = cachedChallenges.get();
+        } else {
+            challenges = challengeFilterByGroup(challengeGroup, areaGroup); // 없으면 db에서 조회
+            redisCacheService.setCache(cacheKeyByGroup, challenges, RedisCacheService.CHALLENGES_TTL); // 캐시에 저장해둠
+        }
 
         // 과제들에 대한 유저의 과제 상태 리스트 -> Map으로 변환
         Map<Long, UserChallenge> userChallengeMap = userChallengeRepository.findByUserAndChallengeInWithFetch(user, challenges).stream()
