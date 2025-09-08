@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -76,8 +78,15 @@ public class RedisCacheService {
                 POPULAR_EVENTS_KEY,
                 UPCOMING_EVENTS_KEY,
                 ENDING_SOON_EVENTS_KEY,
-                POPULAR_DIARIES_KEY
+                POPULAR_DIARIES_KEY,
+                ALL_ITEMS_KEY
             ));
+            // challenge 캐시 삭제
+            Set<String> challengeKeys = redisTemplate.keys(CHALLENGES_KEY + "*");
+            if  (challengeKeys != null && !challengeKeys.isEmpty()) {
+                redisTemplate.delete(challengeKeys);
+            }
+
             log.info("All caches cleared successfully");
         } catch (Exception e) {
             log.error("Failed to clear all caches", e);
