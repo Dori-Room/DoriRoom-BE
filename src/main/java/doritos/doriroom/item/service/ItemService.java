@@ -1,5 +1,7 @@
 package doritos.doriroom.item.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import doritos.doriroom.global.cache.RedisCacheService;
 import doritos.doriroom.item.domain.Item;
 import doritos.doriroom.item.domain.ItemGroup;
 import doritos.doriroom.item.domain.ItemType;
@@ -35,6 +37,7 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final UserItemRepository userItemRepository;
     private final UserRepository userRepository;
+    private final RedisCacheService redisCacheService;
 
     /* ---- 사용자 아이템 추가 관련 (구매하는 경우 제외) ---- */
 
@@ -60,10 +63,22 @@ public class ItemService {
     // 전체 아이템 조회 (유저 보유 여부 포함)
     @Transactional(readOnly = true)
     public List<ItemResponse> getAllItems(User user) {
+        // 캐시에서 아이템 조회
+        Optional<List<Item>> cachedItems = redisCacheService.getCacheList(RedisCacheService.ALL_ITEMS_KEY, new TypeReference<>() {});
+
+        List<Item> allItems;
+        if (cachedItems.isPresent()) {
+            allItems = cachedItems.get(); // 캐시 값이 있으면 할당하여 사용
+        } else {
+            allItems = itemRepository.findAll(); // 캐시에 없으면 db에서 조회
+            redisCacheService.setCache(RedisCacheService.ALL_ITEMS_KEY, allItems, RedisCacheService.ALL_ITEM_TTL); // 캐시에 allItems 저장
+        }
+
+        // 유저의 보유 여부는 따로 조회
         Set<Long> ownedItemIds = userItemRepository.findByUser(user)
                 .stream().map(ui -> ui.getItem().getItemId()).collect(Collectors.toSet());
 
-        return itemRepository.findAll().stream()
+        return allItems.stream()
                 .map(i -> ItemResponse.from(i, ownedItemIds.contains(i.getItemId())))
                 .toList();
     }
