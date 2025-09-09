@@ -36,10 +36,10 @@ public class Item {
     @Column(length = 50)
     private CollectionTheme theme;
 
-    @Column(name = "is_purchasable", nullable = false)
+    @Column(nullable = false)
     private boolean purchasable; // true: 구매 가능, false: 이벤트/한정 지급
 
-    @Column(name = "is_default", nullable = false)
+    @Column(nullable = false)
     @Builder.Default
     private boolean defaultItem = false; // 아이템이 기본 아이템인지 확인
 }
