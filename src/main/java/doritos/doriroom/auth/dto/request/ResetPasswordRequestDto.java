@@ -6,14 +6,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 public record ResetPasswordRequestDto(
-
         @Email(message = "올바른 이메일 형식이어야 합니다.")
         @Schema(description = "이메일 주소", example = "user@example.com")
         @NotBlank String email,
 
 
-        @Pattern(regexp = "^[0-9]{6}$", message = "인증번호는 6자리 숫자여야 합니다.")
-        @NotBlank String code, // 사용자가 받은 인증코드
+//        @Pattern(regexp = "^[0-9]{6}$", message = "인증번호는 6자리 숫자여야 합니다.")
+        @NotBlank String resetToken, // 사용자가 받은 임시토큰
 
 
         @Pattern(regexp = "^(?=.{8,20}$)((?=.*[a-zA-Z])(?=.*\\d)|(?=.*[a-zA-Z])(?=.*[!@#$%^&*])|(?=.*\\d)(?=.*[!@#$%^&*])).*$",

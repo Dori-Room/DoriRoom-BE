@@ -4,6 +4,7 @@ package doritos.doriroom.auth.controller;
 import doritos.doriroom.auth.dto.request.*;
 import doritos.doriroom.auth.dto.response.LoginResponseDto;
 import doritos.doriroom.auth.dto.response.UsernameResponseDto;
+import doritos.doriroom.auth.dto.response.VerifyCodeResponseDto;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.auth.service.AuthService;
 import doritos.doriroom.global.jwt.JwtUtil;
@@ -92,8 +93,14 @@ public class AuthController {
         return ApiResponse.ok();
     }
 
+    @PostMapping("/password/verify")
+    @Operation(summary = "비밀번호 인증코드 인증", description = "이메일로 받은 인증 코드 일치 여부 확인")
+    public ApiResponse<VerifyCodeResponseDto> resetPassword(@RequestBody @Valid EmailVerificationRequestDto request) {
+        return ApiResponse.ok(authService.verifyPasswordResetCode(request));
+    }
+
     @PostMapping("/password/reset")
-    @Operation(summary = "비밀번호 재설정", description = "이메일로 받은 인증 코드 일치 여부 확인 후 비밀번호를 새로 설정하여 반영")
+    @Operation(summary = "비밀번호 재설정", description = "비밀번호를 새로 설정하여 반영")
     public ApiResponse<Void> resetPassword(@RequestBody @Valid ResetPasswordRequestDto request) {
         authService.resetPassword(request);
         return ApiResponse.ok();
