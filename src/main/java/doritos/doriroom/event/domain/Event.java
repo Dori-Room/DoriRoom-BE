@@ -114,8 +114,8 @@ public class Event {
             .eventId(UUID.randomUUID())
             .contentId(parseInt(dto.getContentid()))
             .contentTypeId(parseInt(dto.getContenttypeid()))
-            .firstImage(dto.getFirstimage())
-            .secondImage(dto.getFirstimage2())
+            .firstImage(dto.getFirstimage() != null ? dto.getFirstimage().replace("http://", "https://") : null)
+            .secondImage(dto.getFirstimage2() != null ? dto.getFirstimage2().replace("http://", "https://") : null)
             .title(dto.getTitle())
             .startDate(LocalDate.parse(dto.getEventstartdate(), formatter))
             .endDate(LocalDate.parse(dto.getEventenddate(), formatter))
@@ -138,8 +138,8 @@ public class Event {
     }
 
     public void updateFrom(Event newEvent) {
-        this.firstImage = newEvent.firstImage;
-        this.secondImage = newEvent.secondImage;
+        this.firstImage = newEvent.firstImage != null ? newEvent.firstImage.replace("http://", "https://") : null;
+        this.secondImage = newEvent.secondImage != null ? newEvent.secondImage.replace("http://", "https://") : null;
         this.title = newEvent.title;
         this.startDate = newEvent.startDate;
         this.endDate = newEvent.endDate;
