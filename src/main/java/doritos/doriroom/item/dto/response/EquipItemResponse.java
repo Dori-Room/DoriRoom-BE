@@ -11,7 +11,7 @@ public record EquipItemResponse(
         boolean isEquipped
 
 ) {
-    private static EquipItemResponse from(Long equippedItemId, String name, ItemType itemType, boolean equipped) {
+    public static EquipItemResponse of(Long equippedItemId, String name, ItemType itemType, boolean equipped) {
         return EquipItemResponse.builder()
                 .equippedItemId(equippedItemId)
                 .name(name)
