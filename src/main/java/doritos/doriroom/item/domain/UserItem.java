@@ -28,10 +28,10 @@ public class UserItem {
 
     @Column(nullable = false)
     @Builder.Default
-    private boolean isEquipped = false; // 착용 여부 상태
+    private boolean equipped = false; // 착용 여부 상태
 
     // 아이템 착용/해제
-    public void equip(){    this.isEquipped = true; }
-    public void unequip(){  this.isEquipped = false; }
+    public void equip(){    this.equipped = true; }
+    public void unequip(){  this.equipped = false; }
 
 }
