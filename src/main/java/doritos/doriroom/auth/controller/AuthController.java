@@ -3,6 +3,7 @@ package doritos.doriroom.auth.controller;
 
 import doritos.doriroom.auth.dto.request.*;
 import doritos.doriroom.auth.dto.response.LoginResponseDto;
+import doritos.doriroom.auth.dto.response.UsernameResponseDto;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.auth.service.AuthService;
 import doritos.doriroom.global.jwt.JwtUtil;
@@ -24,14 +25,14 @@ public class AuthController {
     private final JwtUtil jwtUtil;
 
     @PostMapping("/email")
-    @Operation(summary = "이메일 인증 번호 발송")
+    @Operation(summary = "회원가입 시 이메일 인증 번호 발송")
     public ApiResponse<Void> sendVerificationEmail(@RequestBody @Valid EmailRequestDto request){
         authService.sendVerificationEmail(request);
         return ApiResponse.ok();
     }
 
     @PostMapping("/email/verify")
-    @Operation(summary = "이메일 인증 번호 확인")
+    @Operation(summary = "회원가입 시 이메일 인증 번호 확인")
     public ApiResponse<Void> verifyEmail(@RequestBody @Valid EmailVerificationRequestDto request){
         authService.verifyEmail(request);
         return ApiResponse.ok();
@@ -71,17 +72,23 @@ public class AuthController {
         return ApiResponse.ok();
     }
 
-    @PostMapping("/find-username")
-    @Operation(summary = "아이디 찾기", description = "이메일 포함하여 요청 시 마스킹 처리된 아이디 반환")
-    public ApiResponse<Void> findUsername(@RequestBody @Valid EmailRequestDto request){
-        authService.findUsername(request);
+    @PostMapping("/find-username/email")
+    @Operation(summary = "아이디 찾기 이메일 인증 번호 발송", description = "이메일 포함하여 요청 후 인증 코드 포함한 메일 수신")
+    public ApiResponse<Void> sendVerificationEmailToFindUsername(@RequestBody @Valid EmailRequestDto request){
+        authService.sendVerificationEmailToFindUsername(request);
         return ApiResponse.ok();
+    }
+
+    @PostMapping("/find-username/email/verify")
+    @Operation(summary = "아이디 찾기 이메일 인증 번호 확인", description = "이메일 인증번호 확인 후 인증 성공 시 아이디 응답")
+    public ApiResponse<UsernameResponseDto> verifyEmailAndFindUsername(@RequestBody @Valid EmailVerificationRequestDto request){
+        return ApiResponse.ok(authService.verifyEmailAndFindUsername(request));
     }
 
     @PostMapping("/password/send-code")
     @Operation(summary = "비밀번호 재설정 인증코드 발송", description = "사용자 username 입력, 본인 이메일을 입력하여 정보가 일치하는지 검증 -> 이메일로 인증 코드 전송")
-    public ApiResponse<Void> sendPasswordResetCode(@RequestBody @Valid SendPasswordResetCodeRequestDto request) {
-        authService.sendPasswordResetCode(request);
+    public ApiResponse<Void> sendPasswordResetCode(@RequestBody @Valid EmailVerificationRequestDto request) {
+//        authService.(request);
         return ApiResponse.ok();
     }
 
