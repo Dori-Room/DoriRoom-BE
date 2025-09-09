@@ -294,6 +294,7 @@ public class AuthService {
 
         user.setPassword(encoder.encode(request.newPassword())); // 새로운 비밀번호로 설정
 
+        refreshTokenRedisRepository.deleteById(user.getUserId()); // 기존 리프레시 토큰 무효화
         redisTemplate.delete(tokenKey); // 리셋용 임시토큰 삭제
     }
 
