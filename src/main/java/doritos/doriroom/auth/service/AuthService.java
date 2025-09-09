@@ -3,6 +3,7 @@ package doritos.doriroom.auth.service;
 import doritos.doriroom.auth.dto.request.*;
 import doritos.doriroom.auth.dto.response.LoginResponseDto;
 import doritos.doriroom.auth.dto.response.UsernameResponseDto;
+import doritos.doriroom.auth.dto.response.VerifyCodeResponseDto;
 import doritos.doriroom.auth.exception.*;
 import doritos.doriroom.auth.template.EmailTemplate;
 import doritos.doriroom.global.jwt.JwtUtil;
@@ -256,22 +257,44 @@ public class AuthService {
         sendEmail(request.email(), EmailTemplate.Subject.PASSWORD_RESET, content);
     }
 
-    // 비밀전호 재설정 2. 비밀번호 변경
-    @Transactional
-    public void resetPassword(ResetPasswordRequestDto request){
+    // 비밀전호 재설정 2. 인증코드 확인 후 임시 토큰 반환
+    public VerifyCodeResponseDto verifyPasswordResetCode(EmailVerificationRequestDto request){
         // 인증 코드 조회
         String verificationKey = RESET_CODE_PREFIX.getValue() + request.email();
         String storedCode = (String) redisTemplate.opsForValue().get(verificationKey);
 
-        if (storedCode == null || !storedCode.equals(request.code())) {
+        if (storedCode == null || !storedCode.equals(request.verificationCode())) {
             throw new InvalidOrExpiredVerificationCodeException();
+        }
+
+        // 인증 유지용 임시 토큰 생성
+        String resetToken = UUID.randomUUID().toString();
+        String tokenKey = RESET_TOKEN_PREFIX.getValue() + request.email();
+
+        // 저장된 코드 삭제, 임시 토큰 저장 (ttl: 3분)
+        redisTemplate.delete(verificationKey);
+        redisTemplate.opsForValue().set(tokenKey, resetToken, Duration.ofMinutes(3));
+
+        return VerifyCodeResponseDto.of(true, resetToken);
+    }
+
+    // 3. 비밀전호 재설정
+    @Transactional
+    public void resetPassword(ResetPasswordRequestDto request){
+        // 임시토큰 유효성 검증
+        String tokenKey = RESET_TOKEN_PREFIX.getValue() + request.email();
+        String storedToken = (String) redisTemplate.opsForValue().get(tokenKey);
+
+        if (storedToken == null || !storedToken.equals(request.resetToken())) {
+            throw new InvalidTokenException("유효하지 않은 비밀번호 재설정 요청입니다.");
         }
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(UserNotFoundException::new);
 
         user.setPassword(encoder.encode(request.newPassword())); // 새로운 비밀번호로 설정
-        redisTemplate.delete(verificationKey); // 사용된 인증코드 삭제
+
+        redisTemplate.delete(tokenKey); // 리셋용 임시토큰 삭제
     }
 
     /* 내부 메서드 */
@@ -292,14 +315,4 @@ public class AuthService {
         }
     }
 
-    // 아이디 마스킹 처리 메서드
-    // 아이디 찾기 시 username 길이가 3 이하인 경우 인덱스 에러 방지
-    private String maskUsername(String username) {
-        if (username == null || username.isEmpty()) return "***";
-        int len = username.length();
-        if (len == 1) return "*";
-        if (len == 2) return username.charAt(0) + "*";
-        if (len == 3) return username.charAt(0) + "*" + username.charAt(2);
-        return username.substring(0, 2) + "*".repeat(len - 4) + username.substring(len - 2);
-    }
 }

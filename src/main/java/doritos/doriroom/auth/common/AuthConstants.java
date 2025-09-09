@@ -12,7 +12,8 @@ public enum AuthConstants {
     VERIFICATION_KEY_PREFIX("email_verification:"),
     VERIFIED_KEY_PREFIX("email_verified:"),
     FIND_USERNAME_KEY_PREFIX("username:"),
-    RESET_CODE_PREFIX("reset_code:");
+    RESET_CODE_PREFIX("reset_code:"),
+    RESET_TOKEN_PREFIX("reset_token:");
 
     private final String value;
 }
