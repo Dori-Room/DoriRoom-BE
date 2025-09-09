@@ -33,7 +33,7 @@ public record ItemResponse (
                 .theme(i.getTheme())
                 .isPurchasable(i.isPurchasable())
                 .isOwned(isOwned)
-                .isDefault(i.isDefault())
+                .isDefault(i.isDefaultItem())
                 .build();
     }
 }
