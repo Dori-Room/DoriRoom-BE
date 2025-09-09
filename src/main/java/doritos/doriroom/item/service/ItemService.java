@@ -206,7 +206,7 @@ public class ItemService {
                 .orElseThrow(NotOwnedException::new);
 
         // 해당 타입의 기존 착용 아이템이 있는지 여부 확인
-        Optional<UserItem> currentlyEquippedItem = userItemRepository.findByUserAndItem_ItemTypeAndIsEquippedTrue(user, item.getItemType());
+        Optional<UserItem> currentlyEquippedItem = userItemRepository.findByUserAndItem_ItemTypeAndEquippedTrue(user, item.getItemType());
 
         // 유저 아이템의 착용 상태
         boolean isEquipped = userItem.isEquipped();
@@ -223,7 +223,7 @@ public class ItemService {
 
         userItemRepository.save(userItem);
 
-        return new EquipItemResponse(
+        return EquipItemResponse.of(
                 item.getItemId(),
                 item.getName(),
                 item.getItemType(),
@@ -234,7 +234,7 @@ public class ItemService {
     // 현재 착용 중인 아이템 조회
     @Transactional(readOnly = true)
     public List<EquippedItemResponse> getEquippedItems(User user) {
-        return userItemRepository.findByUserAndIsEquippedTrue(user)
+        return userItemRepository.findByUserAndEquippedTrue(user)
                 .stream().map(EquippedItemResponse::from).toList();
     }
 
@@ -243,7 +243,7 @@ public class ItemService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
 
-        return userItemRepository.findByUserAndIsEquippedTrue(user)
+        return userItemRepository.findByUserAndEquippedTrue(user)
                 .stream().map(EquippedItemResponse::from).toList();
     }
 
