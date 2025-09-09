@@ -246,7 +246,7 @@ public class AuthService {
         }
 
         String verificationCode = String.format("%06d", new SecureRandom().nextInt(1000000)); // 6자리 인증 코드
-ㅋ
+
         // redis에 인증 코드 저장
         String verificationKey = RESET_CODE_PREFIX.getValue() + request.email();
         redisTemplate.opsForValue().set(verificationKey, verificationCode, Duration.ofSeconds(VERIFICATION_EXPIRE_SECONDS));
