@@ -2,6 +2,7 @@ package doritos.doriroom.auth.service;
 
 import doritos.doriroom.auth.dto.request.*;
 import doritos.doriroom.auth.dto.response.LoginResponseDto;
+import doritos.doriroom.auth.dto.response.UsernameResponseDto;
 import doritos.doriroom.auth.exception.*;
 import doritos.doriroom.auth.template.EmailTemplate;
 import doritos.doriroom.global.jwt.JwtUtil;
@@ -33,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -205,19 +207,40 @@ public class AuthService {
     /* 아이디 찾기 / 비밀번호 재설정 */
 
     // 아이디 찾기
-    public void findUsername(EmailRequestDto request){
-        userRepository.findByEmail(request.email()).ifPresent(user -> {
-            String maskedUsername = maskUsername(user.getUsername()); // 마스킹 처리된 username
-            // EmailTemplate을 사용하여 이메일 본문 생성 후 발송
-            String content = emailTemplate.createFindUsernameEmailContent(maskedUsername);
-            sendEmail(user.getEmail(), EmailTemplate.Subject.FIND_USERNAME, content);
-        });
+    public void sendVerificationEmailToFindUsername(EmailRequestDto request){
+        Optional<User> user = userRepository.findByEmail(request.email());
+        if (user.isEmpty()) { // 유저가 존재하지 않는 경우에 스킵함
+            return;
+        }
+        String verificationCode = String.format("%06d", new SecureRandom().nextInt(1000000)); // 6자리 인증 코드 생성
+
+        // redis에 인증 코드 저장
+        String verificationKey = FIND_USERNAME_KEY_PREFIX.getValue() + request.email();
+        redisTemplate.opsForValue().set(verificationKey, verificationCode, Duration.ofSeconds(VERIFICATION_EXPIRE_SECONDS));
+
+        String content = emailTemplate.createFindUsernameEmailContent(verificationCode);
+        sendEmail(user.get().getEmail(), EmailTemplate.Subject.FIND_USERNAME, content);
+    }
+
+    public UsernameResponseDto verifyEmailAndFindUsername(EmailVerificationRequestDto request){
+        // 인증 코드 조회
+        String verificationKey = FIND_USERNAME_KEY_PREFIX.getValue() + request.email();
+        String storedCode = (String) redisTemplate.opsForValue().get(verificationKey);
+
+        if (storedCode == null || !storedCode.equals(request.verificationCode())) {
+            throw new InvalidOrExpiredVerificationCodeException();
+        }
+
+        User user = userRepository.findByEmail(request.email()).orElseThrow(UserNotFoundException::new);
+
+        redisTemplate.delete(verificationKey); // 인증 성공 후 삭제
+
+        return UsernameResponseDto.of(user.getUsername());
     }
 
     // 비밀번호 재설정 1. 이메일 인증 코드 전송
-    public void sendPasswordResetCode(SendPasswordResetCodeRequestDto request){
-        // username과 email 정보에 맞는 유저 확인
-        var user = userRepository.findByUsernameAndEmail(request.username(),request.email());
+    public void sendPasswordResetCode(EmailRequestDto request){
+        var user = userRepository.findByEmail(request.email());
         if (user.isEmpty()) { // 유저가 존재하지 않는 경우에 스킵함
             return;
         }
