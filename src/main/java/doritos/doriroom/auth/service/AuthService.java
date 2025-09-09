@@ -141,7 +141,7 @@ public class AuthService {
                 .map(item -> UserItem.builder()
                         .user(user)
                         .item(item)
-                        .isEquipped(true) // 착용 상태로 지정
+                        .equipped(true) // 착용 상태로 지정
                         .build())
                 .collect(Collectors.toList());
         userItemRepository.saveAll(newUserItems);

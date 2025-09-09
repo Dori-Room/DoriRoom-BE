@@ -26,7 +26,7 @@ public class UserItem {
     @ManyToOne(fetch = FetchType.LAZY)
     private Item item;
 
-    @Column(nullable = false)
+    @Column(name = "is_equipped", nullable = false)
     @Builder.Default
     private boolean equipped = false; // 착용 여부 상태
 
