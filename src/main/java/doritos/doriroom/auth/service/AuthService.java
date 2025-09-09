@@ -134,7 +134,7 @@ public class AuthService {
 
         userRepository.save(user);
 
-        List<Item> defaultItems = itemRepository.findByIsDefaultTrue(); // 기본 아이템 전부 조회
+        List<Item> defaultItems = itemRepository.findByDefaultItemTrue(); // 기본 아이템 전부 조회
 
         // 신규 유저 기본 아이템 지급 및 착용
         List<UserItem> newUserItems = defaultItems.stream()
