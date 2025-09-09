@@ -12,7 +12,6 @@ import doritos.doriroom.item.domain.Item;
 import doritos.doriroom.item.domain.UserItem;
 import doritos.doriroom.item.repository.ItemRepository;
 import doritos.doriroom.item.repository.UserItemRepository;
-import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.DuplicateException;
@@ -55,7 +54,6 @@ public class AuthService {
     private final JavaMailSender mailSender;
     private final EmailTemplate emailTemplate;
     private final S3Uploader s3Uploader;
-    private final ItemService itemService;
     private final ItemRepository itemRepository;
     private final UserItemRepository userItemRepository;
 
@@ -266,6 +264,8 @@ public class AuthService {
         if (storedCode == null || !storedCode.equals(request.verificationCode())) {
             throw new InvalidOrExpiredVerificationCodeException();
         }
+        // 인증 성공 후 유저 조회하여 username 추출
+        User user = userRepository.findByEmail(request.email()).orElseThrow(UserNotFoundException::new);
 
         // 인증 유지용 임시 토큰 생성
         String resetToken = UUID.randomUUID().toString();
@@ -275,7 +275,7 @@ public class AuthService {
         redisTemplate.delete(verificationKey);
         redisTemplate.opsForValue().set(tokenKey, resetToken, Duration.ofMinutes(3));
 
-        return VerifyCodeResponseDto.of(true, resetToken);
+        return VerifyCodeResponseDto.of(true, resetToken, user.getUsername());
     }
 
     // 3. 비밀전호 재설정
