@@ -86,9 +86,9 @@ public class AuthController {
     }
 
     @PostMapping("/password/send-code")
-    @Operation(summary = "비밀번호 재설정 인증코드 발송", description = "사용자 username 입력, 본인 이메일을 입력하여 정보가 일치하는지 검증 -> 이메일로 인증 코드 전송")
-    public ApiResponse<Void> sendPasswordResetCode(@RequestBody @Valid EmailVerificationRequestDto request) {
-//        authService.(request);
+    @Operation(summary = "비밀번호 재설정 인증코드 발송", description = "이메일을 입력하여 인증 코드 전송")
+    public ApiResponse<Void> sendPasswordResetCode(@RequestBody @Valid EmailRequestDto request) {
+        authService.sendPasswordResetCode(request);
         return ApiResponse.ok();
     }
 
