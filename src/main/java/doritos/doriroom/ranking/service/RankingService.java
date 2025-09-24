@@ -152,4 +152,21 @@ public class RankingService {
         
         return rankings;
     }
+    
+    // 내 전체 랭킹 조회
+    public RankingResponseDto getMyAllRanking(User user) {
+        long myLikeCount = rankingRepository.findLikeCountByUserId(user.getUserId())
+            .orElse(0L);
+        Integer myRank = rankingRepository.findMyDenseRankByUserId(user.getUserId());
+
+        String rankDisplay = myLikeCount == 0 ? "-" : String.valueOf(myRank);
+
+        return RankingResponseDto.builder()
+            .rank(rankDisplay)
+            .userId(user.getUserId())
+            .nickname(user.getNickname())
+            .profileImageUrl(user.getProfileImageUrl())
+            .likeCount(user.getLikeCount())
+            .build();
+    }
 } 

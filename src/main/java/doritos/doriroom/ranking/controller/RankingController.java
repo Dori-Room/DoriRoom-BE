@@ -31,6 +31,12 @@ public class RankingController {
         return ApiResponse.ok(rankingService.getAllRanking(user));
     }
 
+    @Operation(summary = "내 전체 랭킹 조회", description = "전체 랭킹에서 내 순위 조회")
+    @GetMapping("/my-all")
+    public ApiResponse<RankingResponseDto> getMyOverallRanking(@AuthenticationPrincipal User user) {
+        return ApiResponse.ok(rankingService.getMyAllRanking(user));
+    }
+
     @Operation(summary = "지역별 랭킹 조회", description = "지역별 도감 레벨, 경험치 기준 상위 100명 랭킹 조회")
     @GetMapping("/regional")
     public ApiResponse<List<RegionalRankingResponseDto>> getRegionalRanking(
