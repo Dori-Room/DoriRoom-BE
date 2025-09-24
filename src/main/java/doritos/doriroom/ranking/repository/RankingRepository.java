@@ -48,15 +48,6 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
         @Param("myLevel") Integer myLevel,
         @Param("myExp") Long myExp);
 
-    // 지역별 총 유저 수 조회
-    @Query("""
-        SELECT COUNT(ua)
-        FROM UserAtlas ua
-        JOIN ua.atlas a
-        WHERE a.areaGroup = :areaGroup
-        """)
-    Long countByAreaGroup(@Param("areaGroup") AreaGroup areaGroup);
-
     // 특정 유저의 지역별 도감 정보 조회
     @Query("""
         SELECT ua FROM UserAtlas ua

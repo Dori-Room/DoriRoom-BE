@@ -54,8 +54,7 @@ public class RankingService {
         // 랭킹 계산 및 DTO 변환
         List<RankingResponseDto> rankings = new ArrayList<>();
         int currentRank = 1;
-        int previousLikeCount = -1;
-        
+
         for (int i = 0; i < topUsers.size(); i++) {
             User user = topUsers.get(i);
             
@@ -70,7 +69,7 @@ public class RankingService {
             
             // 등수가 0이면 "-"로 표시, 아니면 숫자로 표시
             String rankDisplay = user.getLikeCount() == 0 ? "-" : String.valueOf(currentRank);
-            
+
             rankings.add(RankingResponseDto.builder()
                 .rank(rankDisplay)
                 .userId(user.getUserId())
@@ -80,10 +79,7 @@ public class RankingService {
                 .following(isFollowing)
                 .followedBy(isFollowedBy)
                 .build());
-            
-            previousLikeCount = user.getLikeCount();
         }
-        
         return rankings;
     }
     
