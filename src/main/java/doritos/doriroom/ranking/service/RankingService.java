@@ -1,9 +1,12 @@
 package doritos.doriroom.ranking.service;
 
+import doritos.doriroom.atlas.domain.UserAtlas;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.repository.FollowRepository;
 import doritos.doriroom.ranking.dto.response.RankingResponseDto;
+import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
 import doritos.doriroom.ranking.repository.RankingRepository;
+import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -78,6 +81,73 @@ public class RankingService {
                 .build());
             
             previousLikeCount = user.getLikeCount();
+        }
+        
+        return rankings;
+    }
+    
+    // 지역별 랭킹 조회 (상위 100명)
+    public List<RegionalRankingResponseDto> getRegionalRanking(User currentUser, AreaGroup areaGroup) {
+        List<UserAtlas> topUserAtlases = rankingRepository.findTop100ByAreaGroupOrderByLevelDescAndExpDesc(areaGroup);
+        
+        if (topUserAtlases.isEmpty()) {
+            return List.of();
+        }
+        
+        // 유저 정보 추출
+        List<User> topUsers = topUserAtlases.stream()
+            .map(UserAtlas::getUser)
+            .toList();
+        
+        // 팔로우 관계 정보 조회
+        Set<UUID> userIds = topUsers.stream()
+            .map(User::getUserId)
+            .collect(Collectors.toSet());
+        
+        // 내가 팔로우하는 유저들
+        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, userIds)
+            .stream()
+            .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
+        
+        // 나를 팔로우하는 유저들
+        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
+        
+        // 랭킹 계산 및 DTO 변환
+        List<RegionalRankingResponseDto> rankings = new ArrayList<>();
+        int currentRank = 1;
+        int previousLevel = -1;
+        long previousExp = -1;
+        
+        for (int i = 0; i < topUserAtlases.size(); i++) {
+            UserAtlas userAtlas = topUserAtlases.get(i);
+            User user = userAtlas.getUser();
+            
+            // 같은 레벨과 경험치가 아니면 등수 업데이트
+            if (previousLevel != -1 && (userAtlas.getLevel() != previousLevel || userAtlas.getCurrentExp() != previousExp)) {
+                currentRank = i + 1;
+            }
+            
+            Follow following = followingMap.get(user.getUserId());
+            boolean isFollowing = following != null;
+            boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
+            
+            // 도감 레벨이 0이면 "-"로 표시, 아니면 숫자로 표시
+            String rankDisplay = userAtlas.getLevel() == 0 ? "-" : String.valueOf(currentRank);
+            
+            rankings.add(RegionalRankingResponseDto.builder()
+                .rank(rankDisplay)
+                .userId(user.getUserId())
+                .nickname(user.getNickname())
+                .profileImageUrl(user.getProfileImageUrl())
+                .atlasLevel(userAtlas.getLevel())
+                .atlasExp(userAtlas.getCurrentExp().intValue())
+                .areaGroup(areaGroup)
+                .following(isFollowing)
+                .followedBy(isFollowedBy)
+                .build());
+            
+            previousLevel = userAtlas.getLevel();
+            previousExp = userAtlas.getCurrentExp();
         }
         
         return rankings;
