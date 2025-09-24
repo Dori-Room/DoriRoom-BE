@@ -37,4 +37,32 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
     // 사용자의 좋아요 점수가 0이거나 없을 경우를 대비해 Optional로 처리
     @Query("SELECT u.likeCount FROM User u WHERE u.userId = :userId")
     Optional<Long> findLikeCountByUserId(@Param("userId") UUID userId);
+
+    @Query("""
+        SELECT COUNT(ua) + 1
+        FROM UserAtlas ua
+        WHERE ua.atlas.areaGroup = :areaGroup
+          AND (ua.level > :myLevel OR (ua.level = :myLevel AND ua.currentExp > :myExp))
+        """)
+    Long findMyRankByScore(@Param("areaGroup") AreaGroup areaGroup,
+        @Param("myLevel") Integer myLevel,
+        @Param("myExp") Long myExp);
+
+    // 지역별 총 유저 수 조회
+    @Query("""
+        SELECT COUNT(ua)
+        FROM UserAtlas ua
+        JOIN ua.atlas a
+        WHERE a.areaGroup = :areaGroup
+        """)
+    Long countByAreaGroup(@Param("areaGroup") AreaGroup areaGroup);
+
+    // 특정 유저의 지역별 도감 정보 조회
+    @Query("""
+        SELECT ua FROM UserAtlas ua
+        JOIN ua.user u
+        JOIN ua.atlas a
+        WHERE u.userId = :userId AND a.areaGroup = :areaGroup
+        """)
+    Optional<UserAtlas> findUserAtlasByUserIdAndAreaGroup(@Param("userId") UUID userId, @Param("areaGroup") AreaGroup areaGroup);
 } 

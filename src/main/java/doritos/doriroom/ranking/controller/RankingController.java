@@ -44,4 +44,12 @@ public class RankingController {
         @RequestParam AreaGroup areaGroup) {
         return ApiResponse.ok(rankingService.getRegionalRanking(user, areaGroup));
     }
+
+    @Operation(summary = "내 지역별 랭킹 조회", description = "지역별 랭킹에서 내 순위 조회")
+    @GetMapping("/my-regional")
+    public ApiResponse<RegionalRankingResponseDto> getMyRegionalRanking(
+        @AuthenticationPrincipal User user,
+        @RequestParam AreaGroup areaGroup) {
+        return ApiResponse.ok(rankingService.getMyRegionalRanking(user, areaGroup));
+    }
 }

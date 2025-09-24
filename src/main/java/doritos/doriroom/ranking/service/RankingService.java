@@ -8,6 +8,7 @@ import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
 import doritos.doriroom.ranking.repository.RankingRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -167,6 +168,58 @@ public class RankingService {
             .nickname(user.getNickname())
             .profileImageUrl(user.getProfileImageUrl())
             .likeCount(user.getLikeCount())
+            .build();
+    }
+
+    // 내 지역별 랭킹 조회
+    public RegionalRankingResponseDto getMyRegionalRanking(User currentUser, AreaGroup areaGroup) {
+        // 내 지역별 도감 정보 조회
+        Optional<UserAtlas> myUserAtlasOpt = rankingRepository.findUserAtlasByUserIdAndAreaGroup(
+            currentUser.getUserId(), areaGroup);
+
+        // 해당 지역에 내 기록이 없는 경우 순위 없음 반환
+        if (myUserAtlasOpt.isEmpty()) {
+            return RegionalRankingResponseDto.builder()
+                .rank("-")
+                .userId(currentUser.getUserId())
+                .nickname(currentUser.getNickname())
+                .profileImageUrl(currentUser.getProfileImageUrl())
+                .atlasLevel(0)
+                .atlasExp(0)
+                .areaGroup(areaGroup)
+                .build();
+        }
+
+        UserAtlas myUserAtlas = myUserAtlasOpt.get();
+
+        // 내 기록이 0점인 경우 순위 없음 반환
+        if (myUserAtlas.getLevel() == 0) {
+            return RegionalRankingResponseDto.builder()
+                .rank("-")
+                .userId(currentUser.getUserId())
+                .nickname(currentUser.getNickname())
+                .profileImageUrl(currentUser.getProfileImageUrl())
+                .atlasLevel(0)
+                .atlasExp(0)
+                .areaGroup(areaGroup)
+                .build();
+        }
+
+        // 내 랭킹 조회
+        Long myRank = rankingRepository.findMyRankByScore(
+            areaGroup,
+            myUserAtlas.getLevel(),
+            myUserAtlas.getCurrentExp()
+        );
+
+        return RegionalRankingResponseDto.builder()
+            .rank(String.valueOf(myRank))
+            .userId(currentUser.getUserId())
+            .nickname(currentUser.getNickname())
+            .profileImageUrl(currentUser.getProfileImageUrl())
+            .atlasLevel(myUserAtlas.getLevel())
+            .atlasExp(myUserAtlas.getCurrentExp().intValue())
+            .areaGroup(areaGroup)
             .build();
     }
 } 
