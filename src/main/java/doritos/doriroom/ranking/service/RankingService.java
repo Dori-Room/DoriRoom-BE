@@ -59,8 +59,8 @@ public class RankingService {
             User user = topUsers.get(i);
             
             // 같은 좋아요 수가 아니면 등수 업데이트
-            if (previousLikeCount != -1 && user.getLikeCount() != previousLikeCount) {
-                currentRank = i + 1;
+            if (i > 0 && user.getLikeCount() < topUsers.get(i - 1).getLikeCount()) {
+                currentRank++;
             }
             
             Follow following = followingMap.get(user.getUserId());
