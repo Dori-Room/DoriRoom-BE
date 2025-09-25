@@ -3,13 +3,11 @@ package doritos.doriroom.ranking.service;
 import doritos.doriroom.atlas.domain.UserAtlas;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.repository.FollowRepository;
-import doritos.doriroom.ranking.domain.FollowInfo;
 import doritos.doriroom.ranking.dto.response.RankingResponseDto;
 import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
 import doritos.doriroom.ranking.repository.RankingRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
-import java.util.Collections;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +20,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import doritos.doriroom.ranking.domain.ProfileVisit;
-import doritos.doriroom.ranking.repository.ProfileVisitRepository;
-import doritos.doriroom.ranking.dto.response.RecentVisitResponseDto;
 import org.springframework.data.redis.core.ZSetOperations;
 
 @Service
@@ -36,8 +31,7 @@ public class RankingService {
     private final ZSetOperations<String, Object> zSetOperations;
     private final RankingRepository rankingRepository;
     private final FollowRepository followRepository;
-    private final ProfileVisitRepository profileVisitRepository;
-    
+
     // Redis 키 상수
     private static final String OVERALL_RANKING_KEY = "ranking:overall";
     private static final String REGIONAL_RANKING_KEY_PREFIX = "ranking:regional:";
