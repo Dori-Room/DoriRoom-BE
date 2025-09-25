@@ -5,8 +5,9 @@ import doritos.doriroom.challenge.domain.challenge.ChallengeType;
 import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
+import doritos.doriroom.user.dto.request.SpeechBubbleRequest;
 import doritos.doriroom.user.dto.request.UserWithdrawalRequestDto;
-import doritos.doriroom.user.dto.response.UserSearchResultDto;
+import doritos.doriroom.user.dto.response.*;
 import doritos.doriroom.follow.repository.FollowRepository;
 import doritos.doriroom.item.dto.response.EquippedItemResponse;
 import doritos.doriroom.item.service.ItemService;
@@ -14,11 +15,6 @@ import doritos.doriroom.s3.S3Uploader;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
 import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
-import doritos.doriroom.user.dto.response.MyRoomResponseDto;
-import doritos.doriroom.user.dto.response.OtherUserRoomResponseDto;
-import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
-import doritos.doriroom.user.dto.response.UserCreditResponseDto;
-import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
 import doritos.doriroom.user.exception.DuplicateException;
 import doritos.doriroom.user.exception.SelfRoomInfoNotAllowedException;
 import doritos.doriroom.user.exception.UserNotFoundException;
@@ -90,6 +86,15 @@ public class UserService {
         foundUser.setNickname(request.nickname()); // 닉네임 업데이트
     }
 
+    // 방 말풍선 변경
+    @Transactional
+    public void updateSpeechBubble(User user, SpeechBubbleRequest request){
+        User foundUser = userRepository.findByUserId(user.getUserId())
+                .orElseThrow(UserNotFoundException::new);
+
+        foundUser.setSpeechBubble(request.speechBubble());
+    }
+
     // 프로필 이미지 변경
     @Transactional
     public ProfileImageResponseDto uploadProfileImage(User user, MultipartFile file){
@@ -135,6 +140,7 @@ public class UserService {
         foundUser.setPassword(encoder.encode(request.newPassword())); // 새 비밀번호를 암호화하여 저장
     }
 
+    // 회원 탈퇴
     @Transactional
     public void withdraw(User user, UserWithdrawalRequestDto request){
         User foundUser = userRepository.findByUserId(user.getUserId())

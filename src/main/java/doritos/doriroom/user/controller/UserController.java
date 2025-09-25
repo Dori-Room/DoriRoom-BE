@@ -2,19 +2,10 @@ package doritos.doriroom.user.controller;
 
 
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
-import doritos.doriroom.user.dto.request.UserWithdrawalRequestDto;
-import doritos.doriroom.user.dto.response.UserSearchResultDto;
+import doritos.doriroom.user.dto.request.*;
+import doritos.doriroom.user.dto.response.*;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
-import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
-import doritos.doriroom.user.dto.request.RoomLikeRequestDto;
-import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
-import doritos.doriroom.user.dto.response.MyRoomResponseDto;
-import doritos.doriroom.user.dto.response.OtherUserRoomResponseDto;
-import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
-import doritos.doriroom.user.dto.response.RoomLikeResponseDto;
-import doritos.doriroom.user.dto.response.UserCreditResponseDto;
-import doritos.doriroom.user.dto.response.UserMyPageInfoDetailResponseDto;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.service.RoomLikeService;
 import doritos.doriroom.user.service.UserService;
@@ -165,5 +156,14 @@ public class UserController {
     public ApiResponse<List<UserSearchResultDto>> searchUsers(@AuthenticationPrincipal User user,
                                                               @RequestBody UserSearchRequestDto request) {
         return ApiResponse.ok(userService.searchUsers(user, request));
+    }
+
+    // 말풍선 업데이트
+    @Operation(summary = "내 방 말풍선 업데이트", description = "방 말풍선을 30자 이하의 텍스트로 변경")
+    @PutMapping("/speechbubble")
+    public ApiResponse<Void> updateSpeechBubble(@AuthenticationPrincipal User user,
+                                                @Valid @RequestBody SpeechBubbleRequest request){
+        userService.updateSpeechBubble(user, request);
+        return ApiResponse.ok();
     }
 }
