@@ -10,11 +10,9 @@ import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -64,5 +62,14 @@ public class RankingController {
         @Parameter(description = "닉네임", example = "도리", required = true)
         @RequestParam String nickname) {
         return ApiResponse.ok(rankingService.searchUsersInRanking(user, nickname));
+    }
+
+    @Operation(summary = "이웃도리 유저 검색", description = "닉네임으로 내가 팔로우하는 유저 내에서만 검색")
+    @GetMapping("/search/follow")
+    public ApiResponse<List<RankingSearchResponseDto>> searchFollowingUsers(
+        @AuthenticationPrincipal User user,
+        @Parameter(description = "닉네임", example = "도리", required = true)
+        @RequestParam String nickname) {
+        return ApiResponse.ok(rankingService.searchFollowingUsers(user, nickname));
     }
 }
