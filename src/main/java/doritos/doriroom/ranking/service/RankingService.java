@@ -420,16 +420,26 @@ public class RankingService {
         
         // 랭킹 응답 DTO 변환
         List<RegionalRankingResponseDto> rankingList = new ArrayList<>();
-        
+        int currentRank = 1;
+        int previousLevel = -1;
+        long previousExp = -1;
+
         for (int i = 0; i < userAtlases.size(); i++) {
             UserAtlas userAtlas = userAtlases.get(i);
             User user = userAtlas.getUser();
             Follow following = followingMap.get(user.getUserId());
             boolean isFollowing = following != null;
             boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
-            
+
+            // dense_rank 로직: 이전 점수와 다르면 현재 순위, 같으면 이전 순위 유지
+            if (previousLevel != -1 && (userAtlas.getLevel() != previousLevel || userAtlas.getCurrentExp() != previousExp)) {
+                currentRank = i + 1;
+            }
+            previousLevel = userAtlas.getLevel();
+            previousExp = userAtlas.getCurrentExp();
+
             rankingList.add(RegionalRankingResponseDto.builder()
-                .rank(String.valueOf(i + 1))
+                .rank(String.valueOf(currentRank))
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
                 .profileImageUrl(user.getProfileImageUrl())
