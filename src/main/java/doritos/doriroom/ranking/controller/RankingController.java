@@ -4,6 +4,7 @@ import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.ranking.dto.response.RankingResponseDto;
 import doritos.doriroom.ranking.dto.response.RankingSearchResponseDto;
 import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
+import doritos.doriroom.ranking.dto.response.RecentVisitResponseDto;
 import doritos.doriroom.ranking.service.RankingService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
@@ -71,5 +72,11 @@ public class RankingController {
         @Parameter(description = "닉네임", example = "도리", required = true)
         @RequestParam String nickname) {
         return ApiResponse.ok(rankingService.searchFollowingUsers(user, nickname));
+    }
+
+    @Operation(summary = "최근 방문한 프로필 조회", description = "최근 방문한 프로필 목록을 최신순으로 조회 (최대 20개)")
+    @GetMapping("/recent-visits")
+    public ApiResponse<List<RecentVisitResponseDto>> getRecentVisits(@AuthenticationPrincipal User user) {
+        return ApiResponse.ok(rankingService.getRecentVisits(user));
     }
 }

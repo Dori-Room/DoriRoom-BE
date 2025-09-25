@@ -23,6 +23,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import doritos.doriroom.ranking.domain.ProfileVisit;
+import doritos.doriroom.ranking.repository.ProfileVisitRepository;
+import doritos.doriroom.ranking.dto.response.RecentVisitResponseDto;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +35,7 @@ public class RankingService {
     
     private final RankingRepository rankingRepository;
     private final FollowRepository followRepository;
+    private final ProfileVisitRepository profileVisitRepository; // 방문 기록 리포지토리 추가
     
     // 전체 랭킹 조회 (상위 100명)
     public List<RankingResponseDto> getAllRanking(User currentUser) {
@@ -258,6 +262,57 @@ public class RankingService {
         }
 
         return searchResults;
+    }
+
+    // 최근 방문한 프로필 조회
+    public List<RecentVisitResponseDto> getRecentVisits(User currentUser) {
+        List<ProfileVisit> recentVisits = profileVisitRepository.findRecentVisitsByVisitorId(currentUser.getUserId());
+        
+        if (recentVisits.isEmpty()) {
+            return List.of();
+        }
+        
+        // 방문한 유저들의 ID 수집
+        Set<UUID> visitedUserIds = recentVisits.stream()
+            .map(visit -> visit.getVisitedUser().getUserId())
+            .collect(Collectors.toSet());
+        
+        // 응답 DTO 변환
+        List<RecentVisitResponseDto> recentVisitList = new ArrayList<>();
+        
+        for (ProfileVisit visit : recentVisits) {
+            User visitedUser = visit.getVisitedUser();
+
+            recentVisitList.add(RecentVisitResponseDto.builder()
+                .userId(visitedUser.getUserId())
+                .nickname(visitedUser.getNickname())
+                .profileImageUrl(visitedUser.getProfileImageUrl())
+                .build());
+        }
+        return recentVisitList;
+    }
+    
+    // 프로필 방문 기록 추가
+    @Transactional
+    public void addProfileVisit(User visitor, User visitedUser) {
+        // 자신의 프로필을 방문하는 경우는 기록하지 않음
+        if (visitor.getUserId().equals(visitedUser.getUserId())) {
+            return;
+        }
+        
+        // 이미 방문 기록이 있는지 확인
+        if (profileVisitRepository.existsByVisitorAndVisitedUser(visitor, visitedUser)) {
+            // 기존 기록 삭제 후 새로 추가 (최신 방문 시간으로 업데이트)
+            profileVisitRepository.deleteByVisitorAndVisitedUser(visitor, visitedUser);
+        }
+        
+        // 새로운 방문 기록 추가
+        ProfileVisit profileVisit = ProfileVisit.builder()
+            .visitor(visitor)
+            .visitedUser(visitedUser)
+            .build();
+        
+        profileVisitRepository.save(profileVisit);
     }
 
     // 현재 유저의 팔로우 정보를 조회
