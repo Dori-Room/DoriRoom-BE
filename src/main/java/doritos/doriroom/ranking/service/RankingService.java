@@ -8,6 +8,7 @@ import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
 import doritos.doriroom.ranking.repository.RankingRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -344,11 +345,8 @@ public class RankingService {
         List<User> users = new ArrayList<>();
         for (ZSetOperations.TypedTuple<Object> tuple : rankingData) {
             String userIdStr = (String) tuple.getValue();
-            UUID userId = UUID.fromString(userIdStr);
-            User user = rankingRepository.findById(userId).orElse(null);
-            if (user != null) {
-                users.add(user);
-            }
+            UUID userId = UUID.fromString(Objects.requireNonNull(userIdStr));
+            rankingRepository.findById(userId).ifPresent(users::add);
         }
         
         // 팔로우 관계 정보 조회
@@ -400,11 +398,9 @@ public class RankingService {
         List<UserAtlas> userAtlases = new ArrayList<>();
         for (ZSetOperations.TypedTuple<Object> tuple : rankingData) {
             String userIdStr = (String) tuple.getValue();
-            UUID userId = UUID.fromString(userIdStr);
+            UUID userId = UUID.fromString(Objects.requireNonNull(userIdStr));
             Optional<UserAtlas> userAtlasOpt = rankingRepository.findUserAtlasByUserIdAndAreaGroup(userId, areaGroup);
-            if (userAtlasOpt.isPresent()) {
-                userAtlases.add(userAtlasOpt.get());
-            }
+            userAtlasOpt.ifPresent(userAtlases::add);
         }
         
         // 팔로우 관계 정보 조회
