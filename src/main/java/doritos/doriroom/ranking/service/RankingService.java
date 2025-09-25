@@ -272,11 +272,6 @@ public class RankingService {
             return List.of();
         }
         
-        // 방문한 유저들의 ID 수집
-        Set<UUID> visitedUserIds = recentVisits.stream()
-            .map(visit -> visit.getVisitedUser().getUserId())
-            .collect(Collectors.toSet());
-        
         // 응답 DTO 변환
         List<RecentVisitResponseDto> recentVisitList = new ArrayList<>();
         
