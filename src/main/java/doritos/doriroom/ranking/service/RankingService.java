@@ -11,6 +11,7 @@ import doritos.doriroom.user.domain.User;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ import org.springframework.data.redis.core.ZSetOperations;
 public class RankingService {
     
     private final ZSetOperations<String, Object> zSetOperations;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final RankingRepository rankingRepository;
     private final FollowRepository followRepository;
 
@@ -148,17 +150,43 @@ public class RankingService {
     public void initializeRankingData() {
         log.info("Redis 랭킹 데이터 초기화를 시작합니다.");
         
-        // 전체 랭킹 데이터 초기화
-        initializeOverallRanking();
-        
-        // 지역별 랭킹 데이터 초기화
-        for (AreaGroup areaGroup : AreaGroup.values()) {
-            initializeRegionalRanking(areaGroup);
+        try {
+            // 기존 Redis 데이터 삭제
+            clearAllRankingData();
+            
+            // 전체 랭킹 데이터 초기화
+            initializeOverallRanking();
+            
+            // 지역별 랭킹 데이터 초기화
+            for (AreaGroup areaGroup : AreaGroup.values()) {
+                initializeRegionalRanking(areaGroup);
+            }
+            log.info("Redis 랭킹 데이터 초기화가 완료되었습니다.");
+        } catch (Exception e) {
+            log.error("Redis 랭킹 데이터 초기화 중 오류 발생", e);
+            throw e;
         }
-        
-        log.info("Redis 랭킹 데이터 초기화가 완료되었습니다.");
     }
-    
+
+    // 모든 랭킹 데이터 삭제
+    private void clearAllRankingData() {
+        try {
+            // 전체 랭킹 데이터 삭제
+            redisTemplate.delete(OVERALL_RANKING_KEY);
+            
+            // 지역별 랭킹 데이터 삭제
+            for (AreaGroup areaGroup : AreaGroup.values()) {
+                String redisKey = REGIONAL_RANKING_KEY_PREFIX + areaGroup.name();
+                redisTemplate.delete(redisKey);
+            }
+            log.info("기존 Redis 랭킹 데이터를 삭제했습니다.");
+        } catch (Exception e) {
+            log.error("Redis 랭킹 데이터 삭제 중 오류 발생", e);
+            throw e;
+        }
+    }
+
+
     // ========== MySQL 조회 메서드들 (Fallback) ==========
     
     // MySQL에서 전체 랭킹 조회
@@ -415,8 +443,6 @@ public class RankingService {
         for (User user : topUsers) {
             zSetOperations.add(OVERALL_RANKING_KEY, user.getUserId().toString(), user.getLikeCount());
         }
-        
-        log.info("전체 랭킹 데이터 초기화 완료: {}명", topUsers.size());
     }
     
     private void initializeRegionalRanking(AreaGroup areaGroup) {
@@ -428,7 +454,5 @@ public class RankingService {
             double score = userAtlas.getLevel() * 10000.0 + userAtlas.getCurrentExp();
             zSetOperations.add(redisKey, userAtlas.getUser().getUserId().toString(), score);
         }
-        
-        log.info("지역 랭킹 데이터 초기화 완료: {} - {}명", areaGroup, topUsers.size());
     }
 } 
