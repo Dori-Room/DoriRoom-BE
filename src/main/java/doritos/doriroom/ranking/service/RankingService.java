@@ -364,15 +364,24 @@ public class RankingService {
         
         // 랭킹 응답 DTO 변환
         List<RankingResponseDto> rankingList = new ArrayList<>();
-        
+
+        int currentRank = 1;
+        int previousLikeCount = -1;
+
         for (int i = 0; i < users.size(); i++) {
             User user = users.get(i);
             Follow following = followingMap.get(user.getUserId());
             boolean isFollowing = following != null;
             boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
-            
+
+            // dense_rank 로직: 이전 점수와 다르면 현재 순위, 같으면 이전 순위 유지
+            if (previousLikeCount != -1 && user.getLikeCount() != previousLikeCount) {
+                currentRank = i + 1;
+            }
+            previousLikeCount = user.getLikeCount();
+
             rankingList.add(RankingResponseDto.builder()
-                .rank(String.valueOf(i + 1))
+                .rank(String.valueOf(currentRank))
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
                 .profileImageUrl(user.getProfileImageUrl())
