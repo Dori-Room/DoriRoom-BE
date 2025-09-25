@@ -3,12 +3,14 @@ package doritos.doriroom.ranking.service;
 import doritos.doriroom.atlas.domain.UserAtlas;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.repository.FollowRepository;
+import doritos.doriroom.ranking.domain.FollowInfo;
 import doritos.doriroom.ranking.dto.response.RankingResponseDto;
 import doritos.doriroom.ranking.dto.response.RankingSearchResponseDto;
 import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
 import doritos.doriroom.ranking.repository.RankingRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
+import java.util.Collections;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,20 +40,9 @@ public class RankingService {
         if (topUsers.isEmpty()) {
             return List.of();
         }
-        
-        // 팔로우 관계 정보 조회
-        Set<UUID> userIds = topUsers.stream()
-            .map(User::getUserId)
-            .collect(Collectors.toSet());
-        
-        // 내가 팔로우하는 유저들
-        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, userIds)
-            .stream()
-            .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
-        
-        // 나를 팔로우하는 유저들
-        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
-        
+
+        FollowInfo followInfo = getFollowInfo(currentUser, topUsers);
+
         // 랭킹 계산 및 DTO 변환
         List<RankingResponseDto> rankings = new ArrayList<>();
         int currentRank = 1;
@@ -64,9 +55,9 @@ public class RankingService {
                 currentRank++;
             }
             
-            Follow following = followingMap.get(user.getUserId());
+            Follow following = followInfo.followingMap().get(user.getUserId());
             boolean isFollowing = following != null;
-            boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
+            boolean isFollowedBy = followInfo.followedByUserIds().contains(user.getUserId());
             
             // 등수가 0이면 "-"로 표시, 아니면 숫자로 표시
             String rankDisplay = user.getLikeCount() == 0 ? "-" : String.valueOf(currentRank);
@@ -97,18 +88,7 @@ public class RankingService {
             .map(UserAtlas::getUser)
             .toList();
         
-        // 팔로우 관계 정보 조회
-        Set<UUID> userIds = topUsers.stream()
-            .map(User::getUserId)
-            .collect(Collectors.toSet());
-        
-        // 내가 팔로우하는 유저들
-        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, userIds)
-            .stream()
-            .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
-        
-        // 나를 팔로우하는 유저들
-        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
+        FollowInfo followInfo = getFollowInfo(currentUser, topUsers);
         
         // 랭킹 계산 및 DTO 변환
         List<RegionalRankingResponseDto> rankings = new ArrayList<>();
@@ -125,9 +105,9 @@ public class RankingService {
                 currentRank = i + 1;
             }
             
-            Follow following = followingMap.get(user.getUserId());
+            Follow following = followInfo.followingMap().get(user.getUserId());
             boolean isFollowing = following != null;
-            boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
+            boolean isFollowedBy = followInfo.followedByUserIds().contains(user.getUserId());
             
             // 도감 레벨이 0이면 "-"로 표시, 아니면 숫자로 표시
             String rankDisplay = userAtlas.getLevel() == 0 ? "-" : String.valueOf(currentRank);
@@ -228,26 +208,15 @@ public class RankingService {
             return List.of();
         }
 
-        // 팔로우 관계 정보 조회
-        Set<UUID> userIds = foundUsers.stream()
-            .map(User::getUserId)
-            .collect(Collectors.toSet());
-
-        // 내가 팔로우하는 유저들
-        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, userIds)
-            .stream()
-            .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
-
-        // 나를 팔로우하는 유저들
-        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
+        FollowInfo followInfo = getFollowInfo(currentUser, foundUsers);
 
         // 검색 결과 DTO 변환
         List<RankingSearchResponseDto> searchResults = new ArrayList<>();
 
         for (User user : foundUsers) {
-            Follow following = followingMap.get(user.getUserId());
+            Follow following = followInfo.followingMap().get(user.getUserId());
             boolean isFollowing = following != null;
-            boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
+            boolean isFollowedBy = followInfo.followedByUserIds().contains(user.getUserId());
 
             searchResults.add(RankingSearchResponseDto.builder()
                 .userId(user.getUserId())
@@ -269,26 +238,15 @@ public class RankingService {
             return List.of();
         }
 
-        // 팔로우 관계 정보 조회
-        Set<UUID> userIds = foundFollowingUsers.stream()
-            .map(User::getUserId)
-            .collect(Collectors.toSet());
-
-        // 내가 팔로우하는 유저들
-        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, userIds)
-            .stream()
-            .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
-
-        // 나를 팔로우하는 유저들
-        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
+        FollowInfo followInfo = getFollowInfo(currentUser, foundFollowingUsers);
 
         // 검색 결과 DTO 변환
         List<RankingSearchResponseDto> searchResults = new ArrayList<>();
 
         for (User user : foundFollowingUsers) {
-            Follow following = followingMap.get(user.getUserId());
+            Follow following = followInfo.followingMap().get(user.getUserId());
             boolean isFollowing = following != null;
-            boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
+            boolean isFollowedBy = followInfo.followedByUserIds().contains(user.getUserId());
 
             searchResults.add(RankingSearchResponseDto.builder()
                 .userId(user.getUserId())
@@ -300,5 +258,24 @@ public class RankingService {
         }
 
         return searchResults;
+    }
+
+    // 현재 유저의 팔로우 정보를 조회
+    private FollowInfo getFollowInfo(User currentUser, List<User> targetUsers) {
+        if (targetUsers.isEmpty()) {
+            return new FollowInfo(Collections.emptyMap(), Collections.emptySet());
+        }
+
+        Set<UUID> userIds = targetUsers.stream()
+            .map(User::getUserId)
+            .collect(Collectors.toSet());
+
+        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, userIds)
+            .stream()
+            .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
+
+        Set<UUID> followedByUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
+
+        return new FollowInfo(followingMap, followedByUserIds);
     }
 } 
