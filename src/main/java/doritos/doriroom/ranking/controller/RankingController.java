@@ -2,15 +2,19 @@ package doritos.doriroom.ranking.controller;
 
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.ranking.dto.response.RankingResponseDto;
+import doritos.doriroom.ranking.dto.response.RankingSearchResponseDto;
 import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
 import doritos.doriroom.ranking.service.RankingService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,5 +55,14 @@ public class RankingController {
         @AuthenticationPrincipal User user,
         @RequestParam AreaGroup areaGroup) {
         return ApiResponse.ok(rankingService.getMyRegionalRanking(user, areaGroup));
+    }
+
+    @Operation(summary = "전체 유저 검색", description = "닉네임으로 전체 유저 중에서 검색")
+    @GetMapping("/search/all")
+    public ApiResponse<List<RankingSearchResponseDto>> searchUsersInRanking(
+        @AuthenticationPrincipal User user,
+        @Parameter(description = "닉네임", example = "도리", required = true)
+        @RequestParam String nickname) {
+        return ApiResponse.ok(rankingService.searchUsersInRanking(user, nickname));
     }
 }

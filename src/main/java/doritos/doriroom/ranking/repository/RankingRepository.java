@@ -56,4 +56,8 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
         WHERE u.userId = :userId AND a.areaGroup = :areaGroup
         """)
     Optional<UserAtlas> findUserAtlasByUserIdAndAreaGroup(@Param("userId") UUID userId, @Param("areaGroup") AreaGroup areaGroup);
+
+    // 닉네임으로 유저 검색 (좋아요 수 기준 정렬)
+    @Query("SELECT u FROM User u WHERE u.nickname LIKE %:nickname% ORDER BY u.likeCount DESC")
+    List<User> findByNicknameContainingOrderByLikeCountDesc(@Param("nickname") String nickname);
 } 

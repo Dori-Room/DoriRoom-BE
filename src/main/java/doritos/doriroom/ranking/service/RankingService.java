@@ -4,6 +4,7 @@ import doritos.doriroom.atlas.domain.UserAtlas;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.repository.FollowRepository;
 import doritos.doriroom.ranking.dto.response.RankingResponseDto;
+import doritos.doriroom.ranking.dto.response.RankingSearchResponseDto;
 import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
 import doritos.doriroom.ranking.repository.RankingRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;
@@ -217,5 +218,45 @@ public class RankingService {
             .atlasExp(myUserAtlas.getCurrentExp().intValue())
             .areaGroup(areaGroup)
             .build();
+    }
+
+    // 닉네임으로 전체 유저 검색
+    public List<RankingSearchResponseDto> searchUsersInRanking(User currentUser, String nickname) {
+        List<User> foundUsers = rankingRepository.findByNicknameContainingOrderByLikeCountDesc(nickname);
+
+        if (foundUsers.isEmpty()) {
+            return List.of();
+        }
+
+        // 팔로우 관계 정보 조회
+        Set<UUID> userIds = foundUsers.stream()
+            .map(User::getUserId)
+            .collect(Collectors.toSet());
+
+        // 내가 팔로우하는 유저들
+        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, userIds)
+            .stream()
+            .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
+
+        // 나를 팔로우하는 유저들
+        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
+
+        // 검색 결과 DTO 변환
+        List<RankingSearchResponseDto> searchResults = new ArrayList<>();
+
+        for (User user : foundUsers) {
+            Follow following = followingMap.get(user.getUserId());
+            boolean isFollowing = following != null;
+            boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
+
+            searchResults.add(RankingSearchResponseDto.builder()
+                .userId(user.getUserId())
+                .nickname(user.getNickname())
+                .profileImageUrl(user.getProfileImageUrl())
+                .following(isFollowing)
+                .followedBy(isFollowedBy)
+                .build());
+        }
+        return searchResults;
     }
 } 
