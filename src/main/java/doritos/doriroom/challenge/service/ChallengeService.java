@@ -49,36 +49,35 @@ public class ChallengeService {
 
     @Transactional(readOnly = true)
     public List<ChallengeResponseDto> getChallengesByGroup(User user, ChallengeGroup challengeGroup, AreaGroup areaGroup){
-        // 그룹별로 사용할 캐시 키 정의
-        String cacheKeyByGroup = RedisCacheService.CHALLENGES_KEY + challengeGroup + (areaGroup != null ? ":" + areaGroup : "");
+        // 캐시 키 정의
+        String cacheKey = RedisCacheService.CHALLENGES_KEY + user.getUserId().toString() + ":" +
+                challengeGroup.name() + (areaGroup != null ? "_" + areaGroup.name() : "");
 
-        // 캐시에서 조회
-        Optional<List<Challenge>> cachedChallenges = redisCacheService.getCacheList(
-                cacheKeyByGroup, new TypeReference<List<Challenge>>() {});
+        // 캐시에서 dto 조회
+        Optional<List<ChallengeResponseDto>> cachedDtoList = redisCacheService.getCacheList(
+                cacheKey, new TypeReference<>() {});
 
-        List<Challenge> challenges;
-        if (cachedChallenges.isPresent()) { // 캐시에 있으면 가져옴
-            challenges = cachedChallenges.get();
-        } else {
-            challenges = challengeFilterByGroup(challengeGroup, areaGroup); // 없으면 db에서 조회
-            redisCacheService.setCache(cacheKeyByGroup, challenges, RedisCacheService.CHALLENGES_TTL); // 캐시에 저장해둠
+        if (cachedDtoList.isPresent()) { // 캐시에 있으면 가져옴
+            return cachedDtoList.get();
         }
 
-        if (challenges.isEmpty()) {
-            return List.of();
-        }
+        List<Challenge> challenges = challengeFilterByGroup(challengeGroup, areaGroup); // 없으면 db에서 조회
 
         // 과제들에 대한 유저의 과제 상태 리스트 -> Map으로 변환
         Map<Long, UserChallenge> userChallengeMap = userChallengeRepository.findByUserAndChallengeInWithFetch(user, challenges).stream()
                 .collect(Collectors.toMap(uc -> uc.getChallenge().getId(), uc -> uc));
 
         // 도전과제 정보와 유저의 진행 상태를 반영하여 반환
-        return challenges.stream()
-            .map(challenge -> {
-                UserChallenge userProgress = userChallengeMap.get(challenge.getId());
-                return ChallengeResponseDto.of(challenge, userProgress);
-            })
-            .collect(Collectors.toList());
+        List<ChallengeResponseDto> challengeDtos = challenges.stream()
+                .map(challenge -> {
+                    UserChallenge userProgress = userChallengeMap.get(challenge.getId());
+                    return ChallengeResponseDto.of(challenge, userProgress);
+                })
+                .collect(Collectors.toList());
+
+        redisCacheService.setCache(cacheKey, challengeDtos, RedisCacheService.CHALLENGES_TTL); // 캐시에 저장해둠
+
+        return challengeDtos;
     }
 
     @Transactional
