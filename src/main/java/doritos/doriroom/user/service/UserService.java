@@ -171,21 +171,19 @@ public class UserService {
         foundUser.setNickname(key + foundUser.getNickname()+ "_" + System.currentTimeMillis());
         foundUser.setPassword(encoder.encode(UUID.randomUUID().toString())); // 비밀번호를 아무도 모르는 값으로 변경
         foundUser.setProfileImageUrl(null);
-
-        // 상태 및 탈퇴일시 변경
-        foundUser.setWithdraw(true);
+        foundUser.setFcmToken(null); // fcm 토큰 정리
+        foundUser.setWithdraw(true); // 상태 및 탈퇴일시 변경
         foundUser.setWithdrawDate(LocalDateTime.now());
 
         // 팔로우 관계 연관 데이터 정리
         followRepository.deleteByFollowerOrFollowed(foundUser, foundUser);
-
     }
 
     //내 방 정보
     @Transactional(readOnly = true)
     public MyRoomResponseDto getMyRoomInfo(User user) {
         User foundUser = userRepository.findByUserId(user.getUserId())
-            .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         // 내가 착용 중인 아이템 조회
         List<EquippedItemResponse> equippedItems = itemService.getEquippedItems(user);
@@ -201,7 +199,7 @@ public class UserService {
         }
 
         User targetUser = userRepository.findByUserId(targetUserId)
-            .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(targetUserId);
 
