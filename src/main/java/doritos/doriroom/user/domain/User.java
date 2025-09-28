@@ -28,29 +28,33 @@ public class User {
 
     private String profileImageUrl;
 
-    @Builder.Default
-    @Column(nullable = false)
+    @Builder.Default @Column(nullable = false)
     private Long credit = 10000L; //TODO: 개발 편의용 크레딧 추가
-
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RoomVisibility roomVisibility = RoomVisibility.PUBLIC;
-
-    @Builder.Default
-    @Column(nullable = false)
-    private int likeCount = 0;
-
-    @Builder.Default
-    @Column(nullable = false)
-    private int viewCount = 0;
 
     // 회원 탈퇴 필드
     @Builder.Default @Column(nullable = false)
     private boolean isWithdraw  = false; // 탈퇴 상태
-    private LocalDateTime withdrawDate; // 탈퇴 시각
 
+    private LocalDateTime withdrawDate; // 탈퇴 시각
+  
     private String fcmToken;
+
+    /*   방 관련    */
+    @Builder.Default
+    @Enumerated(EnumType.STRING) @Column(nullable = false)
+    private RoomVisibility roomVisibility = RoomVisibility.PUBLIC;
+
+    @Builder.Default @Column(nullable = false)
+    private int likeCount = 0;
+
+    @Builder.Default @Column(nullable = false)
+    private int viewCount = 0;
+
+    @Column(length = 30)
+    private String speechBubble;
+
+
+    /*       메서드         */
 
     // 포인트 관련 메서드 추가
     public void addCredit(Long creditCount) {

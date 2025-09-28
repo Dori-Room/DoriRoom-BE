@@ -25,7 +25,10 @@ public record MyRoomResponseDto(
     int likeCount,
 
     @Schema(description = "내 크레딧", example = "10000")
-    Long credit
+    Long credit,
+
+    @Schema(description = "내 말풍선", example = "안녕하세요! 도리토스의 방 입니다~")
+    String speechBubble
 ) {
     public static MyRoomResponseDto from(User user, List<EquippedItemResponse> equippedItems) {
         if (user == null) {
@@ -39,6 +42,7 @@ public record MyRoomResponseDto(
             .viewCount(user.getViewCount())
             .likeCount(user.getLikeCount())
             .credit(user.getCredit())
+            .speechBubble(user.getSpeechBubble())
             .build();
     }
 }
