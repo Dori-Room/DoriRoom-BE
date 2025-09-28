@@ -39,7 +39,8 @@ public class FirebaseConfig {
           "private_key_id": "%s",
           "private_key": "%s",
           "client_email": "%s",
-          "client_id": "%s"
+          "client_id": "%s",
+          "token_uri": "https://oauth2.googleapis.com/token"
         }
         """, projectId, privateKeyId, formattedKey, clientEmail, clientId);
 
