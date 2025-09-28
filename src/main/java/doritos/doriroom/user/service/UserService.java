@@ -5,6 +5,7 @@ import doritos.doriroom.challenge.domain.challenge.ChallengeType;
 import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
+import doritos.doriroom.ranking.service.ProfileVisitService;
 import doritos.doriroom.user.dto.request.SpeechBubbleRequest;
 import doritos.doriroom.user.dto.request.UserWithdrawalRequestDto;
 import doritos.doriroom.user.dto.response.*;
@@ -43,6 +44,7 @@ public class UserService {
     private final ItemService itemService;
     private final FollowRepository followRepository;
     private final ChallengeService challengeService;
+    private final ProfileVisitService profileVisitService;
 
 
     public void checkUsernameDuplicate(String username){
@@ -210,6 +212,9 @@ public class UserService {
 
         // 특정 유저의 총 방문 수 N번 달성 과제에 반영
         challengeService.updateChallengeProgressCount(targetUser, ChallengeType.VISIT_NEIGHBOR, viewCount);
+
+        // 프로필 방문 기록 추가
+        profileVisitService.addProfileVisit(user, targetUser);
 
         return OtherUserRoomResponseDto.from(targetUser, equippedItems);
     }

@@ -18,6 +18,7 @@ import doritos.doriroom.item.repository.ItemRepository;
 import doritos.doriroom.quiz.domain.Question;
 import doritos.doriroom.quiz.domain.Quiz;
 import doritos.doriroom.quiz.repository.QuizRepository;
+import doritos.doriroom.ranking.service.RankingService;
 import doritos.doriroom.tourApi.domain.Area;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.tourApi.repository.AreaRepository;
@@ -49,6 +50,7 @@ public class DataInitializer implements ApplicationRunner {
     private final EventRepository eventRepository;
     private final AreaRepository areaRepository;
     private final ObjectMapper objectMapper;
+    private final RankingService rankingService;
 
     @Override
     @Transactional
@@ -84,6 +86,13 @@ public class DataInitializer implements ApplicationRunner {
 
         if (userRepository.count() == 0) {
             createInitialUsers();
+        }
+
+        // Redis 랭킹 데이터 초기화
+        try {
+            rankingService.initializeRankingData();
+        } catch (Exception e) {
+            log.error("Redis 랭킹 데이터 초기화 중 오류 발생", e);
         }
 
     }

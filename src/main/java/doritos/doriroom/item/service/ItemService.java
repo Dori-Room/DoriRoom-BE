@@ -18,6 +18,8 @@ import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.*;
@@ -263,6 +265,32 @@ public class ItemService {
                 .stream().map(EquippedItemResponse::from).toList();
     }
 
+    // 여러 사용자의 장착 아이템을 배치로 조회
+    public Map<UUID, List<EquippedItemResponse>> getMultipleUsersEquippedItems(Set<UUID> userIds) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        // 모든 사용자의 장착 아이템을 한 번에 조회
+        List<UserItem> userItems = userItemRepository.findByUser_UserIdInAndIsEquippedTrue(userIds);
+
+        // 사용자별로 그룹화
+        Map<UUID, List<UserItem>> userItemsMap = userItems.stream()
+            .collect(Collectors.groupingBy(userItem -> userItem.getUser().getUserId()));
+
+        // EquippedItemResponse로 변환
+        Map<UUID, List<EquippedItemResponse>> result = new HashMap<>();
+
+        for (UUID userId : userIds) {
+            List<UserItem> items = userItemsMap.getOrDefault(userId, List.of());
+            List<EquippedItemResponse> equippedItems = items.stream()
+                .map(EquippedItemResponse::from)
+                .toList();
+            result.put(userId, equippedItems);
+        }
+
+        return result;
+    }
 
 
 
