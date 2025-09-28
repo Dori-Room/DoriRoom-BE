@@ -14,7 +14,9 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,17 +48,22 @@ public class NotificationService {
                             .setBody(content)     // 푸시 알림 내용
                             .build();
 
-            Message message = Message.builder()
-                    .setNotification(fcmNotification)
-                    .setToken(user.getFcmToken())
-                    .build();
+            TransactionSynchronizationManager.registerSynchronization(new  TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    Message message = Message.builder()
+                            .setNotification(fcmNotification)
+                            .setToken(user.getFcmToken())
+                            .build();
 
-            try {
-                String response = FirebaseMessaging.getInstance().send(message);
-                log.info("FCM 푸시 알림 발송 성공: " + response);
-            } catch (FirebaseMessagingException e) {
-                log.error("FCM 푸시 알림 발송 실패", e);
-            }
+                    try {
+                        String response = FirebaseMessaging.getInstance().send(message);
+                        log.info("FCM 푸시 알림 발송 성공: " + response);
+                    } catch (FirebaseMessagingException e) {
+                        log.error("FCM 푸시 알림 발송 실패", e);
+                    }
+                }
+            });
         }
     }
 
