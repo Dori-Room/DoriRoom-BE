@@ -27,12 +27,14 @@ public class NotificationService {
     // 푸시 알림 전송
     @Transactional
     @Async // 알림 발송 비동기 처리
-    public void sendNotification(User user, NotificationType type, String content) {
+    public void sendNotification(User user, NotificationType type, String placeholder) {
+        String content = type.createContent(placeholder); // content 구성
+
         // db에 알림 내용 저장
         Notification notification = Notification.builder()
                 .user(user)
-                .type(type)
                 .content(content)
+                .type(type)
                 .build();
         notificationRepository.save(notification);
 
