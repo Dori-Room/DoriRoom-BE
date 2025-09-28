@@ -2,13 +2,10 @@ package doritos.doriroom.user.controller;
 
 
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
-import doritos.doriroom.user.dto.request.UserWithdrawalRequestDto;
+import doritos.doriroom.user.dto.request.*;
 import doritos.doriroom.user.dto.response.UserSearchResultDto;
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.user.domain.User;
-import doritos.doriroom.user.dto.request.ChangePasswordRequestDto;
-import doritos.doriroom.user.dto.request.RoomLikeRequestDto;
-import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
 import doritos.doriroom.user.dto.response.MyRoomResponseDto;
 import doritos.doriroom.user.dto.response.OtherUserRoomResponseDto;
 import doritos.doriroom.user.dto.response.ProfileImageResponseDto;
@@ -165,5 +162,12 @@ public class UserController {
     public ApiResponse<List<UserSearchResultDto>> searchUsers(@AuthenticationPrincipal User user,
                                                               @RequestBody UserSearchRequestDto request) {
         return ApiResponse.ok(userService.searchUsers(user, request));
+    }
+
+    @Operation(summary = "fcm 토큰 등록 및 업데이트 요청, 로그인 성공 및 fcm토큰 발급 후 요청하여 서버에 등록")
+    @PostMapping("/fcm-token")
+    public ApiResponse<Void> updateFcmToken(@AuthenticationPrincipal User user, @RequestBody @Valid FcmTokenRequestDto request) {
+        userService.updateFcmToken(user, request);
+        return ApiResponse.ok();
     }
 }

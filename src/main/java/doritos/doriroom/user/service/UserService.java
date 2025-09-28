@@ -5,6 +5,7 @@ import doritos.doriroom.challenge.domain.challenge.ChallengeType;
 import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
+import doritos.doriroom.user.dto.request.FcmTokenRequestDto;
 import doritos.doriroom.user.dto.request.UserWithdrawalRequestDto;
 import doritos.doriroom.user.dto.response.UserSearchResultDto;
 import doritos.doriroom.follow.repository.FollowRepository;
@@ -258,5 +259,14 @@ public class UserService {
                     );
                 })
                 .toList();
+    }
+
+    // fcm 토큰 등록 및 업데이트
+    @Transactional
+    public void updateFcmToken(User user, FcmTokenRequestDto request) {
+        User foundUser = userRepository.findById(user.getUserId())
+                .orElseThrow(UserNotFoundException::new);
+
+        foundUser.setFcmToken(request.fcmToken()); // fcm 토큰 업데이트
     }
 }
