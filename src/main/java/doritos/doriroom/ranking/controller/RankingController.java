@@ -2,7 +2,6 @@ package doritos.doriroom.ranking.controller;
 
 import doritos.doriroom.global.dto.ApiResponse;
 import doritos.doriroom.ranking.dto.response.RankingResponseDto;
-import doritos.doriroom.ranking.dto.response.RankingSearchResponseDto;
 import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
 import doritos.doriroom.ranking.dto.response.RecentVisitResponseDto;
 import doritos.doriroom.ranking.service.ProfileVisitService;
@@ -62,7 +61,7 @@ public class RankingController {
 
     @Operation(summary = "전체 유저 검색", description = "닉네임으로 전체 유저 중에서 검색")
     @GetMapping("/search/all")
-    public ApiResponse<List<RankingSearchResponseDto>> searchUsersInRanking(
+    public ApiResponse<List<RankingResponseDto>> searchUsersInRanking(
         @AuthenticationPrincipal User user,
         @Parameter(description = "닉네임", example = "도리", required = true)
         @RequestParam String nickname) {
@@ -71,7 +70,7 @@ public class RankingController {
 
     @Operation(summary = "이웃도리 유저 검색", description = "닉네임으로 내가 팔로우하는 유저 내에서만 검색")
     @GetMapping("/search/follow")
-    public ApiResponse<List<RankingSearchResponseDto>> searchFollowingUsers(
+    public ApiResponse<List<RankingResponseDto>> searchFollowingUsers(
         @AuthenticationPrincipal User user,
         @Parameter(description = "닉네임", example = "도리", required = true)
         @RequestParam String nickname) {

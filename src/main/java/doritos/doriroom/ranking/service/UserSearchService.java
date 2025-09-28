@@ -2,8 +2,10 @@ package doritos.doriroom.ranking.service;
 
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.repository.FollowRepository;
+import doritos.doriroom.item.dto.response.EquippedItemResponse;
+import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.ranking.domain.FollowInfo;
-import doritos.doriroom.ranking.dto.response.RankingSearchResponseDto;
+import doritos.doriroom.ranking.dto.response.RankingResponseDto;
 import doritos.doriroom.ranking.repository.RankingRepository;
 import doritos.doriroom.user.domain.User;
 import java.util.ArrayList;
@@ -25,9 +27,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserSearchService {
     private final RankingRepository rankingRepository;
     private final FollowRepository followRepository;
+    private final RankingService rankingService;
+    private final ItemService itemService;
 
     // 닉네임으로 전체 유저 검색
-    public List<RankingSearchResponseDto> searchUsersInRanking(User currentUser, String nickname) {
+    public List<RankingResponseDto> searchUsersInRanking(User currentUser, String nickname) {
         List<User> foundUsers = rankingRepository.findByNicknameContainingOrderByLikeCountDesc(nickname);
 
         if (foundUsers.isEmpty()) {
@@ -36,18 +40,32 @@ public class UserSearchService {
 
         FollowInfo followInfo = getFollowInfo(currentUser, foundUsers);
 
+        // 검색된 유저들의 ID 수집
+        Set<UUID> userIds = foundUsers.stream()
+            .map(User::getUserId)
+            .collect(Collectors.toSet());
+
+        // 장착 아이템 정보 조회
+        Map<UUID, List<EquippedItemResponse>> equippedItemsMap = itemService.getMultipleUsersEquippedItems(userIds);
+
         // 검색 결과 DTO 변환
-        List<RankingSearchResponseDto> searchResults = new ArrayList<>();
+        List<RankingResponseDto> searchResults = new ArrayList<>();
 
         for (User user : foundUsers) {
             Follow following = followInfo.followingMap().get(user.getUserId());
             boolean isFollowing = following != null;
             boolean isFollowedBy = followInfo.followedByUserIds().contains(user.getUserId());
 
-            searchResults.add(RankingSearchResponseDto.builder()
+            // 해당 유저의 장착 아이템 정보 가져오기
+            List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(user.getUserId(), List.of());
+
+            String rank = rankingService.getUserRank(user.getUserId());
+
+            searchResults.add(RankingResponseDto.builder()
+                .rank(rank)
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
-                .profileImageUrl(user.getProfileImageUrl())
+                .equippedItems(equippedItems)
                 .following(isFollowing)
                 .followedBy(isFollowedBy)
                 .build());
@@ -56,7 +74,7 @@ public class UserSearchService {
     }
 
     // 이웃도리 닉네임으로 유저 검색
-    public List<RankingSearchResponseDto> searchFollowingUsers(User currentUser, String nickname) {
+    public List<RankingResponseDto> searchFollowingUsers(User currentUser, String nickname) {
         List<User> foundFollowingUsers = rankingRepository.findFollowingUsersByNicknameContaining(
             currentUser.getUserId(), nickname);
 
@@ -66,18 +84,32 @@ public class UserSearchService {
 
         FollowInfo followInfo = getFollowInfo(currentUser, foundFollowingUsers);
 
+        // 검색된 유저들의 ID 수집
+        Set<UUID> userIds = foundFollowingUsers.stream()
+            .map(User::getUserId)
+            .collect(Collectors.toSet());
+
+        // 장착 아이템 정보 조회
+        Map<UUID, List<EquippedItemResponse>> equippedItemsMap = itemService.getMultipleUsersEquippedItems(userIds);
+
         // 검색 결과 DTO 변환
-        List<RankingSearchResponseDto> searchResults = new ArrayList<>();
+        List<RankingResponseDto> searchResults = new ArrayList<>();
 
         for (User user : foundFollowingUsers) {
             Follow following = followInfo.followingMap().get(user.getUserId());
             boolean isFollowing = following != null;
             boolean isFollowedBy = followInfo.followedByUserIds().contains(user.getUserId());
 
-            searchResults.add(RankingSearchResponseDto.builder()
+            // 해당 유저의 장착 아이템 정보 가져오기
+            List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(user.getUserId(), List.of());
+
+            String rank = rankingService.getUserRank(user.getUserId());
+
+            searchResults.add(RankingResponseDto.builder()
+                .rank(rank)
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
-                .profileImageUrl(user.getProfileImageUrl())
+                .equippedItems(equippedItems)
                 .following(isFollowing)
                 .followedBy(isFollowedBy)
                 .build());

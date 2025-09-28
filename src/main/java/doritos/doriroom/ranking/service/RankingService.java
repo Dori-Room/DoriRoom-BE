@@ -153,7 +153,21 @@ public class RankingService {
         
         zSetOperations.add(redisKey, userId.toString(), score);
     }
-    
+
+    // 특정 유저의 전체 랭킹 순위 조회
+    public String getUserRank(UUID userId) {
+        // Redis에서 순위 조회
+        Long rank = zSetOperations.reverseRank(OVERALL_RANKING_KEY, userId.toString());
+
+        if (rank == null) {
+            // Redis에 데이터가 없으면 MySQL에서 조회
+            Integer myRank = rankingRepository.findMyDenseRankByUserId(userId);
+            return myRank != null ? String.valueOf(myRank) : "-";
+        }
+
+        return rank == 0 ? "1" : String.valueOf(rank + 1);
+    }
+
     // Redis 랭킹 데이터 초기화
     @Transactional
     public void initializeRankingData() {
