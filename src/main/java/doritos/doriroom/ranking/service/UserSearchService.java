@@ -5,6 +5,7 @@ import doritos.doriroom.follow.repository.FollowRepository;
 import doritos.doriroom.item.dto.response.EquippedItemResponse;
 import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.ranking.domain.FollowInfo;
+import doritos.doriroom.ranking.domain.SearchFilterType;
 import doritos.doriroom.ranking.dto.response.RankingResponseDto;
 import doritos.doriroom.ranking.repository.RankingRepository;
 import doritos.doriroom.user.domain.User;
@@ -74,18 +75,30 @@ public class UserSearchService {
     }
 
     // 이웃도리 닉네임으로 유저 검색
-    public List<RankingResponseDto> searchFollowingUsers(User currentUser, String nickname) {
-        List<User> foundFollowingUsers = rankingRepository.findFollowingUsersByNicknameContaining(
-            currentUser.getUserId(), nickname);
+    public List<RankingResponseDto> searchFollowingUsers(User currentUser, String nickname, SearchFilterType filterType) {
+        List<User> foundUsers;
+        switch (filterType) {
+            case FOLLOWING:
+                foundUsers = rankingRepository.findFollowingUsersByNicknameContaining(currentUser.getUserId(), nickname);
+                break;
+            case FOLLOWERS:
+                foundUsers = rankingRepository.findFollowerUsersByNicknameContaining(currentUser.getUserId(), nickname);
+                break;
+            case BEST_FRIEND:
+                foundUsers = rankingRepository.findBestFriendUsersByNicknameContaining(currentUser.getUserId(), nickname);
+                break;
+            default:
+                foundUsers = rankingRepository.findMutualFollowUsersByNicknameContaining(currentUser.getUserId(), nickname);
+        }
 
-        if (foundFollowingUsers.isEmpty()) {
+        if (foundUsers.isEmpty()) {
             return List.of();
         }
 
-        FollowInfo followInfo = getFollowInfo(currentUser, foundFollowingUsers);
+        FollowInfo followInfo = getFollowInfo(currentUser, foundUsers);
 
         // 검색된 유저들의 ID 수집
-        Set<UUID> userIds = foundFollowingUsers.stream()
+        Set<UUID> userIds = foundUsers.stream()
             .map(User::getUserId)
             .collect(Collectors.toSet());
 
@@ -95,7 +108,7 @@ public class UserSearchService {
         // 검색 결과 DTO 변환
         List<RankingResponseDto> searchResults = new ArrayList<>();
 
-        for (User user : foundFollowingUsers) {
+        for (User user : foundUsers) {
             Follow following = followInfo.followingMap().get(user.getUserId());
             boolean isFollowing = following != null;
             boolean isFollowedBy = followInfo.followedByUserIds().contains(user.getUserId());
