@@ -86,7 +86,8 @@ public class RankingService {
         // Redis에서 내 점수 조회
         Double score = zSetOperations.score(OVERALL_RANKING_KEY, currentUser.getUserId().toString());
         long likeCount = score != null ? score.longValue() : 0;
-        
+        String rankDisplay = likeCount == 0 ? "-" : (rank == 0 ? "1" : String.valueOf(rank + 1));
+
         // 팔로우 관계 조회
         boolean following = false;
         boolean followedBy = false;
@@ -94,7 +95,7 @@ public class RankingService {
         List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(currentUser.getUserId());
         
         return RankingResponseDto.builder()
-            .rank(rank == 0 ? "1" : String.valueOf(rank + 1))
+            .rank(rankDisplay)
             .userId(currentUser.getUserId())
             .nickname(currentUser.getNickname())
             .speech(currentUser.getSpeechBubble())
@@ -242,9 +243,10 @@ public class RankingService {
             boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
 
             List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(user.getUserId(), List.of());
+            String rankDisplay = user.getLikeCount() == 0 ? "-" : String.valueOf(i + 1);
 
             rankingList.add(RankingResponseDto.builder()
-                .rank(String.valueOf(i + 1))
+                .rank(rankDisplay)
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
                 .speech(user.getSpeechBubble())
@@ -311,9 +313,10 @@ public class RankingService {
         Long myLikeCount = rankingRepository.findLikeCountByUserId(currentUser.getUserId()).orElse(0L);
 
         List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(currentUser.getUserId());
+        String rankDisplay = myLikeCount == 0 ? "-" : (myRank != null ? String.valueOf(myRank) : "-");
 
         return RankingResponseDto.builder()
-            .rank(myRank != null ? String.valueOf(myRank) : "-")
+            .rank(rankDisplay)
             .userId(currentUser.getUserId())
             .nickname(currentUser.getNickname())
             .speech(currentUser.getSpeechBubble())
@@ -433,11 +436,12 @@ public class RankingService {
                 currentRank = i + 1;
             }
             previousScore = score;
+            String rankDisplay = score == 0 ? "-" : String.valueOf(currentRank);
 
             List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(userId, List.of());
 
             rankingList.add(RankingResponseDto.builder()
-                .rank(String.valueOf(currentRank))
+                .rank(rankDisplay)
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
                 .speech(user.getSpeechBubble())
