@@ -278,4 +278,13 @@ public class UserService {
 
         foundUser.setFcmToken(request.fcmToken()); // fcm 토큰 업데이트
     }
+
+    // fcm 토큰 삭제
+    @Transactional
+    public void deleteFcmToken(User user) {
+        User foundUser = userRepository.findById(user.getUserId())
+                .orElseThrow(UserNotFoundException::new);
+
+        foundUser.setFcmToken(null);
+    }
 }

@@ -173,4 +173,11 @@ public class UserController {
         userService.updateFcmToken(user, request);
         return ApiResponse.ok();
     }
+
+    @Operation(summary = "fcm 토큰 삭제, 로그아웃 시 요청하여 디바이스 해제")
+    @DeleteMapping("/fcm-token")
+    public ApiResponse<Void> deleteFcmToken(@AuthenticationPrincipal User user) {
+        userService.deleteFcmToken(user);
+        return ApiResponse.ok();
+    }
 }
