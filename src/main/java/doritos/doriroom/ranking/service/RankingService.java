@@ -8,6 +8,7 @@ import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
 import doritos.doriroom.ranking.repository.RankingRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -342,48 +343,57 @@ public class RankingService {
     // Redis 데이터로 전체 랭킹 응답 빌드
     private List<RankingResponseDto> buildOverallRankingResponse(Set<ZSetOperations.TypedTuple<Object>> rankingData, User currentUser) {
         // Redis 데이터를 User 객체로 변환하고 팔로우 관계 조회
-        List<User> users = new ArrayList<>();
+        List<UUID> userIdsInOrder = new ArrayList<>();
+        List<Long> scoresInOrder = new ArrayList<>();
+
         for (ZSetOperations.TypedTuple<Object> tuple : rankingData) {
             String userIdStr = (String) tuple.getValue();
             UUID userId = UUID.fromString(Objects.requireNonNull(userIdStr));
-            rankingRepository.findById(userId).ifPresent(users::add);
+            userIdsInOrder.add(userId);
+            scoresInOrder.add(tuple.getScore() != null ? tuple.getScore().longValue() : 0L);
         }
-        
+
+        // 사용자 정보 조회
+        Set<UUID> userIds = new HashSet<>(userIdsInOrder);
+        Map<UUID, User> userMap = rankingRepository.findAllById(userIdsInOrder)
+            .stream()
+            .collect(Collectors.toMap(User::getUserId, user -> user));
+
         // 팔로우 관계 정보 조회
-        Set<UUID> userIds = users.stream()
-            .map(User::getUserId)
-            .collect(Collectors.toSet());
-        
         Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, userIds)
             .stream()
             .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
-        
         Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
-        
+
         // 랭킹 응답 DTO 변환
         List<RankingResponseDto> rankingList = new ArrayList<>();
 
         int currentRank = 1;
-        int previousLikeCount = -1;
+        Long previousScore = null;
 
-        for (int i = 0; i < users.size(); i++) {
-            User user = users.get(i);
+        for (int i = 0; i < userIdsInOrder.size(); i++) {
+            UUID userId = userIdsInOrder.get(i);
+            User user = userMap.get(userId);
+
+            if(user == null) continue;
+
             Follow following = followingMap.get(user.getUserId());
             boolean isFollowing = following != null;
             boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
 
             // dense_rank 로직: 이전 점수와 다르면 현재 순위, 같으면 이전 순위 유지
-            if (previousLikeCount != -1 && user.getLikeCount() != previousLikeCount) {
+            long score = scoresInOrder.get(i);
+            if (previousScore != null && score != previousScore) {
                 currentRank = i + 1;
             }
-            previousLikeCount = user.getLikeCount();
+            previousScore = score;
 
             rankingList.add(RankingResponseDto.builder()
                 .rank(String.valueOf(currentRank))
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
                 .profileImageUrl(user.getProfileImageUrl())
-                .likeCount(user.getLikeCount())
+                .likeCount((int) score)
                 .following(isFollowing)
                 .followedBy(isFollowedBy)
                 .build());
