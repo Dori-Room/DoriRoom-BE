@@ -1,7 +1,9 @@
 package doritos.doriroom.ranking.dto.response;
 
+import doritos.doriroom.item.dto.response.EquippedItemResponse;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.Builder;
 
 import java.util.UUID;
@@ -16,9 +18,9 @@ public record RegionalRankingResponseDto(
     
     @Schema(description = "사용자 닉네임", example = "도리토스")
     String nickname,
-    
-    @Schema(description = "프로필 사진 URL", example = "https://example.com/profile.jpg")
-    String profileImageUrl,
+
+    @Schema(description = "장착한 아이템 목록")
+    List<EquippedItemResponse> equippedItems,
     
     @Schema(description = "도감 레벨", example = "15")
     int atlasLevel,

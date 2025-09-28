@@ -1,7 +1,6 @@
 package doritos.doriroom.ranking.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
 import lombok.Builder;
 
 import java.util.UUID;

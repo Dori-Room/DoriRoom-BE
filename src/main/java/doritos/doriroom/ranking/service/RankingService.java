@@ -3,6 +3,8 @@ package doritos.doriroom.ranking.service;
 import doritos.doriroom.atlas.domain.UserAtlas;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.repository.FollowRepository;
+import doritos.doriroom.item.dto.response.EquippedItemResponse;
+import doritos.doriroom.item.service.ItemService;
 import doritos.doriroom.ranking.dto.response.RankingResponseDto;
 import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
 import doritos.doriroom.ranking.repository.RankingRepository;
@@ -35,6 +37,7 @@ public class RankingService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final RankingRepository rankingRepository;
     private final FollowRepository followRepository;
+    private final ItemService itemService;
 
     // Redis 키 상수
     private static final String OVERALL_RANKING_KEY = "ranking:overall";
@@ -87,12 +90,14 @@ public class RankingService {
         // 팔로우 관계 조회
         boolean following = false;
         boolean followedBy = false;
+
+        List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(currentUser.getUserId());
         
         return RankingResponseDto.builder()
             .rank(rank == 0 ? "1" : String.valueOf(rank + 1))
             .userId(currentUser.getUserId())
             .nickname(currentUser.getNickname())
-            .profileImageUrl(currentUser.getProfileImageUrl())
+            .equippedItems(equippedItems)
             .likeCount((int) likeCount)
             .following(following)
             .followedBy(followedBy)
@@ -117,12 +122,14 @@ public class RankingService {
         
         int atlasLevel = (int) (totalScore / 10000);
         int atlasExp = (int) (totalScore % 10000);
-        
+
+        List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(currentUser.getUserId());
+
         return RegionalRankingResponseDto.builder()
             .rank(rank == 0 ? "1" : String.valueOf(rank + 1))
             .userId(currentUser.getUserId())
             .nickname(currentUser.getNickname())
-            .profileImageUrl(currentUser.getProfileImageUrl())
+            .equippedItems(equippedItems)
             .atlasLevel(atlasLevel)
             .atlasExp(atlasExp)
             .areaGroup(areaGroup)
@@ -205,7 +212,10 @@ public class RankingService {
             .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
         
         Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
-        
+
+        // 장착 아이템 정보 조회
+        Map<UUID, List<EquippedItemResponse>> equippedItemsMap = itemService.getMultipleUsersEquippedItems(userIds);
+
         // 랭킹 응답 DTO 변환
         List<RankingResponseDto> rankingList = new ArrayList<>();
         
@@ -214,12 +224,14 @@ public class RankingService {
             Follow following = followingMap.get(user.getUserId());
             boolean isFollowing = following != null;
             boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
-            
+
+            List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(user.getUserId(), List.of());
+
             rankingList.add(RankingResponseDto.builder()
                 .rank(String.valueOf(i + 1))
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
-                .profileImageUrl(user.getProfileImageUrl())
+                .equippedItems(equippedItems)
                 .likeCount(user.getLikeCount())
                 .following(isFollowing)
                 .followedBy(isFollowedBy)
@@ -243,7 +255,10 @@ public class RankingService {
             .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
         
         Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
-        
+
+        // 장착 아이템 정보 조회
+        Map<UUID, List<EquippedItemResponse>> equippedItemsMap = itemService.getMultipleUsersEquippedItems(userIds);
+
         // 랭킹 응답 DTO 변환
         List<RegionalRankingResponseDto> rankingList = new ArrayList<>();
         
@@ -253,12 +268,14 @@ public class RankingService {
             Follow following = followingMap.get(user.getUserId());
             boolean isFollowing = following != null;
             boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
-            
+
+            List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(user.getUserId(), List.of());
+
             rankingList.add(RegionalRankingResponseDto.builder()
                 .rank(String.valueOf(i + 1))
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
-                .profileImageUrl(user.getProfileImageUrl())
+                .equippedItems(equippedItems)
                 .atlasLevel(userAtlas.getLevel())
                 .atlasExp(Math.toIntExact(userAtlas.getCurrentExp()))
                 .areaGroup(areaGroup)
@@ -274,12 +291,14 @@ public class RankingService {
     private RankingResponseDto getMyAllRankingFromMySQL(User currentUser) {
         Integer myRank = rankingRepository.findMyDenseRankByUserId(currentUser.getUserId());
         Long myLikeCount = rankingRepository.findLikeCountByUserId(currentUser.getUserId()).orElse(0L);
-        
+
+        List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(currentUser.getUserId());
+
         return RankingResponseDto.builder()
             .rank(myRank != null ? String.valueOf(myRank) : "-")
             .userId(currentUser.getUserId())
             .nickname(currentUser.getNickname())
-            .profileImageUrl(currentUser.getProfileImageUrl())
+            .equippedItems(equippedItems)
             .likeCount(myLikeCount.intValue())
             .following(false)
             .followedBy(false)
@@ -292,13 +311,15 @@ public class RankingService {
         Optional<UserAtlas> myUserAtlasOpt = rankingRepository.findUserAtlasByUserIdAndAreaGroup(
             currentUser.getUserId(), areaGroup);
 
+        List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(currentUser.getUserId());
+
         // 해당 지역에 내 기록이 없는 경우 순위 없음 반환
         if (myUserAtlasOpt.isEmpty()) {
             return RegionalRankingResponseDto.builder()
                 .rank("-")
                 .userId(currentUser.getUserId())
                 .nickname(currentUser.getNickname())
-                .profileImageUrl(currentUser.getProfileImageUrl())
+                .equippedItems(equippedItems)
                 .atlasLevel(0)
                 .atlasExp(0)
                 .areaGroup(areaGroup)
@@ -313,7 +334,7 @@ public class RankingService {
                 .rank("-")
                 .userId(currentUser.getUserId())
                 .nickname(currentUser.getNickname())
-                .profileImageUrl(currentUser.getProfileImageUrl())
+                .equippedItems(equippedItems)
                 .atlasLevel(0)
                 .atlasExp(0)
                 .areaGroup(areaGroup)
@@ -331,7 +352,7 @@ public class RankingService {
             .rank(String.valueOf(myRank))
             .userId(currentUser.getUserId())
             .nickname(currentUser.getNickname())
-            .profileImageUrl(currentUser.getProfileImageUrl())
+            .equippedItems(equippedItems)
             .atlasLevel(myUserAtlas.getLevel())
             .atlasExp(myUserAtlas.getCurrentExp().intValue())
             .areaGroup(areaGroup)
@@ -365,6 +386,9 @@ public class RankingService {
             .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
         Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
 
+        // 장착 아이템 정보 조회
+        Map<UUID, List<EquippedItemResponse>> equippedItemsMap = itemService.getMultipleUsersEquippedItems(userIds);
+
         // 랭킹 응답 DTO 변환
         List<RankingResponseDto> rankingList = new ArrayList<>();
 
@@ -388,11 +412,13 @@ public class RankingService {
             }
             previousScore = score;
 
+            List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(userId, List.of());
+
             rankingList.add(RankingResponseDto.builder()
                 .rank(String.valueOf(currentRank))
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
-                .profileImageUrl(user.getProfileImageUrl())
+                .equippedItems(equippedItems)
                 .likeCount((int) score)
                 .following(isFollowing)
                 .followedBy(isFollowedBy)
@@ -431,6 +457,9 @@ public class RankingService {
 
         Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
 
+        // 배치로 장착 아이템 정보 조회
+        Map<UUID, List<EquippedItemResponse>> equippedItemsMap = itemService.getMultipleUsersEquippedItems(userIds);
+
         // 랭킹 응답 DTO 변환
         List<RegionalRankingResponseDto> rankingList = new ArrayList<>();
         int currentRank = 1;
@@ -458,11 +487,13 @@ public class RankingService {
             int atlasLevel = (int) (score / 10000);
             int atlasExp = (int) (score % 10000);
 
+            List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(userId, List.of());
+
             rankingList.add(RegionalRankingResponseDto.builder()
                 .rank(String.valueOf(currentRank))
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
-                .profileImageUrl(user.getProfileImageUrl())
+                .equippedItems(equippedItems)
                 .atlasLevel(atlasLevel)
                 .atlasExp(atlasExp)
                 .areaGroup(areaGroup)

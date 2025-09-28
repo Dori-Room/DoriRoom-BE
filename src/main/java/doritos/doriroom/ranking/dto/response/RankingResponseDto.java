@@ -1,6 +1,8 @@
 package doritos.doriroom.ranking.dto.response;
 
+import doritos.doriroom.item.dto.response.EquippedItemResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.Builder;
 
 import java.util.UUID;
@@ -15,9 +17,9 @@ public record RankingResponseDto(
     
     @Schema(description = "사용자 닉네임", example = "도리토스")
     String nickname,
-    
-    @Schema(description = "프로필 사진 URL", example = "https://example.com/profile.jpg")
-    String profileImageUrl,
+
+    @Schema(description = "장착한 아이템 목록")
+    List<EquippedItemResponse> equippedItems,
     
     @Schema(description = "방 좋아요 수", example = "150")
     int likeCount,
