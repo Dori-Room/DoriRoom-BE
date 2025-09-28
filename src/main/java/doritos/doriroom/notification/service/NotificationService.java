@@ -26,7 +26,6 @@ public class NotificationService {
 
     // 푸시 알림 전송
     @Transactional
-    @Async // 알림 발송 비동기 처리
     public void sendNotification(User user, NotificationType type, String placeholder) {
         String content = type.createContent(placeholder); // content 구성
 
