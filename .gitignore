@@ -79,3 +79,6 @@ out/
 ### VS Code ###
 .vscode/
 
+##  Firebase key
+src/main/resources/firebase/*.json
+

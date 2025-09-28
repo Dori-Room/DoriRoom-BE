@@ -9,6 +9,8 @@ import doritos.doriroom.guestbook.exception.SelfGuestbookNotAllowedException;
 import doritos.doriroom.guestbook.repository.GuestbookRepository;
 import doritos.doriroom.item.dto.response.EquippedItemResponse;
 import doritos.doriroom.item.service.ItemService;
+import doritos.doriroom.notification.domain.NotificationType;
+import doritos.doriroom.notification.service.NotificationService;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
@@ -28,11 +30,12 @@ public class GuestbookService {
     private final GuestbookRepository guestbookRepository;
     private final UserRepository userRepository;
     private final ItemService itemService;
+    private final NotificationService notificationService;
 
     @Transactional
     public GuestbookResponseDto createGuestbook(UUID writerId, GuestbookRequestDto request) {
         // 방 주인 존재 여부 확인
-        userRepository.findById(request.roomOwnerId())
+        User roomOwner = userRepository.findById(request.roomOwnerId())
                 .orElseThrow(UserNotFoundException::new);
 
         // 자신의 방에 방명록을 작성하려는 경우 예외 처리
@@ -45,7 +48,12 @@ public class GuestbookService {
         Guestbook guestbook = Guestbook.from(writerId, request);
         List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(writerId);
 
-        return GuestbookResponseDto.from(guestbookRepository.save(guestbook), user.getNickname(), equippedItems);
+        Guestbook savedGuestbook = guestbookRepository.save(guestbook);
+
+        // 방 주인에게 방명록 작성 알림 발송
+        notificationService.sendNotification(roomOwner, NotificationType.GUESTBOOK_ENTRY, user.getNickname());
+
+        return GuestbookResponseDto.from(savedGuestbook, user.getNickname(), equippedItems);
     }
 
     public Page<GuestbookResponseDto> getGuestbooksByRoomOwner(UUID roomOwnerId, Pageable pageable) {

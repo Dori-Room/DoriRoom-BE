@@ -15,6 +15,8 @@ import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.repository.UserChallengeRepository;
 import doritos.doriroom.global.cache.RedisCacheService;
 import doritos.doriroom.item.service.ItemService;
+import doritos.doriroom.notification.domain.NotificationType;
+import doritos.doriroom.notification.service.NotificationService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ public class ChallengeService {
     private final ItemService itemService;
     private final AtlasService atlasService;
     private final RedisCacheService redisCacheService;
+    private final NotificationService notificationService;
 
     // endDate가 지난 도전과제 상태를 EXPIRED로 변경, 스케줄러에서 호출
     @Transactional
@@ -185,9 +188,15 @@ public class ChallengeService {
             int currentProgress = userChallenge.getCurrentProgress() + count;
             userChallenge.setCurrentProgress(Math.max(0, currentProgress)); // 0 미만으로 내려가지 않도록 방지
 
+            ChallengeStatus previousStatus = userChallenge.getStatus();
+
             // 과제 진척도에 따른 과제 상태 변환
             if (currentProgress >= challenge.getTargetCount()){
                 userChallenge.setStatus(ChallengeStatus.WAIT_REWARD); // 현재 진척도가 TargetCount보다 크면 보상 대기
+
+                if (previousStatus != ChallengeStatus.WAIT_REWARD) { // 최초 보상 수령 가능 시 알람 전송
+                    notificationService.sendNotification(user, NotificationType.CHALLENGE_REWARD, challenge.getTitle());
+                }
             } else if (currentProgress > 0){ // TargetCount보다 작으면 IN_PROGRESS로 변경 (보상 받지 않았는데 이후 진척도가 줄면 재달성 요구함)
                 userChallenge.setStatus(ChallengeStatus.IN_PROGRESS);
             } else { // 진척도가 0이면 미시작 상태로 지정함
@@ -223,10 +232,16 @@ public class ChallengeService {
                 continue;
             }
 
+            ChallengeStatus previousStatus = userChallenge.getStatus();
+
             // totalCount를 받아 진행도에 반영
             userChallenge.setCurrentProgress(totalCount);
             if (userChallenge.getCurrentProgress() >= challenge.getTargetCount()){
                 userChallenge.setStatus(ChallengeStatus.WAIT_REWARD);
+
+                if (previousStatus != ChallengeStatus.WAIT_REWARD) { // 최초 보상 수령 가능 시 알람 전송
+                    notificationService.sendNotification(user, NotificationType.CHALLENGE_REWARD, challenge.getTitle());
+                }
             } else if (totalCount == 0){
                 userChallenge.setStatus(ChallengeStatus.NOT_STARTED);
             } else if (totalCount > 0){
