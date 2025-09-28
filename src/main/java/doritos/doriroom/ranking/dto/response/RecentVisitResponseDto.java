@@ -1,6 +1,7 @@
 package doritos.doriroom.ranking.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalDateTime;
 import lombok.Builder;
 
 import java.util.UUID;
@@ -14,6 +15,9 @@ public record RecentVisitResponseDto(
     String nickname,
     
     @Schema(description = "프로필 사진 URL", example = "https://example.com/profile.jpg")
-    String profileImageUrl
+    String profileImageUrl,
+
+    @Schema(description = "방문 시간", example = "2025-01-15T14:30:00")
+    String visitedAt
 ) {
 } 

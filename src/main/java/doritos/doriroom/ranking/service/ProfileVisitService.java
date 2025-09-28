@@ -4,8 +4,12 @@ import doritos.doriroom.ranking.domain.ProfileVisit;
 import doritos.doriroom.ranking.dto.response.RecentVisitResponseDto;
 import doritos.doriroom.ranking.repository.ProfileVisitRepository;
 import doritos.doriroom.user.domain.User;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,6 +40,7 @@ public class ProfileVisitService {
                 .userId(visitedUser.getUserId())
                 .nickname(visitedUser.getNickname())
                 .profileImageUrl(visitedUser.getProfileImageUrl())
+                .visitedAt(visit.getVisitedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                 .build());
         }
         return recentVisitList;
