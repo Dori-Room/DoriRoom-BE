@@ -48,10 +48,12 @@ public class GuestbookService {
         Guestbook guestbook = Guestbook.from(writerId, request);
         List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(writerId);
 
+        Guestbook savedGuestbook = guestbookRepository.save(guestbook);
+
         // 방 주인에게 방명록 작성 알림 발송
         notificationService.sendNotification(roomOwner, NotificationType.GUESTBOOK_ENTRY, user.getNickname());
 
-        return GuestbookResponseDto.from(guestbookRepository.save(guestbook), user.getNickname(), equippedItems);
+        return GuestbookResponseDto.from(savedGuestbook, user.getNickname(), equippedItems);
     }
 
     public Page<GuestbookResponseDto> getGuestbooksByRoomOwner(UUID roomOwnerId, Pageable pageable) {
