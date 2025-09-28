@@ -197,8 +197,6 @@ public class ChallengeService {
             int currentProgress = userChallenge.getCurrentProgress() + count;
             userChallenge.setCurrentProgress(Math.max(0, currentProgress)); // 0 미만으로 내려가지 않도록 방지
 
-            ChallengeStatus previousStatus = userChallenge.getStatus();
-
             // 과제 진척도에 따른 과제 상태 변환
             if (currentProgress >= challenge.getTargetCount()){
                 userChallenge.setStatus(ChallengeStatus.WAIT_REWARD); // 현재 진척도가 TargetCount보다 크면 보상 대기
