@@ -76,20 +76,20 @@ public class UserSearchService {
 
     // 이웃도리 닉네임으로 유저 검색
     public List<RankingResponseDto> searchFollowingUsers(User currentUser, String nickname, SearchFilterType filterType) {
-        List<User> foundUsers;
-        switch (filterType) {
-            case FOLLOWING:
-                foundUsers = rankingRepository.findFollowingUsersByNicknameContaining(currentUser.getUserId(), nickname);
-                break;
-            case FOLLOWERS:
-                foundUsers = rankingRepository.findFollowerUsersByNicknameContaining(currentUser.getUserId(), nickname);
-                break;
-            case BEST_FRIEND:
-                foundUsers = rankingRepository.findBestFriendUsersByNicknameContaining(currentUser.getUserId(), nickname);
-                break;
-            default:
-                foundUsers = rankingRepository.findMutualFollowUsersByNicknameContaining(currentUser.getUserId(), nickname);
-        }
+        List<User> foundUsers = switch (filterType) {
+            case FOLLOWING ->
+                rankingRepository.findFollowingUsersByNicknameContaining(currentUser.getUserId(),
+                    nickname);
+            case FOLLOWERS ->
+                rankingRepository.findFollowerUsersByNicknameContaining(currentUser.getUserId(),
+                    nickname);
+            case BEST_FRIEND ->
+                rankingRepository.findBestFriendUsersByNicknameContaining(currentUser.getUserId(),
+                    nickname);
+            default ->
+                rankingRepository.findMutualFollowUsersByNicknameContaining(currentUser.getUserId(),
+                    nickname);
+        };
 
         if (foundUsers.isEmpty()) {
             return List.of();
