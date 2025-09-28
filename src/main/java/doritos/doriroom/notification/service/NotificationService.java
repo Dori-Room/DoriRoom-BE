@@ -79,7 +79,7 @@ public class NotificationService {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(NotificationNotFoundException::new);
 
-        if (!notification.getUser().equals(user)) { // 본인의 알림인지 확인
+        if (!notification.getUser().getUserId().equals(user.getUserId())) { // 본인의 알림인지 확인
             throw new AccessDeniedException();
         }
 
