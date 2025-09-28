@@ -3,6 +3,6 @@ package doritos.doriroom.ranking.domain;
 public enum SearchFilterType {
     ALL,
     FOLLOWING,
-    FOLLOWERS,
+    FOLLOWER,
     BEST_FRIEND
 }

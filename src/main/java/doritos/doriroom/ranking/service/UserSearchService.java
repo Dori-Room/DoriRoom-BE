@@ -80,7 +80,7 @@ public class UserSearchService {
             case FOLLOWING ->
                 rankingRepository.findFollowingUsersByNicknameContaining(currentUser.getUserId(),
                     nickname);
-            case FOLLOWERS ->
+            case FOLLOWER ->
                 rankingRepository.findFollowerUsersByNicknameContaining(currentUser.getUserId(),
                     nickname);
             case BEST_FRIEND ->
