@@ -4,6 +4,7 @@ import doritos.doriroom.atlas.domain.UserAtlas;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -70,4 +71,17 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
         ORDER BY u.nickname
         """)
     List<User> findFollowingUsersByNicknameContaining(@Param("userId") UUID userId, @Param("nickname") String nickname);
+
+    /**
+     * 여러 사용자 ID로 UserAtlas 정보를 한 번에 조회
+     */
+    @Query("""
+        SELECT ua FROM UserAtlas ua
+        JOIN ua.user u
+        JOIN ua.atlas a
+        WHERE u.userId IN :userIds
+        AND a.areaGroup = :areaGroup
+        ORDER BY ua.level DESC, ua.currentExp DESC
+        """)
+    List<UserAtlas> findUserAtlasesByUserIdInAndAreaGroup(@Param("userIds") Set<UUID> userIds, @Param("areaGroup") AreaGroup areaGroup);
 } 
