@@ -284,12 +284,8 @@ public class ItemService {
         for (UUID userId : userIds) {
             List<UserItem> items = userItemsMap.getOrDefault(userId, List.of());
             List<EquippedItemResponse> equippedItems = items.stream()
-                .map(userItem -> EquippedItemResponse.builder()
-                    .itemId(userItem.getItem().getItemId())
-                    .itemType(userItem.getItem().getItemType())
-                    .build())
+                .map(EquippedItemResponse::from)
                 .toList();
-
             result.put(userId, equippedItems);
         }
 
