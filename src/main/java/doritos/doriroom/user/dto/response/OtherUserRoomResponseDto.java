@@ -25,7 +25,10 @@ public record OtherUserRoomResponseDto(
     int likeCount,
 
     @Schema(description = "팔로우 여부", example = "true")
-    boolean following
+    boolean following,
+
+    @Schema(description = "유저 말풍선", example = "안녕하세요! 도리토스의 방 입니다~")
+    String speechBubble
 ){
     public static OtherUserRoomResponseDto from(User user, List<EquippedItemResponse> equippedItems) {
         if (user == null) {
@@ -38,6 +41,7 @@ public record OtherUserRoomResponseDto(
             .equippedItems(equippedItems)
             .viewCount(user.getViewCount())
             .likeCount(user.getLikeCount())
+            .speechBubble(user.getSpeechBubble())
             .build();
     }
 }

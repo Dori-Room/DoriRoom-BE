@@ -98,7 +98,7 @@ public class AuthService {
         redisTemplate.opsForValue().set(verifiedKey, "verified", Duration.ofSeconds(VERIFIED_EXPIRE_SECONDS));
     }
 
-    public void signup(SignupRequestDto request, MultipartFile image) {
+    public void signup(SignupRequestDto request) {
         // 이메일 인증 완료 여부 확인
         String verifiedKey = VERIFIED_KEY_PREFIX.getValue() + request.email();
         String verified = (String) redisTemplate.opsForValue().get(verifiedKey);
@@ -118,19 +118,12 @@ public class AuthService {
             throw new DuplicateException("이메일");
         }
 
-        // 프로필 이미지 등록
-        String profileImageUrl = null;
-        if (image != null && !image.isEmpty()){
-            profileImageUrl = s3Uploader.uploadFile(image, "profile_image"); // s3에 업로드 후 url 반환
-        }
-
         User user = User.builder()
                 .userId(UUID.randomUUID())
                 .username(request.username())
                 .email(request.email())
                 .password(encoder.encode(request.password()))
                 .nickname(request.nickname())
-                .profileImageUrl(profileImageUrl)
                 .build();
 
         userRepository.save(user);
