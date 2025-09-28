@@ -19,6 +19,9 @@ public record RegionalRankingResponseDto(
     @Schema(description = "사용자 닉네임", example = "도리토스")
     String nickname,
 
+    @Schema(description = "사용자 한줄소개", example = "제 방에 좋아요 눌러주세요")
+    String speech,
+
     @Schema(description = "장착한 아이템 목록")
     List<EquippedItemResponse> equippedItems,
     
