@@ -136,6 +136,7 @@ public class ChallengeService {
             throw new ChallengeStatusException("이미 시작했거나 완료한 과제입니다.");
         }
         userChallenge.setStatus(ChallengeStatus.IN_PROGRESS); // 미시작 과제 -> 도전 중으로 변경
+        invalidateUserChallengeCache(user); // 기존 캐시 무효화
     }
 
     @Transactional
@@ -148,6 +149,7 @@ public class ChallengeService {
             throw new ChallengeStatusException("도전 중인 과제만 완료 처리할 수 있습니다.");
         }
         userChallenge.setStatus(ChallengeStatus.WAIT_REWARD); // 도전 중 -> 보상 대기 상태로 변경
+        invalidateUserChallengeCache(user); // 기존 캐시 무효화
     }
 
     /* 과제 진행도 관련 */
@@ -162,6 +164,8 @@ public class ChallengeService {
         Map<Long, UserChallenge> userChallenges = userChallengeRepository.findByUserAndChallengeInWithFetch(user, challenges).stream()
                 .collect(Collectors.toMap(uc -> uc.getChallenge().getId(), uc->uc));
 
+        boolean hasChanges = false; // 변경 사항 추적
+
         for (Challenge challenge : challenges) {
             UserChallenge userChallenge = userChallenges.get(challenge.getId()); // 유저의 특정 과제에 대한 상태 조회
 
@@ -174,12 +178,17 @@ public class ChallengeService {
                         .currentProgress(0)
                         .build();
                 userChallengeRepository.save(userChallenge);
+                hasChanges = true;
             }
 
             // 완료된 과제는 제외
             if (userChallenge.getStatus() == ChallengeStatus.COMPLETED) {
                 continue;
             }
+
+            // 이전 과제 진척도
+            ChallengeStatus previousStatus = userChallenge.getStatus();
+            int previousProgress = userChallenge.getCurrentProgress();
 
             // 현재 과제 진척도 값 (새로운 과제 진척도를 반영한 값)
             int currentProgress = userChallenge.getCurrentProgress() + count;
@@ -194,10 +203,16 @@ public class ChallengeService {
                 userChallenge.setStatus(ChallengeStatus.NOT_STARTED);
             }
 
-            // 변경이 발생한 경우에만 캐시 무효화
-            if (!userChallenges.isEmpty()) {
-                invalidateUserChallengeCache(user);
+            // 상태나 진행도가 변경된 경우 플래그 설정
+            if (previousStatus != userChallenge.getStatus() ||
+                    previousProgress != userChallenge.getCurrentProgress()) {
+                hasChanges = true;
             }
+        }
+
+        // 변경이 있었다면 캐시 무효화
+        if (hasChanges) {
+            invalidateUserChallengeCache(user);
         }
     }
 
@@ -210,6 +225,8 @@ public class ChallengeService {
         Map<Long, UserChallenge> userChallenges = userChallengeRepository.findByUserAndChallengeInWithFetch(user, challenges).stream()
                 .collect(Collectors.toMap(uc -> uc.getChallenge().getId(), uc->uc));
 
+        boolean hasChanges = false;
+
         for (Challenge challenge : challenges) {
             UserChallenge userChallenge = userChallenges.get(challenge.getId());
 
@@ -221,11 +238,16 @@ public class ChallengeService {
                         .currentProgress(0)
                         .build();
                 userChallengeRepository.save(userChallenge);
+                hasChanges = true;
             }
 
             if (userChallenge.getStatus() == ChallengeStatus.COMPLETED) {
                 continue;
             }
+
+            // 이전 과제 진척도
+            ChallengeStatus previousStatus = userChallenge.getStatus();
+            int previousProgress = userChallenge.getCurrentProgress();
 
             // totalCount를 받아 진행도에 반영
             userChallenge.setCurrentProgress(totalCount);
@@ -237,9 +259,15 @@ public class ChallengeService {
                 userChallenge.setStatus(ChallengeStatus.IN_PROGRESS);
             }
 
-            if (!userChallenges.isEmpty()) {
-                invalidateUserChallengeCache(user);
+
+            if (previousStatus != userChallenge.getStatus() ||
+                    previousProgress != userChallenge.getCurrentProgress()) {
+                hasChanges = true;
             }
+        }
+
+        if (hasChanges) {
+            invalidateUserChallengeCache(user);
         }
     }
 
