@@ -12,7 +12,12 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "profile_visits")
+@Table(name = "profile_visits",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"visitor_id", "visited_user_id"}),
+    indexes = {
+        @Index(name = "idx_visitor_visited_at", columnList = "visitor_id, visited_at DESC"),
+        @Index(name = "idx_visitor_visited_user", columnList = "visitor_id, visited_user_id")
+    })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
