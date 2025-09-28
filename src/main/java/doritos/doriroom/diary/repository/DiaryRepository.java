@@ -5,6 +5,7 @@ import doritos.doriroom.user.domain.RoomVisibility;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DiaryRepository extends JpaRepository<Diary, UUID> {
+    @Query("SELECT d, u FROM Diary d, User u WHERE d.userId = u.userId AND d.diaryId = :diaryId")
+    Optional<Object[]> findDiaryWithUser(@Param("diaryId") UUID diaryId);
+
     List<Diary> findByUserIdAndVisitedAtBetweenOrderByVisitedAt(
         UUID userId, LocalDate startDate, LocalDate endDate);
 
