@@ -50,6 +50,8 @@ public class User {
     private boolean isWithdraw  = false; // 탈퇴 상태
     private LocalDateTime withdrawDate; // 탈퇴 시각
 
+    private String fcmToken;
+
     // 포인트 관련 메서드 추가
     public void addCredit(Long creditCount) {
         if (creditCount < 0) {
