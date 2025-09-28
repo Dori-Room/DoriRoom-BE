@@ -5,6 +5,8 @@ import doritos.doriroom.challenge.domain.challenge.ChallengeType;
 import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
+import doritos.doriroom.user.dto.request.FcmTokenRequestDto;
+import doritos.doriroom.ranking.service.ProfileVisitService;
 import doritos.doriroom.user.dto.request.SpeechBubbleRequest;
 import doritos.doriroom.user.dto.request.UserWithdrawalRequestDto;
 import doritos.doriroom.user.dto.response.*;
@@ -43,6 +45,7 @@ public class UserService {
     private final ItemService itemService;
     private final FollowRepository followRepository;
     private final ChallengeService challengeService;
+    private final ProfileVisitService profileVisitService;
 
 
     public void checkUsernameDuplicate(String username){
@@ -168,21 +171,19 @@ public class UserService {
         foundUser.setNickname(key + foundUser.getNickname()+ "_" + System.currentTimeMillis());
         foundUser.setPassword(encoder.encode(UUID.randomUUID().toString())); // 비밀번호를 아무도 모르는 값으로 변경
         foundUser.setProfileImageUrl(null);
-
-        // 상태 및 탈퇴일시 변경
-        foundUser.setWithdraw(true);
+        foundUser.setFcmToken(null); // fcm 토큰 정리
+        foundUser.setWithdraw(true); // 상태 및 탈퇴일시 변경
         foundUser.setWithdrawDate(LocalDateTime.now());
 
         // 팔로우 관계 연관 데이터 정리
         followRepository.deleteByFollowerOrFollowed(foundUser, foundUser);
-
     }
 
     //내 방 정보
     @Transactional(readOnly = true)
     public MyRoomResponseDto getMyRoomInfo(User user) {
         User foundUser = userRepository.findByUserId(user.getUserId())
-            .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         // 내가 착용 중인 아이템 조회
         List<EquippedItemResponse> equippedItems = itemService.getEquippedItems(user);
@@ -198,7 +199,7 @@ public class UserService {
         }
 
         User targetUser = userRepository.findByUserId(targetUserId)
-            .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(targetUserId);
 
@@ -210,6 +211,9 @@ public class UserService {
 
         // 특정 유저의 총 방문 수 N번 달성 과제에 반영
         challengeService.updateChallengeProgressCount(targetUser, ChallengeType.VISIT_NEIGHBOR, viewCount);
+
+        // 프로필 방문 기록 추가
+        profileVisitService.addProfileVisit(user, targetUser);
 
         return OtherUserRoomResponseDto.from(targetUser, equippedItems);
     }
@@ -264,5 +268,23 @@ public class UserService {
                     );
                 })
                 .toList();
+    }
+  
+    // fcm 토큰 등록 및 업데이트
+    @Transactional
+    public void updateFcmToken(User user, FcmTokenRequestDto request) {
+        User foundUser = userRepository.findById(user.getUserId())
+                .orElseThrow(UserNotFoundException::new);
+
+        foundUser.setFcmToken(request.fcmToken()); // fcm 토큰 업데이트
+    }
+
+    // fcm 토큰 삭제
+    @Transactional
+    public void deleteFcmToken(User user) {
+        User foundUser = userRepository.findById(user.getUserId())
+                .orElseThrow(UserNotFoundException::new);
+
+        foundUser.setFcmToken(null);
     }
 }

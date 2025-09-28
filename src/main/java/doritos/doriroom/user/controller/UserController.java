@@ -166,4 +166,18 @@ public class UserController {
         userService.updateSpeechBubble(user, request);
         return ApiResponse.ok();
     }
+                   
+    @Operation(summary = "fcm 토큰 등록 및 업데이트 요청, 로그인 성공 및 fcm토큰 발급 후 요청하여 서버에 등록")
+    @PostMapping("/fcm-token")
+    public ApiResponse<Void> updateFcmToken(@AuthenticationPrincipal User user, @RequestBody @Valid FcmTokenRequestDto request) {
+        userService.updateFcmToken(user, request);
+        return ApiResponse.ok();
+    }
+
+    @Operation(summary = "fcm 토큰 삭제, 로그아웃 시 요청하여 디바이스 해제")
+    @DeleteMapping("/fcm-token")
+    public ApiResponse<Void> deleteFcmToken(@AuthenticationPrincipal User user) {
+        userService.deleteFcmToken(user);
+        return ApiResponse.ok();
+    }
 }

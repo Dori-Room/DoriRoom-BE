@@ -12,6 +12,8 @@ import doritos.doriroom.follow.exception.CannotFollowSelfException;
 import doritos.doriroom.follow.exception.FollowAlreadyExistsException;
 import doritos.doriroom.follow.exception.FollowNotFoundException;
 import doritos.doriroom.follow.repository.FollowRepository;
+import doritos.doriroom.notification.domain.NotificationType;
+import doritos.doriroom.notification.service.NotificationService;
 import doritos.doriroom.user.domain.User;
 import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.UserRepository;
@@ -35,6 +37,7 @@ public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final ChallengeService challengeService;
+    private final NotificationService notificationService;
 
 
     // targetUser 팔로우
@@ -61,6 +64,9 @@ public class FollowService {
         // 일반 과제 진행에 반영 (현재 팔로워 수)
         int currentFollowingCount = followRepository.countByFollower(user);
         challengeService.updateChallengeProgressCount(user, ChallengeType.REACH_NEIGHBOR_COUNT, currentFollowingCount);
+
+        // 타겟 유저에게 알림 전송
+        notificationService.sendNotification(targetUser, NotificationType.FOLLOWER, user.getNickname());
 
         return FollowResponseDto.from(follow);
     }

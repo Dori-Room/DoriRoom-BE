@@ -36,6 +36,8 @@ public class User {
     private boolean isWithdraw  = false; // 탈퇴 상태
 
     private LocalDateTime withdrawDate; // 탈퇴 시각
+  
+    private String fcmToken;
 
     /*   방 관련    */
     @Builder.Default

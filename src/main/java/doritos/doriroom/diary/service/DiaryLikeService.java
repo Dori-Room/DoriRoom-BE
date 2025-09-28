@@ -6,6 +6,8 @@ import doritos.doriroom.diary.exception.DiaryLikeException;
 import doritos.doriroom.diary.exception.DiaryNotFoundException;
 import doritos.doriroom.diary.repository.DiaryLikeRepository;
 import doritos.doriroom.diary.repository.DiaryRepository;
+import doritos.doriroom.notification.domain.NotificationType;
+import doritos.doriroom.notification.service.NotificationService;
 import doritos.doriroom.user.domain.User;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,11 +23,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class DiaryLikeService {
     private final DiaryLikeRepository diaryLikeRepository;
     private final DiaryRepository diaryRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public boolean setLikeStatus(User user, UUID diaryId, boolean isLiked) {
         try {
-            Diary diary = diaryRepository.findById(diaryId).orElseThrow(DiaryNotFoundException::new);
+            Object[] list = diaryRepository.findDiaryWithUser(diaryId).orElseThrow(DiaryNotFoundException::new);
+            Diary diary = (Diary) list[0];
+            User diaryOwner = (User) list[1];
 
             Optional<DiaryLike> existingLike = diaryLikeRepository.findByUserIdAndDiaryId(user.getUserId(), diaryId);
 
@@ -41,6 +46,10 @@ public class DiaryLikeService {
                     diaryLikeRepository.save(like);
                     diary.incrementLikes();
                     diaryRepository.save(diary);
+
+                    // 일기 주인에게 좋아요 알림 발송
+                    notificationService.sendNotification(diaryOwner, NotificationType.DIARY_LIKE, user.getNickname());
+
                     return true;
                 }
             } else {
