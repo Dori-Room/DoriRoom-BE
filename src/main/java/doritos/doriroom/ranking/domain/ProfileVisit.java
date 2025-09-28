@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -35,6 +36,7 @@ public class ProfileVisit {
     @JoinColumn(name = "visited_user_id", nullable = false)
     private User visitedUser; // 방문당한 유저
 
+    @Setter
     @Column(nullable = false)
     private LocalDateTime visitedAt;
 

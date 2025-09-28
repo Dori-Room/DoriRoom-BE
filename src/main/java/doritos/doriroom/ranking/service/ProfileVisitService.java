@@ -4,12 +4,11 @@ import doritos.doriroom.ranking.domain.ProfileVisit;
 import doritos.doriroom.ranking.dto.response.RecentVisitResponseDto;
 import doritos.doriroom.ranking.repository.ProfileVisitRepository;
 import doritos.doriroom.user.domain.User;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -54,18 +53,27 @@ public class ProfileVisitService {
             return;
         }
 
-        // 이미 방문 기록이 있는지 확인
-        if (profileVisitRepository.existsByVisitorAndVisitedUser(visitor, visitedUser)) {
-            // 기존 기록 삭제 후 새로 추가 (최신 방문 시간으로 업데이트)
-            profileVisitRepository.deleteByVisitorAndVisitedUser(visitor, visitedUser);
+        try {
+            Optional<ProfileVisit> existingVisit = profileVisitRepository.findByVisitorAndVisitedUser(visitor, visitedUser);
+
+            if (existingVisit.isPresent()) {
+                // 기존 기록이 있으면 방문 시간만 업데이트
+                ProfileVisit visit = existingVisit.get();
+                visit.setVisitedAt(LocalDateTime.now());
+                profileVisitRepository.save(visit);
+            } else {
+                // 새로운 방문 기록 추가
+                ProfileVisit profileVisit = ProfileVisit.builder()
+                    .visitor(visitor)
+                    .visitedUser(visitedUser)
+                    .build();
+
+                profileVisitRepository.save(profileVisit);
+            }
+
+        } catch (Exception e) {
+            log.warn("프로필 방문 기록 처리 실패: visitor={}, visitedUser={}, error={}",
+                visitor.getUserId(), visitedUser.getUserId(), e.getMessage());
         }
-
-        // 새로운 방문 기록 추가
-        ProfileVisit profileVisit = ProfileVisit.builder()
-            .visitor(visitor)
-            .visitedUser(visitedUser)
-            .build();
-
-        profileVisitRepository.save(profileVisit);
     }
 }

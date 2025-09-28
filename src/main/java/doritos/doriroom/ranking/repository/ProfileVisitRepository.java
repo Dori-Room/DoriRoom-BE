@@ -2,6 +2,7 @@ package doritos.doriroom.ranking.repository;
 
 import doritos.doriroom.ranking.domain.ProfileVisit;
 import doritos.doriroom.user.domain.User;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,10 +23,5 @@ public interface ProfileVisitRepository extends JpaRepository<ProfileVisit, UUID
     List<ProfileVisit> findRecentVisitsByVisitorId(@Param("visitorId") UUID visitorId);
     
     // 특정 방문자가 특정 유저를 방문했는지 확인
-    boolean existsByVisitorAndVisitedUser(User visitor, User visitedUser);
-    
-    /**
-     * 특정 방문자의 방문 기록 삭제 (자신의 방문 기록만)
-     */
-    void deleteByVisitorAndVisitedUser(User visitor, User visitedUser);
+    Optional<ProfileVisit> findByVisitorAndVisitedUser(User visitor, User visitedUser);
 } 
