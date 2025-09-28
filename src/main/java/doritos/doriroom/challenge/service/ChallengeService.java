@@ -111,6 +111,7 @@ public class ChallengeService {
         });
 
         userChallenge.setStatus(ChallengeStatus.COMPLETED); // 완료 상태로 변경
+        invalidateUserChallengeCache(user); // 과제 상태 변경되었으므로 기존 도전과제 캐싱 무효화
     }
 
     @Transactional
@@ -193,6 +194,10 @@ public class ChallengeService {
                 userChallenge.setStatus(ChallengeStatus.NOT_STARTED);
             }
 
+            // 변경이 발생한 경우에만 캐시 무효화
+            if (!userChallenges.isEmpty()) {
+                invalidateUserChallengeCache(user);
+            }
         }
     }
 
@@ -232,6 +237,9 @@ public class ChallengeService {
                 userChallenge.setStatus(ChallengeStatus.IN_PROGRESS);
             }
 
+            if (!userChallenges.isEmpty()) {
+                invalidateUserChallengeCache(user);
+            }
         }
     }
 
@@ -260,4 +268,11 @@ public class ChallengeService {
             throw new ChallengeStatusException("수동으로 시작할 수 없는 타입의 과제입니다.");
         }
     }
+
+    private void invalidateUserChallengeCache(User user) {
+        // 특정 유저의 모든 도전과제 캐시 삭제
+        String pattern = RedisCacheService.CHALLENGES_KEY + user.getUserId().toString() + ":*";
+        redisCacheService.deleteCache(pattern);
+    }
+
 }
