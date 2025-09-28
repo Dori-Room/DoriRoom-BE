@@ -10,6 +10,7 @@ import doritos.doriroom.ranking.dto.response.RegionalRankingResponseDto;
 import doritos.doriroom.ranking.repository.RankingRepository;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -59,18 +60,23 @@ public class RankingService {
     
     // 지역별 랭킹 조회
     public List<RegionalRankingResponseDto> getRegionalRanking(User currentUser, AreaGroup areaGroup) {
-        String redisKey = REGIONAL_RANKING_KEY_PREFIX + areaGroup.name();
-        
         // Redis에서 상위 100명 조회
         Set<ZSetOperations.TypedTuple<Object>> rankingData = zSetOperations.reverseRangeWithScores(
-            redisKey, 0, 99);
-        
+            REGIONAL_RANKING_KEY_PREFIX + areaGroup.name(), 0, 99);
+
         if (rankingData == null || rankingData.isEmpty()) {
-            log.warn("Redis에 지역 랭킹 데이터가 없습니다. MySQL에서 조회합니다.");
             return getRegionalRankingFromMySQL(currentUser, areaGroup);
         }
-        
-        return buildRegionalRankingResponse(rankingData, currentUser, areaGroup);
+
+        // Redis 데이터로 지역별 랭킹 응답 빌드
+        List<RegionalRankingResponseDto> result = buildRegionalRankingResponse(rankingData, currentUser, areaGroup);
+
+        // 빌드된 결과가 비어있으면 전체 사용자 100명을 가져와서 rank를 "-"로 표시
+        if (result.isEmpty()) {
+            return getOverallUsersWithEmptyRank(currentUser, areaGroup);
+        }
+
+        return result;
     }
     
     // 내 전체 랭킹 조회
@@ -212,6 +218,52 @@ public class RankingService {
         }
     }
 
+    // 해당 지역에 데이터가 없을 때 전체 사용자 100명을 가져와서 rank를 "-"로 표시
+    private List<RegionalRankingResponseDto> getOverallUsersWithEmptyRank(User currentUser, AreaGroup areaGroup) {
+        // 전체 사용자 상위 100명 조회
+        List<User> topUsers = rankingRepository.findTop100ByOrderByLikeCountDesc();
+
+        // 팔로우 관계 정보 조회
+        Set<UUID> userIds = topUsers.stream()
+            .map(User::getUserId)
+            .collect(Collectors.toSet());
+
+        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, userIds)
+            .stream()
+            .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
+
+        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
+
+        // 장착 아이템 정보 조회
+        Map<UUID, List<EquippedItemResponse>> equippedItemsMap = itemService.getMultipleUsersEquippedItems(userIds);
+
+        // 랭킹 응답 DTO 변환 (모든 사용자의 rank를 "-"로 표시)
+        List<RegionalRankingResponseDto> rankingList = new ArrayList<>();
+
+        for (User user : topUsers) {
+            Follow following = followingMap.get(user.getUserId());
+            boolean isFollowing = following != null;
+            boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
+
+            List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(user.getUserId(), List.of());
+
+            rankingList.add(RegionalRankingResponseDto.builder()
+                .rank("-") // 모든 사용자의 rank를 "-"로 표시
+                .userId(user.getUserId())
+                .nickname(user.getNickname())
+                .speech(user.getSpeechBubble())
+                .equippedItems(equippedItems)
+                .atlasLevel(0) // 해당 지역에 과제를 하지 않았으므로 0
+                .atlasExp(0)   // 해당 지역에 과제를 하지 않았으므로 0
+                .areaGroup(areaGroup)
+                .following(isFollowing)
+                .followedBy(isFollowedBy)
+                .build());
+        }
+
+        return rankingList;
+    }
+
 
     // ========== MySQL 조회 메서드들 (Fallback) ==========
     
@@ -263,26 +315,34 @@ public class RankingService {
     // MySQL에서 지역별 랭킹 조회
     private List<RegionalRankingResponseDto> getRegionalRankingFromMySQL(User currentUser, AreaGroup areaGroup) {
         List<UserAtlas> topUsers = rankingRepository.findTop100ByAreaGroupOrderByLevelDescAndExpDesc(areaGroup);
-        
-        // 팔로우 관계 정보 조회
-        Set<UUID> userIds = topUsers.stream()
-            .map(userAtlas -> userAtlas.getUser().getUserId())
+        List<User> allUsers = rankingRepository.findTop100ByOrderByLikeCountDesc();
+
+        // 지역별 참여한 사용자들의 ID와 순위 매핑
+        Map<UUID, Integer> regionalUserRankMap = new HashMap<>();
+        for (int i = 0; i < topUsers.size(); i++) {
+            UserAtlas userAtlas = topUsers.get(i);
+            regionalUserRankMap.put(userAtlas.getUser().getUserId(), i + 1);
+        }
+
+        // 전체 사용자 ID 수집
+        Set<UUID> allUserIds = allUsers.stream()
+            .map(User::getUserId)
             .collect(Collectors.toSet());
-        
-        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, userIds)
+
+        // 팔로우 관계 조회
+        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, allUserIds)
             .stream()
             .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
-        
-        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
+
+        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, allUserIds);
 
         // 장착 아이템 정보 조회
-        Map<UUID, List<EquippedItemResponse>> equippedItemsMap = itemService.getMultipleUsersEquippedItems(userIds);
+        Map<UUID, List<EquippedItemResponse>> equippedItemsMap = itemService.getMultipleUsersEquippedItems(allUserIds);
 
         // 랭킹 응답 DTO 변환
         List<RegionalRankingResponseDto> rankingList = new ArrayList<>();
-        
-        for (int i = 0; i < topUsers.size(); i++) {
-            UserAtlas userAtlas = topUsers.get(i);
+
+        for (UserAtlas userAtlas : topUsers) {
             User user = userAtlas.getUser();
             Follow following = followingMap.get(user.getUserId());
             boolean isFollowing = following != null;
@@ -290,8 +350,12 @@ public class RankingService {
 
             List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(user.getUserId(), List.of());
 
+            // 참여한 사용자는 실제 순위 표시
+            Integer regionalRank = regionalUserRankMap.get(user.getUserId());
+            String rankDisplay = String.valueOf(regionalRank);
+
             rankingList.add(RegionalRankingResponseDto.builder()
-                .rank(String.valueOf(i + 1))
+                .rank(rankDisplay)
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
                 .speech(user.getSpeechBubble())
@@ -303,7 +367,35 @@ public class RankingService {
                 .followedBy(isFollowedBy)
                 .build());
         }
-        
+
+        // 2. 그 다음 참여하지 않은 사용자들을 좋아요 수 순으로 추가
+        for (User user : allUsers) {
+            // 이미 참여한 사용자 목록에 포함된 사용자는 제외
+            if (regionalUserRankMap.containsKey(user.getUserId())) {
+                continue;
+            }
+
+            Follow following = followingMap.get(user.getUserId());
+            boolean isFollowing = following != null;
+            boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
+
+            List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(user.getUserId(), List.of());
+
+            // 참여하지 않은 사용자는 "-" 표시
+            rankingList.add(RegionalRankingResponseDto.builder()
+                .rank("-")
+                .userId(user.getUserId())
+                .nickname(user.getNickname())
+                .speech(user.getSpeechBubble())
+                .equippedItems(equippedItems)
+                .atlasLevel(0)
+                .atlasExp(0)
+                .areaGroup(areaGroup)
+                .following(isFollowing)
+                .followedBy(isFollowedBy)
+                .build());
+        }
+
         return rankingList;
     }
     
@@ -467,31 +559,41 @@ public class RankingService {
             scoresInOrder.add(tuple.getScore() != null ? tuple.getScore().longValue() : 0L);
         }
 
-        // 사용자 정보 조회
-        Set<UUID> userIds = new HashSet<>(userIdsInOrder);
+        // 전체 사용자 상위 100명 조회 (항상 전체 사용자를 보여주기 위해)
+        List<User> allUsers = rankingRepository.findTop100ByOrderByLikeCountDesc();
 
-        Map<UUID, User> userMap = rankingRepository.findAllById(userIds).stream()
+        // 지역별 참여한 사용자들의 ID와 순위 매핑
+        Map<UUID, Integer> regionalUserRankMap = new HashMap<>();
+        for (int i = 0; i < userIdsInOrder.size(); i++) {
+            regionalUserRankMap.put(userIdsInOrder.get(i), i + 1);
+        }
+
+        // 전체 사용자 ID 수집
+        Set<UUID> allUserIds = allUsers.stream()
+            .map(User::getUserId)
+            .collect(Collectors.toSet());
+
+        Map<UUID, User> userMap = allUsers.stream()
             .collect(Collectors.toMap(User::getUserId, user -> user));
 
-        Map<UUID, UserAtlas> userAtlasMap = rankingRepository.findUserAtlasesByUserIdInAndAreaGroup(userIds, areaGroup)
+        Map<UUID, UserAtlas> userAtlasMap = rankingRepository.findUserAtlasesByUserIdInAndAreaGroup(allUserIds, areaGroup)
             .stream()
             .collect(Collectors.toMap(userAtlas -> userAtlas.getUser().getUserId(), userAtlas -> userAtlas));
 
         // 팔로우 관계 정보 조회
-        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, userIds)
+        Map<UUID, Follow> followingMap = followRepository.findByFollowerAndFollowed_UserIdIn(currentUser, allUserIds)
             .stream()
             .collect(Collectors.toMap(follow -> follow.getFollowed().getUserId(), follow -> follow));
 
-        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, userIds);
+        Set<UUID> followedByMeUserIds = followRepository.findFollowerIdsByFollowedAndFollowerIdsIn(currentUser, allUserIds);
 
         // 배치로 장착 아이템 정보 조회
-        Map<UUID, List<EquippedItemResponse>> equippedItemsMap = itemService.getMultipleUsersEquippedItems(userIds);
+        Map<UUID, List<EquippedItemResponse>> equippedItemsMap = itemService.getMultipleUsersEquippedItems(allUserIds);
 
         // 랭킹 응답 DTO 변환
         List<RegionalRankingResponseDto> rankingList = new ArrayList<>();
-        int currentRank = 1;
-        Long previousScore = null;
 
+        // 1. 먼저 참여한 사용자들을 순위 순으로 추가
         for (int i = 0; i < userIdsInOrder.size(); i++) {
             UUID userId = userIdsInOrder.get(i);
             User user = userMap.get(userId);
@@ -503,21 +605,18 @@ public class RankingService {
             boolean isFollowing = following != null;
             boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
 
-            // Redis score로 dense_rank 로직: 이전 점수와 다르면 현재 순위, 같으면 이전 순위 유지
-            long score = scoresInOrder.get(i);
-            if (previousScore != null && !(score == previousScore)) {
-                currentRank = i + 1;
-            }
-            previousScore = score;
+            List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(userId, List.of());
+
+            // 참여한 사용자는 실제 순위 표시
+            String rankDisplay = String.valueOf(i + 1);
 
             // Redis score에서 도감 레벨과 경험치 역계산
+            long score = scoresInOrder.get(i);
             int atlasLevel = (int) (score / 10000);
             int atlasExp = (int) (score % 10000);
 
-            List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(userId, List.of());
-
             rankingList.add(RegionalRankingResponseDto.builder()
-                .rank(String.valueOf(currentRank))
+                .rank(rankDisplay)
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
                 .speech(user.getSpeechBubble())
@@ -529,7 +628,35 @@ public class RankingService {
                 .followedBy(isFollowedBy)
                 .build());
         }
-        
+
+        // 2. 그 다음 참여하지 않은 사용자들을 좋아요 수 순으로 추가
+        for (User user : allUsers) {
+            // 이미 참여한 사용자 목록에 포함된 사용자는 제외
+            if (regionalUserRankMap.containsKey(user.getUserId())) {
+                continue;
+            }
+
+            Follow following = followingMap.get(user.getUserId());
+            boolean isFollowing = following != null;
+            boolean isFollowedBy = followedByMeUserIds.contains(user.getUserId());
+
+            List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(user.getUserId(), List.of());
+
+            // 참여하지 않은 사용자는 "-" 표시
+            rankingList.add(RegionalRankingResponseDto.builder()
+                .rank("-")
+                .userId(user.getUserId())
+                .nickname(user.getNickname())
+                .speech(user.getSpeechBubble())
+                .equippedItems(equippedItems)
+                .atlasLevel(0)
+                .atlasExp(0)
+                .areaGroup(areaGroup)
+                .following(isFollowing)
+                .followedBy(isFollowedBy)
+                .build());
+        }
+
         return rankingList;
     }
     
