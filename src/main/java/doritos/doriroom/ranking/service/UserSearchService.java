@@ -33,7 +33,7 @@ public class UserSearchService {
 
     // 닉네임으로 전체 유저 검색
     public List<RankingResponseDto> searchUsersInRanking(User currentUser, String nickname) {
-        List<User> foundUsers = rankingRepository.findByNicknameContainingOrderByLikeCountDesc(nickname);
+        List<User> foundUsers = rankingRepository.findByNicknameContainingOrderByLikeCountDesc(nickname, currentUser.getUserId());
 
         if (foundUsers.isEmpty()) {
             return List.of();
