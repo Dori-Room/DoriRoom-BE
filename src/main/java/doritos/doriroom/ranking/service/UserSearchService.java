@@ -119,9 +119,10 @@ public class UserSearchService {
             List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(user.getUserId(), List.of());
 
             String rank = rankingService.getUserRank(user.getUserId());
+            String displayRank = user.getLikeCount() == 0 ? "-" : rank;
 
             searchResults.add(RankingResponseDto.builder()
-                .rank(rank)
+                .rank(displayRank)
                 .userId(user.getUserId())
                 .nickname(user.getNickname())
                 .equippedItems(equippedItems)
