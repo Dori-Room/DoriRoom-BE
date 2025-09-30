@@ -68,7 +68,7 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
         JOIN f.followed u
         WHERE f.follower.userId = :userId
         AND u.nickname LIKE %:nickname%
-        ORDER BY u.nickname
+        ORDER BY u.likeCount DESC, u.nickname
         """)
     List<User> findFollowingUsersByNicknameContaining(@Param("userId") UUID userId, @Param("nickname") String nickname);
 
@@ -78,7 +78,7 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
         JOIN f.follower u
         WHERE f.followed.userId = :userId
         AND u.nickname LIKE %:nickname%
-        ORDER BY u.nickname
+        ORDER BY u.likeCount DESC, u.nickname
         """)
     List<User> findFollowerUsersByNicknameContaining(@Param("userId") UUID userId, @Param("nickname") String nickname);
 
@@ -89,7 +89,7 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
         WHERE f.follower.userId = :userId
         AND f.isBestFriend = true
         AND u.nickname LIKE %:nickname%
-        ORDER BY u.nickname
+        ORDER BY u.likeCount DESC, u.nickname
         """)
     List<User> findBestFriendUsersByNicknameContaining(@Param("userId") UUID userId, @Param("nickname") String nickname);
 
@@ -104,7 +104,7 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
             AND f2.followed.userId = :userId
         )
         AND u.nickname LIKE %:nickname%
-        ORDER BY u.nickname
+        ORDER BY u.likeCount DESC, u.nickname
         """)
     List<User> findMutualFollowUsersByNicknameContaining(@Param("userId") UUID userId, @Param("nickname") String nickname);
 
