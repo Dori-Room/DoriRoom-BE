@@ -35,6 +35,8 @@ public class NotificationController {
         return ApiResponse.ok();
     }
 
+    @Operation(summary = "알림 발송 테스트")
+    @PostMapping("/test")
     public ApiResponse<Void> testNotification(@AuthenticationPrincipal User user){
         notificationService.sendNotification(user, NotificationType.TEST_MESSAGE, "");
         return ApiResponse.ok();
