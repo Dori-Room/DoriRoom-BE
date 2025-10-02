@@ -1,6 +1,7 @@
-package doritos.doriroom.notification;
+package doritos.doriroom.notification.controller;
 
 import doritos.doriroom.global.dto.ApiResponse;
+import doritos.doriroom.notification.domain.NotificationType;
 import doritos.doriroom.notification.dto.NotificationResponseDto;
 import doritos.doriroom.notification.service.NotificationService;
 import doritos.doriroom.user.domain.User;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -30,6 +32,11 @@ public class NotificationController {
                                               @Parameter(description = "읽음 처리할 알림의 ID")
                                               @PathVariable Long notificationId) {
         notificationService.markAsRead(user, notificationId);
+        return ApiResponse.ok();
+    }
+
+    public ApiResponse<Void> testNotification(@AuthenticationPrincipal User user){
+        notificationService.sendNotification(user, NotificationType.TEST_MESSAGE, "");
         return ApiResponse.ok();
     }
 }
