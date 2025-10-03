@@ -17,6 +17,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -324,13 +325,12 @@ public class RankingService {
         Integer previousLevel = null;
         Long previousExp = null;
 
-        for (int i = 0; i < topUsers.size(); i++) {
-            UserAtlas userAtlas = topUsers.get(i);
-
+        for (UserAtlas userAtlas : topUsers) {
             // dense_rank 로직
             if (previousLevel != null && previousExp != null &&
-                (userAtlas.getLevel() != previousLevel || !userAtlas.getCurrentExp().equals(previousExp))) {
-                currentRank = i + 1;
+                (userAtlas.getLevel() != previousLevel || !userAtlas.getCurrentExp()
+                    .equals(previousExp))) {
+                currentRank++;
             }
 
             regionalUserRankMap.put(userAtlas.getUser().getUserId(), currentRank);
@@ -539,7 +539,7 @@ public class RankingService {
             // dense_rank 로직: 이전 점수와 다르면 현재 순위, 같으면 이전 순위 유지
             long score = scoresInOrder.get(i);
             if (previousScore != null && score != previousScore) {
-                currentRank = i + 1;
+                currentRank++;
             }
             previousScore = score;
             String rankDisplay = score == 0 ? "-" : String.valueOf(currentRank);
@@ -709,12 +709,27 @@ public class RankingService {
     }
 
     private String calculateRegionalDenseRank(String redisKey, long userScore) {
-        Long higherScoreCount = zSetOperations.count(redisKey, userScore + 1, Double.POSITIVE_INFINITY);
+        Set<ZSetOperations.TypedTuple<Object>> allScores = zSetOperations.reverseRangeWithScores(
+            redisKey, 0, -1);
 
-        if (higherScoreCount == null) {
-            return "-";
+        if (allScores == null || allScores.isEmpty()) {
+            return "1"; // 데이터가 없으면 1위
         }
 
-        return String.valueOf(higherScoreCount + 1);
+        // 점수별로 그룹화하여 dense_rank 계산
+        Map<Double, Long> scoreCounts = allScores.stream()
+            .filter(tuple -> tuple.getScore() != null)
+            .collect(Collectors.groupingBy(
+                TypedTuple::getScore,
+                Collectors.counting()
+            ));
+
+        // 사용자 점수보다 높은 점수들의 개수 계산
+        long higherScoreTypes = scoreCounts.entrySet().stream()
+            .filter(entry -> entry.getKey() > userScore)
+            .count();
+
+        // dense_rank = 더 높은 점수 종류의 개수 + 1
+        return String.valueOf(higherScoreTypes + 1);
     }
 } 
