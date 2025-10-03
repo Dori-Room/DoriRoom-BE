@@ -105,21 +105,19 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
         """)
     List<User> findBestFriendUsersByNicknameContaining(@Param("userId") UUID userId, @Param("nickname") String nickname);
 
-    // 맞팔로우 유저 중에서 닉네임으로 검색
+    // 내가 팔로우하고, 나를 팔로우하는 모든 유저 중에서 닉네임 검색
     @Query("""
-        SELECT f1.followed FROM Follow f1
-        JOIN f1.followed u
-        WHERE f1.follower.userId = :userId
-        AND EXISTS (
-            SELECT 1 FROM Follow f2
-            WHERE f2.follower.userId = f1.followed.userId
-            AND f2.followed.userId = :userId
-        )
-        AND u.nickname LIKE %:nickname%
-        AND u.isWithdraw = false
-        ORDER BY u.likeCount DESC, u.nickname
-        """)
-    List<User> findMutualFollowUsersByNicknameContaining(@Param("userId") UUID userId, @Param("nickname") String nickname);
+    SELECT DISTINCT u FROM User u
+    WHERE u.nickname LIKE %:nickname%
+    AND u.isWithdraw = false
+    AND u.userId IN (
+        SELECT f1.followed.userId FROM Follow f1 WHERE f1.follower.userId = :userId
+        UNION
+        SELECT f2.follower.userId FROM Follow f2 WHERE f2.followed.userId = :userId
+    )
+    ORDER BY u.likeCount DESC, u.nickname
+    """)
+    List<User> findAllUsersByNicknameContaining(@Param("userId") UUID userId, @Param("nickname") String nickname);
 
     /**
      * 여러 사용자 ID로 UserAtlas 정보를 한 번에 조회

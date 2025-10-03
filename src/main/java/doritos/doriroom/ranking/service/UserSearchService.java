@@ -89,7 +89,7 @@ public class UserSearchService {
                 rankingRepository.findBestFriendUsersByNicknameContaining(currentUser.getUserId(),
                     nickname);
             default ->
-                rankingRepository.findMutualFollowUsersByNicknameContaining(currentUser.getUserId(),
+                rankingRepository.findAllUsersByNicknameContaining(currentUser.getUserId(),
                     nickname);
         };
 
