@@ -14,6 +14,7 @@ import doritos.doriroom.atlas.repository.AtlasRewardRepository;
 import doritos.doriroom.atlas.repository.UserAtlasRepository;
 import doritos.doriroom.atlas.repository.UserAtlasRewardRepository;
 import doritos.doriroom.item.service.ItemService;
+import doritos.doriroom.ranking.service.RankingService;
 import doritos.doriroom.tourApi.domain.AreaGroup;
 import doritos.doriroom.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class AtlasService {
     private final UserAtlasRewardRepository userAtlasRewardRepository;
     private final LevelPolicy levelPolicy;
     private final ItemService itemService;
+    private final RankingService rankingService;
 
     // 전체 또는 지역별 도감 조회
     @Transactional(readOnly = true)
@@ -120,6 +122,9 @@ public class AtlasService {
         userAtlas.setCurrentExp(userAtlas.getCurrentExp() + exp);
 
         levelUp(userAtlas); // 레벨업 내부 메서드, 조건 만족 시 레벨업 처리
+
+        // 지역별 랭킹 업데이트
+        rankingService.updateRegionalRanking(user.getUserId(), areaGroup, userAtlas.getLevel(), userAtlas.getCurrentExp());
     }
 
 
