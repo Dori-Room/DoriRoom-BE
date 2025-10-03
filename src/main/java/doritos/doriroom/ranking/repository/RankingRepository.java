@@ -31,9 +31,12 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
     List<UserAtlas> findTop100ByAreaGroupOrderByLevelDescAndExpDesc(@Param("areaGroup") AreaGroup areaGroup);
 
     // 특정 유저의 랭킹 조회
-    @Query("SELECT COUNT(u) + 1 " +
-           "FROM User u " +
-           "WHERE u.likeCount > (SELECT u2.likeCount FROM User u2 WHERE u2.userId = :userId AND u.isWithdraw = false)")
+    @Query("""
+        SELECT COUNT(u) + 1
+        FROM User u
+        WHERE u.isWithdraw = false
+        AND u.likeCount > (SELECT u2.likeCount FROM User u2 WHERE u2.userId = :userId)
+    """)
     Integer findMyDenseRankByUserId(@Param("userId") UUID userId);
 
     // 사용자의 좋아요 점수가 0이거나 없을 경우를 대비해 Optional로 처리
@@ -68,7 +71,7 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
         LIKE %:nickname%
         AND u.isWithdraw = false
         AND u.userId != :currentUserId
-        ORDER BY u.nickname""")
+        ORDER BY u.likeCount DESC, u.nickname""")
     List<User> findByNicknameContainingOrderByLikeCountDesc(@Param("nickname") String nickname, @Param("currentUserId") UUID currentUserId);
 
     // 내가 팔로우하는 유저 내에서 닉네임으로 유저 검색
