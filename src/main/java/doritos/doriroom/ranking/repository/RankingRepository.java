@@ -48,8 +48,8 @@ public interface RankingRepository extends JpaRepository<User, UUID> {
         FROM UserAtlas ua
         JOIN ua.user u
         WHERE ua.atlas.areaGroup = :areaGroup
-          AND (ua.level > :myLevel OR (ua.level = :myLevel AND ua.currentExp > :myExp)
-          AND u.isWithdraw = false)
+        AND (ua.level > :myLevel OR (ua.level = :myLevel AND ua.currentExp > :myExp))
+        AND u.isWithdraw = false
         """)
     Long findMyRankByScore(@Param("areaGroup") AreaGroup areaGroup,
         @Param("myLevel") Integer myLevel,

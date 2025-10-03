@@ -132,9 +132,10 @@ public class RankingService {
         int atlasExp = (int) (totalScore % 10000);
 
         List<EquippedItemResponse> equippedItems = itemService.getOtherUserEquippedItems(currentUser.getUserId());
+        String rankDisplay = calculateRegionalDenseRank(redisKey, totalScore);
 
         return RegionalRankingResponseDto.builder()
-            .rank(rank == 0 ? "1" : String.valueOf(rank + 1))
+            .rank(rankDisplay)
             .userId(currentUser.getUserId())
             .nickname(currentUser.getNickname())
             .speech(currentUser.getSpeechBubble())
@@ -319,9 +320,22 @@ public class RankingService {
 
         // 지역별 참여한 사용자들의 ID와 순위 매핑
         Map<UUID, Integer> regionalUserRankMap = new HashMap<>();
+        int currentRank = 1;
+        Integer previousLevel = null;
+        Long previousExp = null;
+
         for (int i = 0; i < topUsers.size(); i++) {
             UserAtlas userAtlas = topUsers.get(i);
-            regionalUserRankMap.put(userAtlas.getUser().getUserId(), i + 1);
+
+            // dense_rank 로직
+            if (previousLevel != null && previousExp != null &&
+                (userAtlas.getLevel() != previousLevel || !userAtlas.getCurrentExp().equals(previousExp))) {
+                currentRank = i + 1;
+            }
+
+            regionalUserRankMap.put(userAtlas.getUser().getUserId(), currentRank);
+            previousLevel = userAtlas.getLevel();
+            previousExp = userAtlas.getCurrentExp();
         }
 
         // 전체 사용자 ID 수집
@@ -564,8 +578,20 @@ public class RankingService {
 
         // 지역별 참여한 사용자들의 ID와 순위 매핑
         Map<UUID, Integer> regionalUserRankMap = new HashMap<>();
+        int currentRank = 1;
+        Long previousScore = null;
+
         for (int i = 0; i < userIdsInOrder.size(); i++) {
-            regionalUserRankMap.put(userIdsInOrder.get(i), i + 1);
+            UUID userId = userIdsInOrder.get(i);
+            long score = scoresInOrder.get(i);
+
+            // dense_rank 로직
+            if (previousScore != null && score != previousScore) {
+                currentRank = i + 1;
+            }
+
+            regionalUserRankMap.put(userId, currentRank);
+            previousScore = score;
         }
 
         // 전체 사용자 ID 수집
@@ -608,7 +634,8 @@ public class RankingService {
             List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(userId, List.of());
 
             // 참여한 사용자는 실제 순위 표시
-            String rankDisplay = String.valueOf(i + 1);
+            Integer regionalRank = regionalUserRankMap.get(userId);
+            String rankDisplay = String.valueOf(regionalRank);
 
             // Redis score에서 도감 레벨과 경험치 역계산
             long score = scoresInOrder.get(i);
@@ -679,5 +706,15 @@ public class RankingService {
             double score = userAtlas.getLevel() * 10000.0 + userAtlas.getCurrentExp();
             zSetOperations.add(redisKey, userAtlas.getUser().getUserId().toString(), score);
         }
+    }
+
+    private String calculateRegionalDenseRank(String redisKey, long userScore) {
+        Long higherScoreCount = zSetOperations.count(redisKey, userScore + 1, Double.POSITIVE_INFINITY);
+
+        if (higherScoreCount == null) {
+            return "-";
+        }
+
+        return String.valueOf(higherScoreCount + 1);
     }
 } 
