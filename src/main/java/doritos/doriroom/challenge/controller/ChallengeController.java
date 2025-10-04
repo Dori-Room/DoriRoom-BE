@@ -33,6 +33,14 @@ public class ChallengeController {
         return ApiResponse.ok(challengeService.getChallengesByGroup(user, challengeGroup, areaGroup));
     }
 
+    @GetMapping("/{challengeId}")
+    @Operation(summary = "도전과제 상세 정보 조회")
+    public ApiResponse<ChallengeResponseDto> getChallengeDetail(@AuthenticationPrincipal User user,
+                                                                @Parameter(description = "조회할 도전과제의 ID")
+                                                                @PathVariable Long challengeId) {
+        return ApiResponse.ok(challengeService.getChallengeDetail(user, challengeId));
+    }
+
     @PostMapping("/{challengeId}/claim") // 해당 도전과제의 보상 받기 처리
     @Operation(summary = "특정 도전과제의 보상 받기 처리", description = "challengeId로 관련 리워드를 사용자에게 지급 및 도전과제 상태를 완료로 처리")
     public ApiResponse<Void> claimChallengeReward(@AuthenticationPrincipal User user,
