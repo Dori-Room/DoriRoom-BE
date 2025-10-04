@@ -10,6 +10,7 @@ import doritos.doriroom.notification.exception.AccessDeniedException;
 import doritos.doriroom.notification.exception.NotificationNotFoundException;
 import doritos.doriroom.notification.repository.NotificationRepository;
 import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.repository.UserRepository;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -19,10 +20,13 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationService {
+    private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
 
     // 푸시 알림 전송
@@ -67,9 +71,16 @@ public class NotificationService {
     }
 
     // 알림 목록 조회
-    @Transactional(readOnly = true)
+    @Transactional
     public Page<NotificationResponseDto> getMyNotifications(User user, Pageable pageable) {
         Page<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+
+        // 안 읽은 상태의 알림 리스트
+        List<Notification> unreadNotifications = notificationRepository.findByUserAndReadFalse(user);
+        for (Notification notification : unreadNotifications) {
+            notification.markAsRead();
+        }
+
         return notifications.map(NotificationResponseDto::from);
     }
 
