@@ -9,8 +9,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     Page<Notification> findByUserOrderByCreatedAtDesc(User user, Pageable pageable); // 알림 목록을 최신순으로 페이징
 
