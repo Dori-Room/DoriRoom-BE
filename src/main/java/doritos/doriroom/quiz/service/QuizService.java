@@ -23,6 +23,8 @@ import doritos.doriroom.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,7 +64,7 @@ public class QuizService {
         // 상태가 NOT_STARTED이면 IN_PROGRESS로 변경
         if (userChallenge.getStatus() == ChallengeStatus.NOT_STARTED) {
             userChallenge.setStatus(ChallengeStatus.IN_PROGRESS);
-            challengeService.invalidateUserChallengeCache(user);  // 상태 변경 시 캐시 초기화
+            registerCacheInvalidation(user);  // 상태 변경 시 캐시 초기화
         }
 
         // 해당 도전과제의 퀴즈를 불러옴
@@ -97,7 +99,7 @@ public class QuizService {
         }
 
         userChallenge.setStatus(ChallengeStatus.WAIT_REWARD); //  보상 대기 상태로 변경
-        challengeService.invalidateUserChallengeCache(user); // 상태 변경 후 캐시 초기화
+        registerCacheInvalidation(user); // 상태 변경 후 캐시 초기화
 
 
         // 도전과제의 보상 정보를 dto로 변환
@@ -106,6 +108,20 @@ public class QuizService {
                 .collect(Collectors.toList());
 
         return new QuizCompleteResponseDto(true, rewards);
+    }
+
+    /* 내부 메서드 */
+
+    // 트랜잭션 커밋 후 캐시 무효화
+    private void registerCacheInvalidation(User user) {
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        challengeService.invalidateUserChallengeCache(user);
+                    }
+                }
+        );
     }
 }
 
