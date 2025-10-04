@@ -83,6 +83,17 @@ public class ChallengeService {
         return challengeDtos;
     }
 
+    @Transactional(readOnly = true)
+    public ChallengeResponseDto getChallengeDetail(User user, Long challengeId) {
+        Challenge challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(ChallengeNotFoundException::new);
+
+        UserChallenge userProgress = userChallengeRepository.findByUserAndChallenge(user, challenge)
+                .orElse(null); // 진행도가 없으면 null
+
+        return ChallengeResponseDto.of(challenge, userProgress);
+    }
+
     @Transactional
     public void claimChallengeReward(User user, Long challengeId){
         Challenge challenge = challengeRepository.findById(challengeId)
@@ -202,7 +213,7 @@ public class ChallengeService {
                 userChallenge.setStatus(ChallengeStatus.WAIT_REWARD); // 현재 진척도가 TargetCount보다 크면 보상 대기
 
                 if (previousStatus != ChallengeStatus.WAIT_REWARD) { // 최초 보상 수령 가능 시 알람 전송
-                    notificationService.sendNotification(user, NotificationType.CHALLENGE_REWARD, challenge.getTitle());
+                    notificationService.sendNotification(user, NotificationType.CHALLENGE_REWARD, challenge.getTitle(), challenge.getId().toString());
                 }
             } else if (currentProgress > 0){ // TargetCount보다 작으면 IN_PROGRESS로 변경 (보상 받지 않았는데 이후 진척도가 줄면 재달성 요구함)
                 userChallenge.setStatus(ChallengeStatus.IN_PROGRESS);
@@ -262,7 +273,7 @@ public class ChallengeService {
                 userChallenge.setStatus(ChallengeStatus.WAIT_REWARD);
 
                 if (previousStatus != ChallengeStatus.WAIT_REWARD) { // 최초 보상 수령 가능 시 알람 전송
-                    notificationService.sendNotification(user, NotificationType.CHALLENGE_REWARD, challenge.getTitle());
+                    notificationService.sendNotification(user, NotificationType.CHALLENGE_REWARD, challenge.getTitle(), challenge.getId().toString());
                 }
             } else if (totalCount == 0){
                 userChallenge.setStatus(ChallengeStatus.NOT_STARTED);
