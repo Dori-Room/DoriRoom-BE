@@ -8,6 +8,7 @@ import doritos.doriroom.challenge.exception.ChallengeNotFoundException;
 import doritos.doriroom.challenge.exception.ChallengeStatusException;
 import doritos.doriroom.challenge.repository.ChallengeRepository;
 import doritos.doriroom.challenge.repository.UserChallengeRepository;
+import doritos.doriroom.challenge.service.ChallengeService;
 import doritos.doriroom.quiz.domain.Question;
 import doritos.doriroom.quiz.domain.Quiz;
 import doritos.doriroom.quiz.dto.request.QuestionSubmitRequestDto;
@@ -18,6 +19,7 @@ import doritos.doriroom.quiz.exception.QuizNotFoundException;
 import doritos.doriroom.quiz.repository.QuestionRepository;
 import doritos.doriroom.quiz.repository.QuizRepository;
 import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,7 @@ public class QuizService {
     private final ChallengeRepository challengeRepository;
     private final UserChallengeRepository userChallengeRepository;
     private final QuestionRepository questionRepository;
+    private final ChallengeService challengeService;
 
 
     @Transactional
@@ -59,6 +62,7 @@ public class QuizService {
         // 상태가 NOT_STARTED이면 IN_PROGRESS로 변경
         if (userChallenge.getStatus() == ChallengeStatus.NOT_STARTED) {
             userChallenge.setStatus(ChallengeStatus.IN_PROGRESS);
+            challengeService.invalidateUserChallengeCache(user);  // 상태 변경 시 캐시 초기화
         }
 
         // 해당 도전과제의 퀴즈를 불러옴
@@ -92,8 +96,8 @@ public class QuizService {
             throw new ChallengeStatusException("이미 완료했거나 보상 대기 중인 과제입니다.");
         }
 
-        //  보상 대기 상태로 변경
-        userChallenge.setStatus(ChallengeStatus.WAIT_REWARD);
+        userChallenge.setStatus(ChallengeStatus.WAIT_REWARD); //  보상 대기 상태로 변경
+        challengeService.invalidateUserChallengeCache(user); // 상태 변경 후 캐시 초기화
 
 
         // 도전과제의 보상 정보를 dto로 변환

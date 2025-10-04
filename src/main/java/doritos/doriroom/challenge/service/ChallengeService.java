@@ -293,6 +293,12 @@ public class ChallengeService {
         }
     }
 
+    public void invalidateUserChallengeCache(User user) {
+        // 특정 유저의 모든 도전과제 캐시 삭제
+        String pattern = RedisCacheService.CHALLENGES_KEY + user.getUserId().toString() + ":*";
+        redisCacheService.deleteKeysByPattern(pattern);
+    }
+
     /* 내부 메서드 */
     private List<Challenge> challengeFilterByGroup(ChallengeGroup challengeGroup, AreaGroup areaGroup){
         if(challengeGroup == null)  // challengeGroup은 필수 파라미터
@@ -318,11 +324,4 @@ public class ChallengeService {
             throw new ChallengeStatusException("수동으로 시작할 수 없는 타입의 과제입니다.");
         }
     }
-
-    private void invalidateUserChallengeCache(User user) {
-        // 특정 유저의 모든 도전과제 캐시 삭제
-        String pattern = RedisCacheService.CHALLENGES_KEY + user.getUserId().toString() + ":*";
-        redisCacheService.deleteCache(pattern);
-    }
-
 }
