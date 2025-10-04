@@ -28,6 +28,9 @@ public class Notification {
     @Column(nullable = false)
     private NotificationType type; // 알림 타입
 
+    @Column(length = 36)
+    private String targetId; // 페이지 이동 Id, UUID | Long
+
     @Builder.Default
     @Column(name = "is_read", nullable = false)
     private boolean read = false; // 알림 읽음 여부
