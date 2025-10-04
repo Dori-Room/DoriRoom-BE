@@ -60,6 +60,22 @@ public class RedisCacheService {
             return Optional.empty();
         }
     }
+    // 캐시 조회
+    public <T> Optional<T> getCache(String key, TypeReference<T> typeReference) {
+        try {
+            Object cachedData = redisTemplate.opsForValue().get(key);
+            if (cachedData != null) {
+                T result = objectMapper.readValue(cachedData.toString(), typeReference);
+                log.info("캐시 조회 성공: {}", key);
+                return Optional.of(result);
+            }
+            log.info("캐시 조회 정보 없음: {}", key);
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("캐시 조회 실패: {}", key, e);
+            return Optional.empty();
+        }
+    }
 
     // 캐시 삭제
     public void deleteCache(String key) {
@@ -68,19 +84,6 @@ public class RedisCacheService {
             log.info("캐시 삭제: {}", key);
         } catch (Exception e) {
             log.error("캐시 삭제 실패: {}", key, e);
-        }
-    }
-
-    // 패턴으로 캐시 삭제
-    public void deleteKeysByPattern(String pattern) {
-        try {
-            Set<String> keys = redisTemplate.keys(pattern);
-            if (keys != null && !keys.isEmpty()) {
-                redisTemplate.delete(keys);
-                log.info("패턴으로 캐시 삭제 성공: {}", pattern);
-            }
-        } catch (Exception e) {
-            log.error("패턴으로 캐시 삭제 실패: {}", pattern, e);
         }
     }
 

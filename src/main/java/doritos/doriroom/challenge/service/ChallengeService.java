@@ -23,8 +23,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,18 +56,23 @@ public class ChallengeService {
     @Transactional(readOnly = true)
     public List<ChallengeResponseDto> getChallengesByGroup(User user, ChallengeGroup challengeGroup, AreaGroup areaGroup){
         // 캐시 키 정의
-        String cacheKey = RedisCacheService.CHALLENGES_KEY + user.getUserId().toString() + ":" +
-                challengeGroup.name() + (areaGroup != null ? "_" + areaGroup.name() : "");
+        String userKey = RedisCacheService.CHALLENGES_KEY + user.getUserId().toString();
+        String groupKey = challengeGroup.name() + (areaGroup != null ? "_" + areaGroup.name() : "");
 
         // 캐시에서 dto 조회
-        Optional<List<ChallengeResponseDto>> cachedDtoList = redisCacheService.getCacheList(
-                cacheKey, new TypeReference<>() {});
+        Optional<Map<String, List<ChallengeResponseDto>>> cachedData =
+                redisCacheService.getCache(userKey, new TypeReference<Map<String, List<ChallengeResponseDto>>>() {});
 
-        if (cachedDtoList.isPresent()) { // 캐시에 있으면 가져옴
-            return cachedDtoList.get();
+        if (cachedData.isPresent()) { // 캐시에 있으면 가져옴
+            List<ChallengeResponseDto> groupData = cachedData.get().get(groupKey);
+            if (groupData != null) {
+                log.debug("캐시 히트 - 유저: {}, 그룹: {}", user.getUserId(), groupKey);
+                return groupData;
+            }
         }
 
-        List<Challenge> challenges = challengeFilterByGroup(challengeGroup, areaGroup); // 없으면 db에서 조회
+        log.debug("캐시 미스 - 유저: {}, 그룹: {}", user.getUserId(), groupKey);
+        List<Challenge> challenges = challengeFilterByGroup(challengeGroup, areaGroup);  // 없으면 db에서 조회
 
         // 과제들에 대한 유저의 과제 상태 리스트 -> Map으로 변환
         Map<Long, UserChallenge> userChallengeMap = userChallengeRepository.findByUserAndChallengeInWithFetch(user, challenges).stream()
@@ -78,7 +86,10 @@ public class ChallengeService {
                 })
                 .collect(Collectors.toList());
 
-        redisCacheService.setCache(cacheKey, challengeDtos, RedisCacheService.CHALLENGES_TTL); // 캐시에 저장해둠
+        // 캐시 저장 (기존 데이터에 새 그룹 추가)
+        Map<String, List<ChallengeResponseDto>> allData = cachedData.orElseGet(HashMap::new);
+        allData.put(groupKey, challengeDtos);
+        redisCacheService.setCache(userKey, allData, RedisCacheService.CHALLENGES_TTL);
 
         return challengeDtos;
     }
@@ -125,7 +136,7 @@ public class ChallengeService {
         });
 
         userChallenge.setStatus(ChallengeStatus.COMPLETED); // 완료 상태로 변경
-        invalidateUserChallengeCache(user); // 과제 상태 변경되었으므로 기존 도전과제 캐싱 무효화
+        registerCacheInvalidation(user); // 과제 상태 변경되었으므로 기존 도전과제 캐싱 무효화
     }
 
     @Transactional
@@ -150,7 +161,7 @@ public class ChallengeService {
             throw new ChallengeStatusException("이미 시작했거나 완료한 과제입니다.");
         }
         userChallenge.setStatus(ChallengeStatus.IN_PROGRESS); // 미시작 과제 -> 도전 중으로 변경
-        invalidateUserChallengeCache(user); // 기존 캐시 무효화
+        registerCacheInvalidation(user); // 기존 캐시 무효화
     }
 
     @Transactional
@@ -163,7 +174,7 @@ public class ChallengeService {
             throw new ChallengeStatusException("도전 중인 과제만 완료 처리할 수 있습니다.");
         }
         userChallenge.setStatus(ChallengeStatus.WAIT_REWARD); // 도전 중 -> 보상 대기 상태로 변경
-        invalidateUserChallengeCache(user); // 기존 캐시 무효화
+        registerCacheInvalidation(user); // 기존 캐시 무효화
     }
 
     /* 과제 진행도 관련 */
@@ -230,7 +241,7 @@ public class ChallengeService {
 
         // 변경이 있었다면 캐시 무효화
         if (hasChanges) {
-            invalidateUserChallengeCache(user);
+            registerCacheInvalidation(user);
         }
     }
 
@@ -289,17 +300,37 @@ public class ChallengeService {
         }
 
         if (hasChanges) {
-            invalidateUserChallengeCache(user);
+            registerCacheInvalidation(user);
         }
     }
 
     public void invalidateUserChallengeCache(User user) {
         // 특정 유저의 모든 도전과제 캐시 삭제
-        String pattern = RedisCacheService.CHALLENGES_KEY + user.getUserId().toString() + ":*";
-        redisCacheService.deleteKeysByPattern(pattern);
+        try {
+            String cacheKey = RedisCacheService.CHALLENGES_KEY + user.getUserId().toString();
+            redisCacheService.deleteCache(cacheKey);
+
+            log.info("유저 {} 도전과제 캐시 삭제 완료", user.getUserId());
+        } catch (Exception e) {
+            log.error("캐시 삭제 실패 - 유저: {}", user.getUserId(), e);
+        }
     }
 
+
     /* 내부 메서드 */
+
+    // 트랜잭션 커밋 후 캐시 무효화
+    private void registerCacheInvalidation(User user) {
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        invalidateUserChallengeCache(user);
+                    }
+                }
+        );
+    }
+
     private List<Challenge> challengeFilterByGroup(ChallengeGroup challengeGroup, AreaGroup areaGroup){
         if(challengeGroup == null)  // challengeGroup은 필수 파라미터
             throw new ChallengeArgumentException("요청에 challengeGroup 값이 필요합니다.");
