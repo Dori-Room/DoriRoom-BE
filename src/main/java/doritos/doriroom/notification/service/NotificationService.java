@@ -5,6 +5,7 @@ import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import doritos.doriroom.notification.domain.Notification;
 import doritos.doriroom.notification.domain.NotificationType;
+import doritos.doriroom.notification.dto.NotificationRedirectDto;
 import doritos.doriroom.notification.dto.NotificationResponseDto;
 import doritos.doriroom.notification.exception.AccessDeniedException;
 import doritos.doriroom.notification.exception.NotificationNotFoundException;
@@ -31,7 +32,7 @@ public class NotificationService {
 
     // 푸시 알림 전송
     @Transactional
-    public void sendNotification(User user, NotificationType type, String placeholder) {
+    public void sendNotification(User user, NotificationType type, String placeholder, String targetId) {
         String content = type.createContent(placeholder); // content 구성
 
         // db에 알림 내용 저장
@@ -39,6 +40,7 @@ public class NotificationService {
                 .user(user)
                 .content(content)
                 .type(type)
+                .targetId(targetId)
                 .build();
         notificationRepository.save(notification);
 
@@ -86,7 +88,7 @@ public class NotificationService {
 
     // 알림 읽음 처리
     @Transactional
-    public void markAsRead(User user, Long notificationId) {
+    public NotificationRedirectDto readAndRedirect(User user, Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(NotificationNotFoundException::new);
 
@@ -94,6 +96,18 @@ public class NotificationService {
             throw new AccessDeniedException();
         }
 
-        notification.markAsRead(); //읽음 상태로 변경
+        if (!notification.isRead()) {
+            notification.markAsRead(); // 안 읽은 상태인 경우 -> 읽음 상태로 변경
+        }
+
+        String redirectUrl = switch (notification.getType()) {
+            case DIARY_LIKE        -> "/api/diary/" + notification.getTargetId(); // diaryId
+            case FOLLOWER      -> "/api/users/room/" + notification.getTargetId(); // userId
+            case CHALLENGE_REWARD  -> "/api/challenges/" + notification.getTargetId(); // challengeId
+            case GUESTBOOK_ENTRY -> "/api/guestbooks/room/" + notification.getTargetId();  // roomOwnerId
+            default -> "/"; // 기본 경로는 홈
+        };
+
+        return NotificationRedirectDto.of(redirectUrl);
     }
 }

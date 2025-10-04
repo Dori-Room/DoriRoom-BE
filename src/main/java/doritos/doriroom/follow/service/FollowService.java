@@ -66,7 +66,7 @@ public class FollowService {
         challengeService.updateChallengeProgressCount(user, ChallengeType.REACH_NEIGHBOR_COUNT, currentFollowingCount);
 
         // 타겟 유저에게 알림 전송
-        notificationService.sendNotification(targetUser, NotificationType.FOLLOWER, user.getNickname());
+        notificationService.sendNotification(targetUser, NotificationType.FOLLOWER, user.getNickname(), user.getUserId().toString());
 
         return FollowResponseDto.from(follow);
     }

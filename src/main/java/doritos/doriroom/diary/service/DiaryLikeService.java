@@ -48,7 +48,7 @@ public class DiaryLikeService {
                     diaryRepository.save(diary);
 
                     // 일기 주인에게 좋아요 알림 발송
-                    notificationService.sendNotification(diaryOwner, NotificationType.DIARY_LIKE, user.getNickname());
+                    notificationService.sendNotification(diaryOwner, NotificationType.DIARY_LIKE, user.getNickname(), diary.getDiaryId().toString());
 
                     return true;
                 }
