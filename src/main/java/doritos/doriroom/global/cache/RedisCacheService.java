@@ -71,6 +71,19 @@ public class RedisCacheService {
         }
     }
 
+    // 패턴으로 캐시 삭제
+    public void deleteKeysByPattern(String pattern) {
+        try {
+            Set<String> keys = redisTemplate.keys(pattern);
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+                log.info("패턴으로 캐시 삭제 성공: {}", pattern);
+            }
+        } catch (Exception e) {
+            log.error("패턴으로 캐시 삭제 실패: {}", pattern, e);
+        }
+    }
+
     // 모든 캐시 삭제 (관리자용)
     public void clearAllCaches() {
         try {
