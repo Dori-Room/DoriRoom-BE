@@ -75,11 +75,7 @@ public class NotificationService {
     public Page<NotificationResponseDto> getMyNotifications(User user, Pageable pageable) {
         Page<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable);
 
-        // 안 읽은 상태의 알림 리스트
-        List<Notification> unreadNotifications = notificationRepository.findByUserAndReadFalse(user);
-        for (Notification notification : unreadNotifications) {
-            notification.markAsRead();
-        }
+        notificationRepository.markAllAsReadByUser(user);  // 안 읽은 상태의 알림을 읽음 처리
 
         return notifications.map(NotificationResponseDto::from);
     }
