@@ -51,7 +51,7 @@ public class GuestbookService {
         Guestbook savedGuestbook = guestbookRepository.save(guestbook);
 
         // 방 주인에게 방명록 작성 알림 발송
-        notificationService.sendNotification(roomOwner, NotificationType.GUESTBOOK_ENTRY, user.getNickname());
+        notificationService.sendNotification(roomOwner, NotificationType.GUESTBOOK_ENTRY, user.getNickname(), roomOwner.getUserId().toString());
 
         return GuestbookResponseDto.from(savedGuestbook, user.getNickname(), equippedItems);
     }
