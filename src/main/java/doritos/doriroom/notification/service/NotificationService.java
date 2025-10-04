@@ -11,7 +11,6 @@ import doritos.doriroom.notification.exception.AccessDeniedException;
 import doritos.doriroom.notification.exception.NotificationNotFoundException;
 import doritos.doriroom.notification.repository.NotificationRepository;
 import doritos.doriroom.user.domain.User;
-import doritos.doriroom.user.repository.UserRepository;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,7 +26,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationService {
-    private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
 
     // 푸시 알림 전송
@@ -100,12 +98,17 @@ public class NotificationService {
             notification.markAsRead(); // 안 읽은 상태인 경우 -> 읽음 상태로 변경
         }
 
+        String targetId = notification.getTargetId();
+        if (targetId == null || targetId.isBlank()) {
+            return NotificationRedirectDto.of("/");
+        }
+
         String redirectUrl = switch (notification.getType()) {
-            case DIARY_LIKE        -> "/api/diary/" + notification.getTargetId(); // diaryId
-            case FOLLOWER      -> "/api/users/room/" + notification.getTargetId(); // userId
-            case CHALLENGE_REWARD  -> "/api/challenges/" + notification.getTargetId(); // challengeId
-            case GUESTBOOK_ENTRY -> "/api/guestbooks/room/" + notification.getTargetId();  // roomOwnerId
-            default -> "/"; // 기본 경로는 홈
+            case DIARY_LIKE        -> "/api/diary/" + targetId; // diaryId
+            case FOLLOWER      -> "/api/users/room/" + targetId; // userId
+            case CHALLENGE_REWARD  -> "/api/challenges/" + targetId; // challengeId
+            case GUESTBOOK_ENTRY -> "/api/guestbooks/room/" + targetId;  // roomOwnerId
+            default -> "/";
         };
 
         return NotificationRedirectDto.of(redirectUrl);
