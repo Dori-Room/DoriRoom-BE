@@ -35,7 +35,6 @@ import doritos.doriroom.user.exception.UserNotFoundException;
 import doritos.doriroom.user.repository.RoomLikeRepository;
 import doritos.doriroom.user.repository.UserRepository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,12 +42,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -202,6 +203,7 @@ public class UserService {
         if (StringUtils.hasText(foundUser.getProfileImageUrl())) {
             s3Uploader.deleteFile(foundUser.getProfileImageUrl());
         }
+        log.info("회원 탈퇴가 성공적으로 처리되었습니다. userId: {}, username: {}", foundUser.getUserId(), foundUser.getUsername());
     }
 
     //내 방 정보
