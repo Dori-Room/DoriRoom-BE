@@ -98,7 +98,7 @@ public class AuthService {
         redisTemplate.opsForValue().set(verifiedKey, "verified", Duration.ofSeconds(VERIFIED_EXPIRE_SECONDS));
     }
 
-    public void signup(SignupRequestDto request) {
+    public LoginResponseDto signup(SignupRequestDto request) {
         // 이메일 인증 완료 여부 확인
         String verifiedKey = VERIFIED_KEY_PREFIX.getValue() + request.email();
         String verified = (String) redisTemplate.opsForValue().get(verifiedKey);
@@ -141,6 +141,11 @@ public class AuthService {
         userItemRepository.saveAll(newUserItems);
 
         redisTemplate.delete(verifiedKey); // 유저 등록 후 인증 상태 삭제
+
+        String accessToken = jwtUtil.generateAccessToken(user);
+        String refreshToken = jwtUtil.generateRefresh(user);
+
+        return new LoginResponseDto(accessToken, refreshToken);
     }
 
     public LoginResponseDto login(LoginRequestDto request) {
