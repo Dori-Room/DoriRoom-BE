@@ -107,4 +107,6 @@ public interface DiaryRepository extends JpaRepository<Diary, UUID> {
         @Param("userId") UUID userId,
         @Param("visibilities") List<RoomVisibility> visibilities,
         @Param("visitedAt") LocalDate visitedAt);
+
+    List<Diary> findAllByUserId(UUID userId);
 }

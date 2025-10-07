@@ -1,10 +1,22 @@
 package doritos.doriroom.user.service;
 
+import doritos.doriroom.atlas.repository.UserAtlasRepository;
+import doritos.doriroom.atlas.repository.UserAtlasRewardRepository;
 import doritos.doriroom.auth.exception.InvalidPasswordException;
+import doritos.doriroom.auth.repository.RefreshTokenRedisRepository;
 import doritos.doriroom.challenge.domain.challenge.ChallengeType;
+import doritos.doriroom.challenge.repository.UserChallengeRepository;
 import doritos.doriroom.challenge.service.ChallengeService;
+import doritos.doriroom.diary.domain.Diary;
+import doritos.doriroom.diary.domain.DiaryLike;
+import doritos.doriroom.diary.repository.DiaryLikeRepository;
+import doritos.doriroom.diary.repository.DiaryRepository;
 import doritos.doriroom.follow.domain.Follow;
 import doritos.doriroom.follow.dto.request.UserSearchRequestDto;
+import doritos.doriroom.guestbook.repository.GuestbookRepository;
+import doritos.doriroom.item.repository.UserItemRepository;
+import doritos.doriroom.notification.repository.NotificationRepository;
+import doritos.doriroom.user.domain.RoomLike;
 import doritos.doriroom.user.dto.request.FcmTokenRequestDto;
 import doritos.doriroom.ranking.service.ProfileVisitService;
 import doritos.doriroom.user.dto.request.SpeechBubbleRequest;
@@ -20,6 +32,7 @@ import doritos.doriroom.user.dto.request.UpdateProfileRequestDto;
 import doritos.doriroom.user.exception.DuplicateException;
 import doritos.doriroom.user.exception.SelfRoomInfoNotAllowedException;
 import doritos.doriroom.user.exception.UserNotFoundException;
+import doritos.doriroom.user.repository.RoomLikeRepository;
 import doritos.doriroom.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
@@ -43,9 +56,21 @@ public class UserService {
     private final PasswordEncoder encoder;
     private final S3Uploader s3Uploader;
     private final ItemService itemService;
-    private final FollowRepository followRepository;
     private final ChallengeService challengeService;
     private final ProfileVisitService profileVisitService;
+
+    // 탈퇴 시 삭제 관련
+    private final FollowRepository followRepository;
+    private final DiaryRepository diaryRepository;
+    private final DiaryLikeRepository diaryLikeRepository;
+    private final RoomLikeRepository roomLikeRepository;
+    private final GuestbookRepository guestbookRepository;
+    private final UserItemRepository userItemRepository;
+    private final UserChallengeRepository userChallengeRepository;
+    private final UserAtlasRepository userAtlasRepository;
+    private final UserAtlasRewardRepository userAtlasRewardRepository;
+    private final NotificationRepository notificationRepository;
+    private final RefreshTokenRedisRepository refreshTokenRedisRepository;
 
 
     public void checkUsernameDuplicate(String username){
@@ -149,34 +174,34 @@ public class UserService {
         User foundUser = userRepository.findByUserId(user.getUserId())
                 .orElseThrow(UserNotFoundException::new);
 
-        if (foundUser.isWithdraw()) {
-            return;
-        }
-
         if (!encoder.matches(request.password(), foundUser.getPassword())){
             throw new InvalidPasswordException("비밀번호가 일치하지 않습니다.");
         }
 
-        // 기존 프로필 이미지가 있으면 S3에서 삭제 후 URL 제거
+        deleteLikesHandler(foundUser); // 다른 유저에게 누른 좋아요들 삭제
+
+        // 유저 관계 삭제
+        guestbookRepository.deleteAllByUserId(foundUser.getUserId());
+        followRepository.deleteAllByUser(foundUser);
+
+        // 유저 개인 데이터 삭제
+        userChallengeRepository.deleteAllByUser(foundUser);
+        userAtlasRewardRepository.deleteAllByUser(foundUser);
+        userAtlasRepository.deleteAllByUser(foundUser);
+        userItemRepository.deleteAllByUser(foundUser);
+        notificationRepository.deleteAllByUser(foundUser);
+        refreshTokenRedisRepository.deleteById(foundUser.getUserId());
+
+        deleteUserDiariesAndRelatedData(foundUser); // 유저 생성 데이터 삭제
+        roomLikeRepository.deleteAllByRoomOwner(foundUser); // 유저의 방 좋아요 삭제
+
+
+        userRepository.delete(foundUser); // 유저 삭제
+
+        // 기존 프로필 이미지가 있으면 S3에서 삭제
         if (StringUtils.hasText(foundUser.getProfileImageUrl())) {
             s3Uploader.deleteFile(foundUser.getProfileImageUrl());
-            foundUser.setProfileImageUrl(null);
         }
-
-        // 개인정보 비식별화
-        String key = "WITHDRAWN_";
-        String withdrawnUserId = (key + foundUser.getUserId().toString()+ "_" + System.currentTimeMillis());
-        foundUser.setUsername(withdrawnUserId);
-        foundUser.setEmail(withdrawnUserId + "@dori.com");
-        foundUser.setNickname(key + foundUser.getNickname()+ "_" + System.currentTimeMillis());
-        foundUser.setPassword(encoder.encode(UUID.randomUUID().toString())); // 비밀번호를 아무도 모르는 값으로 변경
-        foundUser.setProfileImageUrl(null);
-        foundUser.setFcmToken(null); // fcm 토큰 정리
-        foundUser.setWithdraw(true); // 상태 및 탈퇴일시 변경
-        foundUser.setWithdrawDate(LocalDateTime.now());
-
-        // 팔로우 관계 연관 데이터 정리
-        followRepository.deleteByFollowerOrFollowed(foundUser, foundUser);
     }
 
     //내 방 정보
@@ -286,5 +311,52 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
 
         foundUser.setFcmToken(null);
+    }
+
+
+
+    /*  내부 메서드  */
+
+    // 유저가 누른 좋아요 삭제하여 관련 게시물의 카운트를 감소
+    private void deleteLikesHandler(User user) {
+        // 내가 좋아요 누른 다이어리 목록 조회 후 카운트 감소 및 삭제
+        List<DiaryLike> diaryLikes = diaryLikeRepository.findByUser(user);
+        for (DiaryLike like : diaryLikes) {
+            like.getDiary().decrementLikes();
+        }
+        diaryLikeRepository.deleteAll(diaryLikes);
+
+        // 내가 좋아요 누른 방
+        List<RoomLike> roomLikes = roomLikeRepository.findByLiker(user);
+        for (RoomLike like : roomLikes) {
+            like.getRoomOwner().decrementLikeCount();
+        }
+        roomLikeRepository.deleteAll(roomLikes);
+    }
+
+    // 유저가 작성한 모든 일기와 관련된 데이터 식제
+    private void deleteUserDiariesAndRelatedData(User user) {
+        // 모든 다이어리 조회
+        List<Diary> userDiaries = diaryRepository.findAllByUserId(user.getUserId());
+        if (userDiaries.isEmpty()) {
+            return;
+        }
+
+        // 다이어리 id 리스트 추출
+        List<UUID> diaryIds = userDiaries.stream()
+                .map(Diary::getDiaryId)
+                .collect(Collectors.toList());
+
+        // 해당 다이어리 전부 삭제
+        diaryLikeRepository.deleteAllByDiaryIds(diaryIds);
+
+        // S3에서 관련 이미지들을 삭제
+        for (Diary diary : userDiaries) {
+            if (diary.getImageUrls() != null && !diary.getImageUrls().isEmpty()) {
+                s3Uploader.deleteFiles(diary.getImageUrls());
+            }
+        }
+
+        diaryRepository.deleteAll(userDiaries); // 최종 다이어리 삭제
     }
 }
