@@ -41,9 +41,8 @@ public class AuthController {
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입")
-    public ApiResponse<Void> signup(@RequestBody @Valid SignupRequestDto request){
-        authService.signup(request);
-        return ApiResponse.ok();
+    public ApiResponse<LoginResponseDto> signup(@RequestBody @Valid SignupRequestDto request){
+        return ApiResponse.ok(authService.signup(request));
     }
 
     @PostMapping("/login")
