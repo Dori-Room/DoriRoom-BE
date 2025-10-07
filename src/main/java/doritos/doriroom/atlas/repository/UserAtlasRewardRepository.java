@@ -3,6 +3,7 @@ package doritos.doriroom.atlas.repository;
 import doritos.doriroom.atlas.domain.UserAtlasReward;
 import doritos.doriroom.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -22,4 +23,8 @@ public interface UserAtlasRewardRepository extends JpaRepository<UserAtlasReward
 
     // 특정 유저가 특정 보상을 이미 받았는지 확인
     boolean existsByUserAndAtlasReward_Id(User user, Long atlasRewardId);
+
+    @Modifying
+    @Query("DELETE FROM UserAtlasReward uar WHERE uar.user = :user")
+    void deleteAllByUser(@Param("user") User user);
 }

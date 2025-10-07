@@ -35,5 +35,9 @@ public interface UserChallengeRepository extends JpaRepository<UserChallenge, Lo
     int expireChallenges(@Param("yesterday") LocalDate yesterday, @Param("expiredStatus") ChallengeStatus expiredStatus,
                          @Param("activeStatuses") List<ChallengeStatus> activeStatuses);
 
+    @Modifying
+    @Query("DELETE FROM UserChallenge uc WHERE uc.user = :user")
+    void deleteAllByUser(@Param("user") User user);
+
 }
 
