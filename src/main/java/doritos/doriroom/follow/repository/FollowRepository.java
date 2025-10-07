@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -68,4 +69,9 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
     List<UUID> findMutualBestFriendIds(@Param("currentUserId") UUID currentUserId);
 
     void deleteByFollowerOrFollowed(User follower, User followed);
+
+    // 해당 유저의 팔로우/팔로잉 데이터 전부 삭제
+    @Modifying
+    @Query("DELETE FROM Follow f WHERE f.follower = :user OR f.followed = :user")
+    void deleteAllByUser(@Param("user") User user);
 }

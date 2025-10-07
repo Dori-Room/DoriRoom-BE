@@ -6,6 +6,7 @@ import doritos.doriroom.user.domain.User;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -23,4 +24,8 @@ public interface UserAtlasRepository extends JpaRepository<UserAtlas, UUID> {
 //    List<UserAtlas> findByUser(User user); // 유저의 모든 지역도감 조회 시
     @Query("SELECT ua FROM UserAtlas ua JOIN FETCH ua.atlas WHERE ua.user = :user") // fetch join 하여 UserAtlas와 Atlas를 전부 조회
     List<UserAtlas> findByUserWithAtlas(@Param("user") User user);
+
+    @Modifying
+    @Query("DELETE FROM UserAtlas ua WHERE ua.user = :user")
+    void deleteAllByUser(@Param("user") User user);
 }

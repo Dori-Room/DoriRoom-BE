@@ -12,6 +12,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -35,4 +37,8 @@ public interface UserItemRepository extends JpaRepository<UserItem, Long> {
     AND ui.equipped = true
     """)
     List<UserItem> findByUser_UserIdInAndIsEquippedTrue(@Param("userIds") Set<UUID> userIds);
+
+    @Modifying
+    @Query("DELETE FROM UserItem ui WHERE ui.user = :user")
+    void deleteAllByUser(@Param("user") User user);
 }
