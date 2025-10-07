@@ -11,9 +11,9 @@ public record SignupRequestDto (
         @Schema(description = "로그인 아이디(소문자+숫자, 4~20자)", example = "user1234")
         @NotBlank String username,
 
-        @Pattern(regexp = "^(?=.{8,20}$)((?=.*[a-zA-Z])(?=.*\\d)|(?=.*[a-zA-Z])(?=.*[!@#$%^&*])|(?=.*\\d)(?=.*[!@#$%^&*])).*$",
+        @Pattern(regexp = "^(?=.{6,20}$)((?=.*[a-zA-Z])(?=.*\\d)|(?=.*[a-zA-Z])(?=.*[!@#$%^&*])|(?=.*\\d)(?=.*[!@#$%^&*])).*$",
                 message = "비밀번호는 영문, 숫자, 특수문자 중 2가지 이상을 조합하여 6~20자로 설정해야 합니다.")
-        @Schema(description = "비밀번호(영문/숫자/특수문자 포함 8~20자)", example = "Passw0rd!")
+        @Schema(description = "비밀번호(영문/숫자/특수문자 포함 6~20자)", example = "Passw0rd!")
         @NotBlank String password,
 
         @Email(message = "올바른 이메일 형식이어야 합니다.")
