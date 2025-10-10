@@ -9,6 +9,8 @@ import doritos.doriroom.diary.repository.DiaryRepository;
 import doritos.doriroom.notification.domain.NotificationType;
 import doritos.doriroom.notification.service.NotificationService;
 import doritos.doriroom.user.domain.User;
+import doritos.doriroom.user.exception.UserNotFoundException;
+import doritos.doriroom.user.repository.UserRepository;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,15 +25,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class DiaryLikeService {
     private final DiaryLikeRepository diaryLikeRepository;
     private final DiaryRepository diaryRepository;
+    private final UserRepository userRepository;
     private final NotificationService notificationService;
 
     @Transactional
     public boolean setLikeStatus(User user, UUID diaryId, boolean isLiked) {
         try {
-            Object[] list = diaryRepository.findDiaryWithUser(diaryId).orElseThrow(DiaryNotFoundException::new);
-            Diary diary = (Diary) list[0];
-            User diaryOwner = (User) list[1];
-            log.info("findDiaryWithUser result: {}, {}", list[0].getClass(), list[1].getClass());
+            // 일기 조회
+            Diary diary = diaryRepository.findById(diaryId)
+                .orElseThrow(DiaryNotFoundException::new);
+            
+            // 일기 작성자 조회
+            User diaryOwner = userRepository.findByUserId(diary.getUserId())
+                .orElseThrow(UserNotFoundException::new);
 
             Optional<DiaryLike> existingLike = diaryLikeRepository.findByUserIdAndDiaryId(user.getUserId(), diaryId);
 
@@ -72,8 +78,14 @@ public class DiaryLikeService {
                 }
             }
         } catch (DiaryNotFoundException e) {
+            log.error("일기를 찾을 수 없습니다 - diaryId: {}", diaryId);
+            throw e;
+        } catch (UserNotFoundException e) {
+            log.error("일기 작성자를 찾을 수 없습니다 - diaryId: {}", diaryId);
             throw e;
         } catch (Exception e) {
+            log.error("일기 좋아요 처리 중 오류 발생 - userId: {}, diaryId: {}, isLiked: {}, error: {}", 
+                user.getUserId(), diaryId, isLiked, e.getMessage(), e);
             throw new DiaryLikeException();
         }
     }

@@ -8,6 +8,7 @@ import doritos.doriroom.user.exception.UserNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,7 @@ class DiaryLikeController {
     @PostMapping
     public ApiResponse<Boolean> toggleLike(
         @AuthenticationPrincipal User user,
-        @RequestBody DiaryLikeRequestDto request
+        @Valid @RequestBody DiaryLikeRequestDto request
     ) {
         if (user == null) {
             throw new UserNotFoundException();
