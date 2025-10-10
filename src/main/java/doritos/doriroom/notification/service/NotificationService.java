@@ -20,7 +20,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -51,11 +53,17 @@ public class NotificationService {
                             .setBody(content)     // 푸시 알림 내용
                             .build();
 
+            Map<String, String> data = new HashMap<>();
+            data.put("type", type.name());
+            data.put("targetId", targetId);
+            data.put("content", content);
+
             TransactionSynchronizationManager.registerSynchronization(new  TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
                     Message message = Message.builder()
                             .setNotification(fcmNotification)
+                            .putAllData(data)
                             .setToken(user.getFcmToken())
                             .build();
 
