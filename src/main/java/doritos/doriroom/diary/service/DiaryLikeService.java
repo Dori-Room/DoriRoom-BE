@@ -47,8 +47,16 @@ public class DiaryLikeService {
                     diary.incrementLikes();
                     diaryRepository.save(diary);
 
-                    // 일기 주인에게 좋아요 알림 발송
-                    notificationService.sendNotification(diaryOwner, NotificationType.DIARY_LIKE, user.getNickname(), diary.getDiaryId().toString());
+                    try {
+                        notificationService.sendNotification(
+                                diaryOwner,
+                                NotificationType.DIARY_LIKE,
+                                user.getNickname(),
+                                diary.getDiaryId().toString()
+                        );
+                    } catch (Exception notifyEx) {
+                        log.warn("알림 전송 실패: {}", notifyEx.getMessage());
+                    }
 
                     return true;
                 }
