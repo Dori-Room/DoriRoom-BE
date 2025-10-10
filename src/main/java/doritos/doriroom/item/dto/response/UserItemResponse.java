@@ -10,24 +10,24 @@ import lombok.Builder;
 public record UserItemResponse (
         Long itemId,
         String name,
-//        String imageUrl,
         ItemType itemType,
         ItemGroup itemGroup, // COMMON or AREA
         AreaGroup areaGroup, // nullable
         CollectionTheme theme, // nullable
-        boolean isEquipped
+        boolean isEquipped,
+        boolean defaultItem
 ){
     public static UserItemResponse from(UserItem userItem){
         Item i = userItem.getItem();
         return UserItemResponse.builder()
                 .itemId(i.getItemId())
                 .name(i.getName())
-//                .imageUrl(i.getImageUrl())
                 .itemType(i.getItemType())
                 .itemGroup(i.getItemGroup())
                 .areaGroup(i.getAreaGroup())
                 .theme(i.getTheme())
                 .isEquipped(userItem.isEquipped())
+                .defaultItem(userItem.getItem().isDefaultItem())
                 .build();
     }
 }
