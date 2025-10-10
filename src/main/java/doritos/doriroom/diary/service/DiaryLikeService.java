@@ -31,6 +31,7 @@ public class DiaryLikeService {
             Object[] list = diaryRepository.findDiaryWithUser(diaryId).orElseThrow(DiaryNotFoundException::new);
             Diary diary = (Diary) list[0];
             User diaryOwner = (User) list[1];
+            log.info("findDiaryWithUser result: {}, {}", list[0].getClass(), list[1].getClass());
 
             Optional<DiaryLike> existingLike = diaryLikeRepository.findByUserIdAndDiaryId(user.getUserId(), diaryId);
 

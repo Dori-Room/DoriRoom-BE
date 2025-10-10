@@ -16,7 +16,12 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DiaryRepository extends JpaRepository<Diary, UUID> {
-    @Query("SELECT d, u FROM Diary d, User u WHERE d.userId = u.userId AND d.diaryId = :diaryId")
+    @Query("""
+        SELECT d, u
+        FROM Diary d
+        JOIN User u ON d.userId = u.userId
+        WHERE d.diaryId = :diaryId
+        """)
     Optional<Object[]> findDiaryWithUser(@Param("diaryId") UUID diaryId);
 
     List<Diary> findByUserIdAndVisitedAtBetweenOrderByVisitedAt(
