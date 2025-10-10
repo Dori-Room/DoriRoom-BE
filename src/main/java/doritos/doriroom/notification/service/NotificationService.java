@@ -5,7 +5,6 @@ import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import doritos.doriroom.notification.domain.Notification;
 import doritos.doriroom.notification.domain.NotificationType;
-import doritos.doriroom.notification.dto.NotificationRedirectDto;
 import doritos.doriroom.notification.dto.NotificationResponseDto;
 import doritos.doriroom.notification.exception.AccessDeniedException;
 import doritos.doriroom.notification.exception.NotificationNotFoundException;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -54,6 +52,7 @@ public class NotificationService {
                             .build();
 
             Map<String, String> data = new HashMap<>();
+            data.put("notificationId", notification.getId().toString());
             data.put("type", type.name());
             data.put("targetId", targetId);
             data.put("content", content);
@@ -90,7 +89,7 @@ public class NotificationService {
 
     // 알림 읽음 처리
     @Transactional
-    public NotificationRedirectDto readAndRedirect(User user, Long notificationId) {
+    public void readNotification(User user, Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(NotificationNotFoundException::new);
 
@@ -101,20 +100,5 @@ public class NotificationService {
         if (!notification.isRead()) {
             notification.markAsRead(); // 안 읽은 상태인 경우 -> 읽음 상태로 변경
         }
-
-        String targetId = notification.getTargetId();
-        if (targetId == null || targetId.isBlank()) {
-            return NotificationRedirectDto.of("/");
-        }
-
-        String redirectUrl = switch (notification.getType()) {
-            case DIARY_LIKE        -> "/api/diary/" + targetId; // diaryId
-            case FOLLOWER      -> "/api/users/room/" + targetId; // userId
-            case CHALLENGE_REWARD  -> "/api/challenges/" + targetId; // challengeId
-            case GUESTBOOK_ENTRY -> "/api/guestbooks/room/" + targetId;  // roomOwnerId
-            default -> "/";
-        };
-
-        return NotificationRedirectDto.of(redirectUrl);
     }
 }

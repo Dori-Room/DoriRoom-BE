@@ -2,10 +2,8 @@ package doritos.doriroom.notification.dto;
 
 import doritos.doriroom.notification.domain.Notification;
 import doritos.doriroom.notification.domain.NotificationType;
-import doritos.doriroom.user.domain.User;
 import lombok.Builder;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Builder
 public record NotificationResponseDto(
